@@ -1,0 +1,1103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#121010">
+    <meta name="description" content="NexTrade — Premium Indian stock market simulator with live data, portfolio analytics, and trading tools">
+    <title>NexTrade | Indian Markets</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📈</text></svg>">
+    <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body>
+
+<div class="app-container">
+
+    <!-- ══ Sidebar ══ -->
+    <aside class="sidebar glass-panel">
+        <div class="logo">
+            <i data-lucide="trending-up" class="logo-icon"></i>
+            <h1>NexTrade</h1>
+        </div>
+        <nav class="nav-menu">
+            <a href="#" class="nav-item active" data-view="dashboard">
+                <i data-lucide="layout-dashboard"></i><span>Dashboard</span>
+            </a>
+            <a href="#" class="nav-item" data-view="screener">
+                <i data-lucide="bar-chart-2"></i><span>Stocks</span>
+            </a>
+            <a href="#" class="nav-item" data-view="allstocks">
+                <i data-lucide="list"></i><span>All Stocks</span>
+                <span class="nav-badge" style="display:inline;">5000+</span>
+            </a>
+            <a href="#" class="nav-item" data-view="gainers">
+                <i data-lucide="activity"></i><span>Gainers / Losers</span>
+            </a>
+            <a href="#" class="nav-item" data-view="mutualfunds">
+                <i data-lucide="briefcase"></i><span>Mutual Funds</span>
+            </a>
+            <a href="#" class="nav-item" data-view="ipo">
+                <i data-lucide="rocket"></i><span>IPO</span>
+            </a>
+            <a href="#" class="nav-item" data-view="crypto">
+                <i data-lucide="bitcoin"></i><span>Crypto</span>
+            </a>
+            <a href="#" class="nav-item" data-view="portfolio">
+                <i data-lucide="pie-chart"></i><span>Portfolio</span>
+            </a>
+            <a href="#" class="nav-item" data-view="watchlist">
+                <i data-lucide="star"></i><span>Watchlist</span>
+                <span class="nav-badge" id="watchlistCount">0</span>
+            </a>
+            <a href="#" class="nav-item" data-view="orders">
+                <i data-lucide="clipboard-list"></i><span>Orders</span>
+            </a>
+            <a href="#" class="nav-item" data-view="news">
+                <i data-lucide="newspaper"></i><span>News</span>
+            </a>
+            <a href="#" class="nav-item" data-view="calculator">
+                <i data-lucide="calculator"></i><span>Calculator</span>
+            </a>
+            <a href="#" class="nav-item" data-view="compare">
+                <i data-lucide="git-compare"></i><span>Compare</span>
+            </a>
+            <a href="#" class="nav-item" data-view="heatmap">
+                <i data-lucide="grid-3x3"></i><span>Heatmap</span>
+            </a>
+            <a href="#" class="nav-item" data-view="journal">
+                <i data-lucide="book-open"></i><span>Journal</span>
+            </a>
+        </nav>
+        <div class="sidebar-bottom">
+            <div class="market-status">
+                <span class="status-dot" id="marketStatusDot"></span>
+                <span id="marketStatusText">Checking...</span>
+            </div>
+            <a href="#" class="nav-item" data-view="settings">
+                <i data-lucide="settings"></i><span>Settings</span>
+            </a>
+        </div>
+    </aside>
+
+    <!-- ══ Main ══ -->
+    <main class="main-content">
+
+        <!-- Header -->
+        <header class="top-header glass-panel">
+            <div class="search-bar">
+                <i data-lucide="search" class="search-icon"></i>
+                <input type="text" placeholder="Search any NSE/BSE stock, fund..." id="searchInput" autocomplete="off">
+                <div id="searchDropdown" class="search-dropdown hidden"></div>
+            </div>
+            <div class="header-actions">
+                <span id="dataSourceBadge" class="data-source-badge badge-live">⚡ Live Dashboard</span>
+                <div class="balance-pill">
+                    <i data-lucide="wallet" style="width:13px;height:13px;"></i>
+                    <span id="balanceDisplay">&#8377;10,00,000.00</span>
+                </div>
+                <div class="exchange-badge">NSE</div>
+                <div class="exchange-badge">BSE</div>
+                <button class="btn btn-icon" id="notifBtn"><i data-lucide="bell"></i></button>
+                <div class="user-avatar" onclick="setView('settings')" style="cursor:pointer;" title="Bandariya Didi"><img src="bandariya_didi.png" alt="Bandariya Didi"></div>
+            </div>
+        </header>
+
+        <!-- Ticker -->
+        <div class="ticker-bar">
+            <div class="ticker-label-fixed">LIVE</div>
+            <div class="ticker-wrapper">
+                <div class="ticker-inner" id="tickerInner"></div>
+            </div>
+        </div>
+
+        <!-- Content -->
+        <div class="dashboard-content">
+
+            <!-- Market Overview -->
+            <section class="overview-section" id="section-dashboard">
+                <h2 class="section-title">Market Overview <span class="section-tag">Live</span></h2>
+                <div class="market-cards" id="marketCards"></div>
+                <div id="fearGreedWrap" style="margin-top:20px;"></div>
+            </section>
+
+            <!-- Gainers / Losers / Sector -->
+            <section class="gainers-section" id="section-gainers">
+                <div class="gl-grid">
+                    <div class="gl-panel glass-panel">
+                        <h3 class="gl-title positive-text"><i data-lucide="trending-up" style="width:15px;height:15px;"></i> Top Gainers</h3>
+                        <table class="stock-table gl-table">
+                            <thead><tr><th>Symbol</th><th>LTP (&#8377;)</th><th>Change</th></tr></thead>
+                            <tbody id="gainersBody">
+                                <tr><td colspan="3" style="text-align:center;padding:20px;color:var(--text-muted);"><i data-lucide="loader" class="spin"></i> Loading...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="gl-panel glass-panel">
+                        <h3 class="gl-title negative-text"><i data-lucide="trending-down" style="width:15px;height:15px;"></i> Top Losers</h3>
+                        <table class="stock-table gl-table">
+                            <thead><tr><th>Symbol</th><th>LTP (&#8377;)</th><th>Change</th></tr></thead>
+                            <tbody id="losersBody">
+                                <tr><td colspan="3" style="text-align:center;padding:20px;color:var(--text-muted);"><i data-lucide="loader" class="spin"></i> Loading...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="gl-panel glass-panel">
+                        <h3 class="gl-title" style="color:var(--accent-primary);"><i data-lucide="layers" style="width:15px;height:15px;"></i> Sector Performance</h3>
+                        <div id="sectorPerformance" class="sector-perf-list"></div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Stock Screener -->
+            <section class="screener-section glass-panel" id="section-screener">
+                <div class="screener-header">
+                    <div>
+                        <h2 class="section-title" id="screenerTitle" style="margin-bottom:4px;">NSE Top Picks</h2>
+                        <p class="section-sub">Prices in &#8377; &middot; NSE &middot; Real-time</p>
+                    </div>
+                    <div class="filters">
+                        <select id="sectorFilter" class="filter-select">
+                            <option value="All">All Sectors</option>
+                            <option value="Technology">Technology (IT)</option>
+                            <option value="Finance">Finance &amp; Banking</option>
+                            <option value="Energy">Energy &amp; Oil</option>
+                            <option value="Consumer">Consumer (FMCG)</option>
+                            <option value="Infrastructure">Infrastructure</option>
+                            <option value="Healthcare">Healthcare &amp; Pharma</option>
+                            <option value="Auto">Automobile</option>
+                            <option value="Metals">Metals &amp; Mining</option>
+                            <option value="Telecom">Telecom</option>
+                        </select>
+                        <button class="btn btn-primary" id="applyStockFilter">
+                            <i data-lucide="sliders-horizontal"></i> Filter
+                        </button>
+                    </div>
+                </div>
+                <div class="table-container">
+                    <table class="stock-table">
+                        <thead>
+                            <tr>
+                                <th>Symbol</th>
+                                <th>LTP (&#8377;)</th>
+                                <th>Day Change</th>
+                                <th>Market Cap</th>
+                                <th>P/E Ratio</th>
+                                <th>Sector</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="screenerBody">
+                            <tr><td colspan="7" style="text-align:center;padding:40px;color:var(--text-muted);"><i data-lucide="loader" class="spin"></i> Fetching live market data...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- All Stocks Browser -->
+            <section class="all-stocks-section glass-panel" id="section-allstocks">
+                <div class="screener-header">
+                    <div>
+                        <h2 class="section-title" style="margin-bottom:4px;">All Stocks <span id="allStocksCount" class="section-tag"></span></h2>
+                        <p class="section-sub">NSE &amp; BSE listed companies &middot; Real-time prices</p>
+                    </div>
+                    <div class="filters" style="gap:8px;flex-wrap:wrap;">
+                        <select id="allStocksSector" class="filter-select">
+                            <option value="All">All Sectors</option>
+                            <option value="Technology">Technology</option>
+                            <option value="Finance">Finance</option>
+                            <option value="Energy">Energy</option>
+                            <option value="Consumer">Consumer / FMCG</option>
+                            <option value="Infrastructure">Infrastructure</option>
+                            <option value="Healthcare">Healthcare</option>
+                            <option value="Auto">Automobile</option>
+                            <option value="Metals">Metals</option>
+                            <option value="Chemicals">Chemicals</option>
+                            <option value="Telecom">Telecom</option>
+                        </select>
+                        <div class="as-sort-group">
+                            <button class="as-sort-btn active" data-sort="marketcap">Market Cap</button>
+                            <button class="as-sort-btn" data-sort="price">Price</button>
+                            <button class="as-sort-btn" data-sort="change">% Change</button>
+                            <button class="as-sort-btn" data-sort="name">Name A-Z</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="table-container">
+                    <table class="stock-table all-stocks-table">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Company</th>
+                                <th>LTP (&#8377;)</th>
+                                <th>Day Change</th>
+                                <th>Market Cap</th>
+                                <th>52W High / Low</th>
+                                <th>Sector</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="allStocksBody">
+                            <tr><td colspan="8" style="text-align:center;padding:40px;color:var(--text-muted);"><i data-lucide="loader" class="spin"></i> Fetching live quotes...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="as-pagination">
+                    <button class="btn" id="allStocksPrev"><i data-lucide="chevron-left" style="width:14px;height:14px;"></i> Prev</button>
+                    <span id="allStocksPageInfo" style="font-size:13px;color:var(--text-muted);"></span>
+                    <button class="btn" id="allStocksNext">Next <i data-lucide="chevron-right" style="width:14px;height:14px;"></i></button>
+                </div>
+            </section>
+
+            <!-- Mutual Funds -->
+            <section class="mutual-funds-section glass-panel" id="section-mutualfunds">
+                <div class="screener-header">
+                    <div>
+                        <h2 class="section-title" style="margin-bottom:4px;">Top Mutual Funds</h2>
+                        <p class="section-sub">Direct Plans &middot; SEBI Registered &middot; Annualised Returns</p>
+                    </div>
+                    <div class="filters">
+                        <select id="fundCategoryFilter" class="filter-select">
+                            <option value="All">All Categories</option>
+                            <option value="Large Cap">Large Cap</option>
+                            <option value="Mid Cap">Mid Cap</option>
+                            <option value="Small Cap">Small Cap</option>
+                            <option value="Flexi Cap">Flexi Cap</option>
+                            <option value="ELSS">ELSS (Tax Saver)</option>
+                            <option value="Hybrid">Hybrid</option>
+                            <option value="Debt">Debt</option>
+                            <option value="Index">Index Fund</option>
+                            <option value="Sectoral">Sectoral / Thematic</option>
+                        </select>
+                        <button class="btn btn-primary" id="applyFundFilter">
+                            <i data-lucide="sliders-horizontal"></i> Filter
+                        </button>
+                    </div>
+                </div>
+                <div class="table-container">
+                    <table class="stock-table">
+                        <thead>
+                            <tr>
+                                <th>Fund Name</th>
+                                <th>NAV (&#8377;)</th>
+                                <th>1Y Returns</th>
+                                <th>3Y Returns</th>
+                                <th>AUM (&#8377; Cr)</th>
+                                <th>Risk</th>
+                                <th>Rating</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="fundsBody"></tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- IPO Centre -->
+            <section class="ipo-section glass-panel" id="section-ipo">
+                <div class="screener-header">
+                    <div>
+                        <h2 class="section-title" style="margin-bottom:4px;">IPO Centre</h2>
+                        <p class="section-sub">Upcoming &amp; Ongoing IPOs &middot; Apply directly</p>
+                    </div>
+                    <div class="filters">
+                        <select id="ipoFilter" class="filter-select">
+                            <option value="all">All IPOs</option>
+                            <option value="open">Open Now</option>
+                            <option value="upcoming">Upcoming</option>
+                            <option value="listed">Recently Listed</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="ipo-grid" id="ipoGrid"></div>
+            </section>
+
+            <!-- Global Crypto Markets -->
+            <section class="crypto-section glass-panel" id="section-crypto" style="display:none;">
+                <div class="screener-header">
+                    <div>
+                        <h2 class="section-title" style="margin-bottom:4px;">Crypto Markets <span class="section-tag">Live API</span></h2>
+                        <p class="section-sub">Real-time global cryptocurrency prices</p>
+                    </div>
+                    <button class="btn btn-primary" onclick="fetchCryptoData()"><i data-lucide="refresh-cw"></i> Refresh</button>
+                </div>
+                <div class="table-container">
+                    <table class="stock-table">
+                        <thead>
+                            <tr>
+                                <th>Coin</th>
+                                <th>Symbol</th>
+                                <th>Price ($)</th>
+                                <th>24h Change</th>
+                                <th>Market Cap</th>
+                                <th>Volume (24h)</th>
+                            </tr>
+                        </thead>
+                        <tbody id="cryptoBody">
+                            <tr><td colspan="6" style="text-align:center;padding:40px;color:var(--text-muted);">Fetching live crypto data...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- Portfolio -->
+            <section class="portfolio-section glass-panel" id="section-portfolio">
+                <div class="screener-header">
+                    <div>
+                        <h2 class="section-title" style="margin-bottom:4px;">My Portfolio</h2>
+                        <p class="section-sub">Holdings &middot; Long Term &middot; Real-time P&amp;L</p>
+                    </div>
+                    <button class="btn btn-primary" onclick="showToast('Connect your Demat account to sync holdings','info')">
+                        <i data-lucide="refresh-cw"></i> Sync Demat
+                    </button>
+                </div>
+                <div class="portfolio-summary-cards" id="portfolioSummary"></div>
+                <div id="holdingsDonut" style="margin-top:20px;"></div>
+                <div class="table-container" style="margin-top:16px;">
+                    <table class="stock-table">
+                        <thead>
+                            <tr>
+                                <th>Stock</th><th>Qty</th><th>Avg Cost</th><th>LTP</th>
+                                <th>Invested</th><th>Current Value</th><th>P&amp;L</th><th>Returns</th><th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="portfolioBody"></tbody>
+                    </table>
+                </div>
+            </section>
+
+        </div><!-- end dashboard-content -->
+
+        <!-- ══ Orders Section ══ -->
+        <div id="section-orders" class="glass-panel" style="margin:0 24px 24px;padding:24px;border-radius:16px;display:none;">
+            <div class="screener-header">
+                <div>
+                    <h2 class="section-title" style="margin-bottom:4px;">Order History</h2>
+                    <p class="section-sub">All executed trades on your virtual account</p>
+                </div>
+                <button class="btn btn-primary" onclick="renderOrderHistory()"><i data-lucide="refresh-cw"></i> Refresh</button>
+            </div>
+            <div class="table-container">
+                <table class="stock-table">
+                    <thead>
+                        <tr>
+                            <th>Date / Time</th><th>Symbol</th><th>Side</th><th>Qty</th>
+                            <th>Price (&#8377;)</th><th>Total (&#8377;)</th><th>Type</th><th>Product</th><th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="ordersBody"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- ══ News Section ══ -->
+        <div id="section-news" class="glass-panel" style="margin:0 24px 24px;padding:24px;border-radius:16px;display:none;">
+            <div class="screener-header">
+                <div>
+                    <h2 class="section-title" style="margin-bottom:4px;">Market News</h2>
+                    <p class="section-sub">Latest updates from Indian markets</p>
+                </div>
+                <select id="newsFilter" class="filter-select">
+                    <option value="All">All Sectors</option>
+                    <option value="Market">Market</option>
+                    <option value="Technology">Technology</option>
+                    <option value="Finance">Finance</option>
+                    <option value="Energy">Energy</option>
+                    <option value="Auto">Auto</option>
+                    <option value="Consumer">Consumer</option>
+                    <option value="Economy">Economy</option>
+                    <option value="Infrastructure">Infrastructure</option>
+                </select>
+            </div>
+            <div id="newsGrid" class="news-grid"></div>
+        </div>
+
+        <!-- ══ Calculator Section ══ -->
+        <div id="section-calculator" class="glass-panel" style="margin:0 24px 24px;padding:24px;border-radius:16px;display:none;">
+            <h2 class="section-title" style="margin-bottom:4px;">Investment Calculator</h2>
+            <p class="section-sub" style="margin-bottom:20px;">Plan your wealth with SIP &amp; Lumpsum calculators — with real-world tax &amp; inflation impact</p>
+            <div class="calc-tabs">
+                <button class="calc-tab active" data-calc="sip">SIP Calculator</button>
+                <button class="calc-tab" data-calc="lumpsum">Lumpsum Calculator</button>
+                <button class="calc-tab" data-calc="whatif">&#10024; What-If Machine</button>
+            </div>
+            <!-- SIP Form -->
+            <div id="calcSIPForm" class="calc-form">
+                <div class="calc-inputs">
+                    <div class="calc-field">
+                        <label class="form-label">Monthly SIP Amount (&#8377;)</label>
+                        <input type="number" id="calcSIP" value="5000" min="500" class="amount-input-field">
+                    </div>
+                    <div class="calc-field">
+                        <label class="form-label">Duration (Years)</label>
+                        <input type="range" id="calcYears" value="10" min="1" max="30" class="calc-slider" oninput="document.getElementById('calcYearsVal').textContent=this.value;calcSIP()">
+                        <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--text-muted);margin-top:4px;">
+                            <span>1 yr</span><span id="calcYearsVal" style="font-weight:700;color:var(--accent-primary);">10</span><span>30 yrs</span>
+                        </div>
+                    </div>
+                    <div class="calc-field">
+                        <label class="form-label">Expected Annual Return (%)</label>
+                        <input type="range" id="calcRate" value="12" min="1" max="30" class="calc-slider" oninput="document.getElementById('calcRateVal').textContent=this.value;calcSIP()">
+                        <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--text-muted);margin-top:4px;">
+                            <span>1%</span><span id="calcRateVal" style="font-weight:700;color:var(--accent-primary);">12</span><span>30%</span>
+                        </div>
+                    </div>
+                    <!-- Capital Gains Tax Slider -->
+                    <div class="calc-field">
+                        <label class="form-label">Capital Gains Tax Rate (%)
+                            <span class="calc-tax-badge">LTCG</span>
+                        </label>
+                        <input type="range" id="calcSIPTax" value="12.5" min="0" max="30" step="0.5" class="calc-slider tax-slider" oninput="document.getElementById('calcSIPTaxVal').textContent=this.value;calcSIP()">
+                        <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--text-muted);margin-top:4px;">
+                            <span>0%</span><span id="calcSIPTaxVal" style="font-weight:700;color:#f59e0b;">12.5</span><span>30%</span>
+                        </div>
+                    </div>
+                    <!-- Inflation Slider -->
+                    <div class="calc-field">
+                        <label class="form-label">Inflation Rate (%)
+                            <span class="calc-inf-badge">CPI</span>
+                        </label>
+                        <input type="range" id="calcSIPInflation" value="5.09" min="0" max="15" step="0.1" class="calc-slider inf-slider" oninput="document.getElementById('calcSIPInflationVal').textContent=parseFloat(this.value).toFixed(1);calcSIP()">
+                        <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--text-muted);margin-top:4px;">
+                            <span>0%</span><span id="calcSIPInflationVal" style="font-weight:700;color:#ec4899;">5.1</span><span>15%</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="calc-results">
+                    <div class="calc-result-card"><span>Total Invested</span><strong id="calcInvested">—</strong></div>
+                    <div class="calc-result-card positive-border"><span>Gross Returns</span><strong id="calcReturns" class="positive-text">—</strong></div>
+                    <div class="calc-result-card accent-border"><span>Gross Value</span><strong id="calcTotal" style="font-size:22px;">—</strong></div>
+                    <div class="calc-result-card"><span>Real Net Gain <small style="opacity:0.6">(after tax &amp; inflation)</small></span><strong id="calcGain" class="positive-text">—</strong></div>
+                    <div class="calc-result-card tax-border"><span>After Tax Value</span><strong id="calcAfterTax" style="color:#f59e0b;">—</strong></div>
+                    <div class="calc-result-card inf-border"><span>Real Value <small>(Inflation-adj.)</small></span><strong id="calcRealValue" style="color:#ec4899;">—</strong></div>
+                </div>
+                <div class="calc-bar-wrap">
+                    <div class="calc-bar invested-bar" id="calcInvestedBar"></div>
+                    <div class="calc-bar returns-bar"  id="calcReturnsBar"></div>
+                </div>
+                <div style="display:flex;gap:16px;font-size:12px;color:var(--text-muted);margin-top:6px;flex-wrap:wrap;">
+                    <span><span style="display:inline-block;width:10px;height:10px;background:#3b82f6;border-radius:2px;margin-right:4px;"></span>Invested</span>
+                    <span><span style="display:inline-block;width:10px;height:10px;background:#10b981;border-radius:2px;margin-right:4px;"></span>Returns</span>
+                    <span><span style="display:inline-block;width:10px;height:10px;background:#f59e0b;border-radius:2px;margin-right:4px;"></span>After Tax</span>
+                    <span><span style="display:inline-block;width:10px;height:10px;background:#ec4899;border-radius:2px;margin-right:4px;"></span>Real (Inflation-adj.)</span>
+                </div>
+            </div>
+            <!-- Lumpsum Form -->
+            <div id="calcLSForm" class="calc-form hidden">
+                <div class="calc-inputs">
+                    <div class="calc-field">
+                        <label class="form-label">One-Time Investment (&#8377;)</label>
+                        <input type="number" id="calcLumpsum" value="100000" min="1000" class="amount-input-field">
+                    </div>
+                    <div class="calc-field">
+                        <label class="form-label">Duration (Years)</label>
+                        <input type="range" id="calcLumpsumYears" value="10" min="1" max="30" class="calc-slider" oninput="document.getElementById('calcLSYearsVal').textContent=this.value;calcLumpsum()">
+                        <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--text-muted);margin-top:4px;">
+                            <span>1 yr</span><span id="calcLSYearsVal" style="font-weight:700;color:var(--accent-primary);">10</span><span>30 yrs</span>
+                        </div>
+                    </div>
+                    <div class="calc-field">
+                        <label class="form-label">Expected Annual Return (%)</label>
+                        <input type="range" id="calcLumpsumRate" value="12" min="1" max="30" class="calc-slider" oninput="document.getElementById('calcLSRateVal').textContent=this.value;calcLumpsum()">
+                        <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--text-muted);margin-top:4px;">
+                            <span>1%</span><span id="calcLSRateVal" style="font-weight:700;color:var(--accent-primary);">12</span><span>30%</span>
+                        </div>
+                    </div>
+                    <!-- Capital Gains Tax Slider (Lumpsum) -->
+                    <div class="calc-field">
+                        <label class="form-label">Capital Gains Tax Rate (%)
+                            <span class="calc-tax-badge">LTCG</span>
+                        </label>
+                        <input type="range" id="calcLSTax" value="12.5" min="0" max="30" step="0.5" class="calc-slider tax-slider" oninput="document.getElementById('calcLSTaxVal').textContent=this.value;calcLumpsum()">
+                        <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--text-muted);margin-top:4px;">
+                            <span>0%</span><span id="calcLSTaxVal" style="font-weight:700;color:#f59e0b;">12.5</span><span>30%</span>
+                        </div>
+                    </div>
+                    <!-- Inflation Slider (Lumpsum) -->
+                    <div class="calc-field">
+                        <label class="form-label">Inflation Rate (%)
+                            <span class="calc-inf-badge">CPI</span>
+                        </label>
+                        <input type="range" id="calcLSInflation" value="5.09" min="0" max="15" step="0.1" class="calc-slider inf-slider" oninput="document.getElementById('calcLSInflationVal').textContent=parseFloat(this.value).toFixed(1);calcLumpsum()">
+                        <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--text-muted);margin-top:4px;">
+                            <span>0%</span><span id="calcLSInflationVal" style="font-weight:700;color:#ec4899;">5.1</span><span>15%</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="calc-results">
+                    <div class="calc-result-card"><span>Amount Invested</span><strong id="calcLsInvested">—</strong></div>
+                    <div class="calc-result-card positive-border"><span>Gross Returns</span><strong id="calcLsReturns" class="positive-text">—</strong></div>
+                    <div class="calc-result-card accent-border"><span>Gross Value</span><strong id="calcLsTotal" style="font-size:22px;">—</strong></div>
+                    <div class="calc-result-card"><span>Real Net Gain <small style="opacity:0.6">(after tax &amp; inflation)</small></span><strong id="calcLsGain" class="positive-text">—</strong></div>
+                    <div class="calc-result-card tax-border"><span>After Tax Value</span><strong id="calcLsAfterTax" style="color:#f59e0b;">—</strong></div>
+                    <div class="calc-result-card inf-border"><span>Real Value <small>(Inflation-adj.)</small></span><strong id="calcLsRealValue" style="color:#ec4899;">—</strong></div>
+                </div>
+            </div>
+
+            <!-- What-If Machine Form -->
+            <div id="calcWIForm" class="calc-form hidden">
+                <p class="section-sub" style="margin-bottom:20px;">Discover what your money would be worth today if you had invested years ago in any stock.</p>
+                <div class="calc-inputs">
+                    <div class="calc-field">
+                        <label class="form-label">Choose a Stock</label>
+                        <select id="wiStock" class="filter-select" style="width:100%;padding:10px 14px;font-size:14px;height:auto;" onchange="calcWhatIf()">
+                        </select>
+                    </div>
+                    <div class="calc-field">
+                        <label class="form-label">One-Time Investment (&#8377;)</label>
+                        <input type="number" id="wiAmount" value="100000" min="1000" class="amount-input-field" oninput="calcWhatIf()">
+                    </div>
+                    <div class="calc-field">
+                        <label class="form-label">Years Ago</label>
+                        <input type="range" id="wiYears" value="5" min="1" max="15" class="calc-slider" oninput="document.getElementById('wiYearsVal').textContent=this.value;calcWhatIf()">
+                        <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--text-muted);margin-top:4px;">
+                            <span>1 yr</span><span id="wiYearsVal" style="font-weight:700;color:var(--accent-primary);">5</span><span>15 yrs</span>
+                        </div>
+                    </div>
+                </div>
+                <div id="wiResult" style="margin-top:24px;"></div>
+            </div>
+
+            <!-- Info Note: Sources -->
+            <div class="calc-info-note">
+                <div class="calc-info-row">
+                    <span class="calc-info-icon">&#9432;</span>
+                    <div class="calc-info-text">
+                        <strong>Current Rates Used as Defaults:</strong>
+                        <ul>
+                            <li><strong>Capital Gains Tax (LTCG — Long Term):</strong> 12.5% on equity gains held &gt;1 year (Budget 2024, Ministry of Finance, Govt. of India). STCG is 20% for &lt;1 year.</li>
+                            <li><strong>Inflation Rate (CPI):</strong> 5.09% (Consumer Price Index, March 2025 — Reserve Bank of India / Ministry of Statistics &amp; Programme Implementation).</li>
+                        </ul>
+                        <span class="calc-info-sources">Sources: <a href="https://www.rbi.org.in" target="_blank">Reserve Bank of India (RBI)</a> &bull; <a href="https://www.incometax.gov.in" target="_blank">Income Tax India (Finance Act 2024)</a> &bull; <a href="https://mospi.gov.in" target="_blank">MoSPI</a></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ══ Compare Stocks Section ══ -->
+        <div id="section-compare" class="glass-panel" style="margin:0 24px 24px;padding:24px;border-radius:16px;display:none;">
+            <h2 class="section-title" style="margin-bottom:4px;">Stock Comparator</h2>
+            <p class="section-sub" style="margin-bottom:20px;">Compare stocks within the same sector — find who gives more returns</p>
+            <div class="filters" style="margin-bottom:20px;flex-wrap:wrap;gap:10px;">
+                <select id="compareSector" class="filter-select">
+                    <option value="Technology">Technology (IT)</option>
+                    <option value="Finance">Finance &amp; Banking</option>
+                    <option value="Energy">Energy &amp; Oil</option>
+                    <option value="Consumer">Consumer (FMCG)</option>
+                    <option value="Healthcare">Healthcare &amp; Pharma</option>
+                    <option value="Auto">Automobile</option>
+                    <option value="Metals">Metals &amp; Mining</option>
+                    <option value="Infrastructure">Infrastructure</option>
+                    <option value="Chemicals">Chemicals</option>
+                    <option value="Telecom">Telecom</option>
+                </select>
+                <button class="btn btn-primary" onclick="renderCompare()"><i data-lucide="git-compare"></i> Compare Sector</button>
+            </div>
+            <div id="compareGrid" style="overflow-x:auto;">
+                <table class="stock-table" style="min-width:700px;">
+                    <thead>
+                        <tr>
+                            <th>Rank</th><th>Company</th><th>LTP (&#8377;)</th><th>Day Change</th>
+                            <th>52W Range</th><th>Market Cap</th><th>P/E Ratio</th><th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="compareBody"></tbody>
+                </table>
+            </div>
+            <p id="compareEmptyMsg" style="text-align:center;color:var(--text-muted);padding:40px;display:none;">Select a sector and click Compare</p>
+        </div>
+
+        <!-- ══ Market Heatmap Section ══ -->
+        <div id="section-heatmap" class="glass-panel" style="margin:0 24px 24px;padding:24px;border-radius:16px;display:none;">
+            <div class="screener-header" style="margin-bottom:16px;">
+                <div>
+                    <h2 class="section-title" style="margin-bottom:4px;">Market Heatmap</h2>
+                    <p class="section-sub">Visual snapshot — size by market cap, color by day % change</p>
+                </div>
+                <button class="btn btn-primary" onclick="renderHeatmap()"><i data-lucide="refresh-cw"></i> Refresh</button>
+            </div>
+            <!-- Sector tabs -->
+            <div class="hm-sector-tabs" id="hmSectorTabs">
+                <button class="hm-sector-tab active" onclick="switchHeatmapSector('All',this)">&#127760; All Stocks</button>
+                <button class="hm-sector-tab" onclick="switchHeatmapSector('Technology',this)">&#128187; Technology</button>
+                <button class="hm-sector-tab" onclick="switchHeatmapSector('Finance',this)">&#127981; Finance</button>
+                <button class="hm-sector-tab" onclick="switchHeatmapSector('Energy',this)">&#9889; Energy</button>
+                <button class="hm-sector-tab" onclick="switchHeatmapSector('Consumer',this)">&#128722; Consumer</button>
+                <button class="hm-sector-tab" onclick="switchHeatmapSector('Healthcare',this)">&#128138; Healthcare</button>
+                <button class="hm-sector-tab" onclick="switchHeatmapSector('Auto',this)">&#128664; Auto</button>
+                <button class="hm-sector-tab" onclick="switchHeatmapSector('Infrastructure',this)">&#127959; Infra</button>
+                <button class="hm-sector-tab" onclick="switchHeatmapSector('Metals',this)">&#9881; Metals</button>
+                <button class="hm-sector-tab" onclick="switchHeatmapSector('Telecom',this)">&#128225; Telecom</button>
+            </div>
+            <div class="heatmap-legend">
+                <span class="hm-leg hm-leg-bear3">&#9660;3%+</span>
+                <span class="hm-leg hm-leg-bear2">&#9660;2%</span>
+                <span class="hm-leg hm-leg-bear1">&#9660;1%</span>
+                <span class="hm-leg hm-leg-neutral">0%</span>
+                <span class="hm-leg hm-leg-bull1">&#9650;1%</span>
+                <span class="hm-leg hm-leg-bull2">&#9650;2%</span>
+                <span class="hm-leg hm-leg-bull3">&#9650;3%+</span>
+            </div>
+            <div id="heatmapGrid" class="heatmap-grid"></div>
+        </div>
+
+        <!-- ══ Trade Journal Section ══ -->
+        <div id="section-journal" class="glass-panel" style="margin:0 24px 24px;padding:24px;border-radius:16px;display:none;">
+            <div class="screener-header" style="margin-bottom:20px;">
+                <div>
+                    <h2 class="section-title" style="margin-bottom:4px;">Trade Journal</h2>
+                    <p class="section-sub">P&amp;L analytics, equity curve &amp; trade-by-trade history on your virtual account</p>
+                </div>
+                <button class="btn btn-primary" onclick="renderJournal()"><i data-lucide="refresh-cw"></i> Refresh</button>
+            </div>
+            
+            <!-- Portfolio Analytics Chart -->
+            <div class="analytics-top-row" id="analyticsDashboard" style="display: none;">
+                <div class="analytics-card">
+                    <div class="analytics-title">Win / Loss Ratio</div>
+                    <div style="display:flex; justify-content:space-between; width:100%; align-items:center;">
+                        <div style="text-align:center;">
+                            <div style="font-size:24px;font-weight:700;color:#10b981;" id="winPctDisplay">0%</div>
+                            <div style="font-size:10px;color:var(--text-muted);text-transform:uppercase;">Wins</div>
+                        </div>
+                        <div class="donut-svg-wrap">
+                            <svg viewBox="0 0 120 120" style="width:100%;height:100%;transform:rotate(-90deg); filter:drop-shadow(0 0 8px rgba(0,0,0,0.3));">
+                                <circle cx="60" cy="60" r="52" fill="none" stroke="#ef4444" stroke-width="12" />
+                                <circle id="winCircle" cx="60" cy="60" r="52" fill="none" stroke="#10b981" stroke-width="12" stroke-dasharray="0 326.72" style="transition: stroke-dasharray 1.5s ease;"/>
+                            </svg>
+                            <div class="donut-center-text">
+                                <div style="font-size:26px;font-weight:700;color:var(--text-light);" id="totalTradesDisplay">0</div>
+                                <div style="font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px;">Trades</div>
+                            </div>
+                        </div>
+                        <div style="text-align:center;">
+                            <div style="font-size:24px;font-weight:700;color:#ef4444;" id="lossPctDisplay">0%</div>
+                            <div style="font-size:10px;color:var(--text-muted);text-transform:uppercase;">Losses</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="journalStats" class="journal-stats-grid"></div>
+            <div id="journalCurveWrap" style="margin-top:20px;"></div>
+            <div class="table-container" style="margin-top:20px;">
+                <table class="stock-table">
+                    <thead>
+                        <tr>
+                            <th>Date / Time</th><th>Symbol</th><th>Side</th><th>Qty</th>
+                            <th>Price (&#8377;)</th><th>Total (&#8377;)</th><th>Est. P&amp;L</th><th>Type</th>
+                        </tr>
+                    </thead>
+                    <tbody id="journalBody"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- ══ Settings / Profile Section ══ -->
+        <div id="section-settings" class="glass-panel" style="margin:0 24px 24px;padding:24px;border-radius:16px;display:none;">
+            <h2 class="section-title" style="margin-bottom:4px;">Settings &amp; Profile</h2>
+            <p class="section-sub" style="margin-bottom:24px;">Manage your account, preferences and platform settings</p>
+
+            <!-- Profile Card -->
+            <div class="settings-profile-card glass-panel">
+                <div class="settings-avatar-wrap">
+                    <img src="bandariya_didi.png" alt="Profile" class="settings-avatar" onerror="this.src='https://i.pravatar.cc/150?img=11'">
+                    <div class="settings-avatar-badge">&#128081;</div>
+                </div>
+                <div class="settings-profile-info">
+                    <h3 id="profileNameDisplay">Virtual Trader</h3>
+                    <p>Virtual Trading Account &middot; Premium Member</p>
+                    <div style="display:flex;gap:10px;margin-top:12px;flex-wrap:wrap;">
+                        <span class="settings-chip"><i data-lucide="wallet" style="width:12px;height:12px;"></i> Balance: <strong id="settingsBalance">&#8212;</strong></span>
+                        <span class="settings-chip"><i data-lucide="trending-up" style="width:12px;height:12px;"></i> Orders: <strong id="settingsOrderCount">&#8212;</strong></span>
+                        <span class="settings-chip"><i data-lucide="star" style="width:12px;height:12px;"></i> Watchlist: <strong id="settingsWLCount">&#8212;</strong></span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="settings-grid">
+                <!-- Account -->
+                <div class="settings-card glass-panel">
+                    <h4 class="settings-card-title"><i data-lucide="user" style="width:15px;height:15px;"></i> Account</h4>
+                    <div class="settings-row">
+                        <span>Display Name</span>
+                        <input type="text" id="settingsName" class="settings-input" value="Virtual Trader" placeholder="Your name" onchange="document.getElementById('profileNameDisplay').textContent=this.value">
+                    </div>
+                    <div class="settings-row">
+                        <span>Virtual Balance</span>
+                        <span class="settings-val" id="settingsBalVal" style="color:var(--positive);">&#8212;</span>
+                    </div>
+                    <div class="settings-row">
+                        <span>Reset Account</span>
+                        <button class="btn btn-sm settings-danger-btn" onclick="resetVirtualAccount()">Reset to &#8377;10L</button>
+                    </div>
+                </div>
+
+                <!-- Appearance -->
+                <div class="settings-card glass-panel">
+                    <h4 class="settings-card-title"><i data-lucide="palette" style="width:15px;height:15px;"></i> Appearance</h4>
+                    <div class="settings-row">
+                        <span>Theme</span>
+                        <div style="display:flex;gap:8px;">
+                            <button class="settings-theme-btn active" id="themeDark" onclick="setTheme('dark')">&#127769; Dark</button>
+                            <button class="settings-theme-btn" id="themeLight" onclick="setTheme('light')">&#9728;&#65039; Light</button>
+                        </div>
+                    </div>
+                    <div class="settings-row">
+                        <span>Accent Colour</span>
+                        <div style="display:flex;gap:8px;align-items:center;">
+                            <button class="settings-color-dot" style="background:#10b981;" onclick="setAccent('#10b981','#059669')" title="Emerald"></button>
+                            <button class="settings-color-dot" style="background:#6366f1;" onclick="setAccent('#6366f1','#4f46e5')" title="Indigo"></button>
+                            <button class="settings-color-dot" style="background:#f59e0b;" onclick="setAccent('#f59e0b','#d97706')" title="Amber"></button>
+                            <button class="settings-color-dot" style="background:#ec4899;" onclick="setAccent('#ec4899','#db2777')" title="Pink"></button>
+                            <button class="settings-color-dot" style="background:#06b6d4;" onclick="setAccent('#06b6d4','#0891b2')" title="Cyan"></button>
+                            <button class="settings-color-dot" style="background:#ef4444;" onclick="setAccent('#ef4444','#dc2626')" title="Red"></button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Data & Prices -->
+                <div class="settings-card glass-panel">
+                    <h4 class="settings-card-title"><i data-lucide="activity" style="width:15px;height:15px;"></i> Data &amp; Prices</h4>
+                    <div class="settings-row">
+                        <span>Live Update Interval</span>
+                        <select id="simSpeed" class="filter-select" style="font-size:12px;padding:4px 8px;" onchange="changeSimSpeed(this.value)">
+                            <option value="10000">Every 10s</option>
+                            <option value="20000">Every 20s</option>
+                            <option value="30000">Every 30s</option>
+                            <option value="60000">Every 60s</option>
+                        </select>
+                    </div>
+                    <div class="settings-row">
+                        <span>Data Source</span>
+                        <span class="settings-chip" id="settingsDataSrc">&#8212;</span>
+                    </div>
+                    <div class="settings-row">
+                        <span>Force Refresh</span>
+                        <button class="btn btn-sm" onclick="fetchRealTimeData().then(function(){showToast('Prices refreshed!','success')})">&#8635; Refresh Now</button>
+                    </div>
+                </div>
+
+                <!-- Notifications -->
+                <div class="settings-card glass-panel">
+                    <h4 class="settings-card-title"><i data-lucide="bell" style="width:15px;height:15px;"></i> Alerts</h4>
+                    <div class="settings-row">
+                        <span>Active Price Alerts</span>
+                        <span class="settings-val" id="settingsAlertCount" style="color:var(--accent-primary);">0</span>
+                    </div>
+                    <div class="settings-row">
+                        <span>Clear All Alerts</span>
+                        <button class="btn btn-sm settings-danger-btn" onclick="clearAllAlerts()">Clear All</button>
+                    </div>
+                </div>
+
+                <!-- Risk Profile -->
+                <div class="settings-card glass-panel">
+                    <h4 class="settings-card-title"><i data-lucide="shield" style="width:15px;height:15px;"></i> Risk Profile</h4>
+                    <div class="settings-row"><span>Current Profile</span><span class="settings-chip" style="background:rgba(16,185,129,0.15);color:#10b981;">Moderate</span></div>
+                    <div class="settings-row">
+                        <span>Change Profile</span>
+                        <select class="filter-select" style="font-size:12px;padding:4px 8px;" onchange="showToast('Risk profile: '+this.value,'success')">
+                            <option>Conservative</option>
+                            <option selected>Moderate</option>
+                            <option>Aggressive</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- About -->
+                <div class="settings-card glass-panel">
+                    <h4 class="settings-card-title"><i data-lucide="info" style="width:15px;height:15px;"></i> About NexTrade</h4>
+                    <div class="settings-row"><span>Version</span><span class="settings-val">2.0.0</span></div>
+                    <div class="settings-row"><span>Data Sources</span><span class="settings-val">Stooq &bull; Yahoo Finance</span></div>
+                    <div class="settings-row"><span>Disclaimer</span><span class="settings-val" style="font-size:11px;color:var(--text-muted);">For simulation only. Not real investment advice.</span></div>
+                </div>
+            </div>
+        </div>
+
+    </main>
+</div>
+
+<!-- ══ Stock Detail Modal ══ -->
+<div id="stockModal" class="modal-overlay hidden" onclick="overlayClose(event,'stockModal')">
+    <div class="modal glass-panel modal-wide">
+        <div class="modal-header">
+            <div class="stock-symbol">
+                <div class="stock-logo" id="modalLogo"></div>
+                <div>
+                    <h2 id="modalSymbol" style="font-size:20px;font-weight:700;"></h2>
+                    <p id="modalName" style="color:var(--text-muted);font-size:13px;margin-top:2px;"></p>
+                </div>
+            </div>
+            <button class="btn btn-icon modal-close" onclick="closeModal('stockModal')">
+                <i data-lucide="x"></i>
+            </button>
+        </div>
+        <div class="modal-body">
+            <div class="modal-price-row">
+                <div>
+                    <div class="modal-price" id="modalPrice"></div>
+                    <div id="modalChange" class="trend-badge" style="margin-top:4px;"></div>
+                </div>
+                <div style="display:flex;gap:8px;margin-left:auto;align-items:flex-start;flex-wrap:wrap;">
+                    <button class="btn btn-buy" id="modalBuyBtn">Buy</button>
+                    <button class="btn btn-sell" id="modalSellBtn">Sell</button>
+                    <button class="btn btn-alert-btn" id="modalAlertBtn" onclick="openAlertModal(document.getElementById('modalSymbol').textContent)"><i data-lucide="bell" style="width:14px;height:14px;"></i> Alert</button>
+                    <button class="btn btn-watchlist-btn" id="modalWatchlistBtn"></button>
+                </div>
+            </div>
+
+            <!-- 52-week range bar -->
+            <div class="week52-range" id="modal52RangeWrap">
+                <div class="week52-labels">
+                    <span>52W Low<br><strong id="modal52Low" class="negative-text"></strong></span>
+                    <span id="modal52PctLabel" style="font-size:11px;color:var(--text-muted);text-align:center;"></span>
+                    <span style="text-align:right;">52W High<br><strong id="modal52High" class="positive-text"></strong></span>
+                </div>
+                <div class="week52-bar-track">
+                    <div class="week52-bar-fill" id="modal52Fill"></div>
+                    <div class="week52-marker" id="modal52Marker"></div>
+                </div>
+            </div>
+
+            <div class="modal-stats">
+                <div class="stat-item"><span>Market Cap</span><strong id="modalMarketCap"></strong></div>
+                <div class="stat-item"><span>P/E Ratio</span><strong id="modalPE"></strong></div>
+                <div class="stat-item"><span>Open</span><strong id="modalOpen"></strong></div>
+                <div class="stat-item"><span>Prev Close</span><strong id="modalPrevClose"></strong></div>
+                <div class="stat-item"><span>Day High</span><strong id="modalDayHigh" class="positive-text"></strong></div>
+                <div class="stat-item"><span>Day Low</span><strong id="modalDayLow" class="negative-text"></strong></div>
+                <div class="stat-item"><span>Volume</span><strong id="modalVolume"></strong></div>
+                <div class="stat-item"><span>Sector</span><strong id="modalSector"></strong></div>
+                <div class="stat-item"><span>EPS (TTM)</span><strong id="modalEPS"></strong></div>
+                <div class="stat-item"><span>Book Value</span><strong id="modalBookValue"></strong></div>
+                <div class="stat-item"><span>Dividend Yield</span><strong id="modalDividend"></strong></div>
+                <div class="stat-item"><span>Exchange</span><strong id="modalExchange">NSE</strong></div>
+            </div>
+
+            <!-- Stock Strength Score -->
+            <div id="modalScoreWrap" style="margin-top:16px;"></div>
+
+            <!-- Price Chart -->
+            <div class="modal-chart-section">
+                <div class="chart-range-tabs">
+                    <button class="chart-range-tab" data-range="1D">1D</button>
+                    <button class="chart-range-tab" data-range="1W">1W</button>
+                    <button class="chart-range-tab active" data-range="1M">1M</button>
+                    <button class="chart-range-tab" data-range="3M">3M</button>
+                    <button class="chart-range-tab" data-range="1Y">1Y</button>
+                </div>
+                <div id="modalChartArea" class="modal-chart-area"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ══ Order Modal ══ -->
+<div id="orderModal" class="modal-overlay hidden" onclick="overlayClose(event,'orderModal')">
+    <div class="modal glass-panel">
+        <div class="modal-header">
+            <div class="stock-symbol">
+                <div class="order-side-badge" id="orderSideBadge">BUY</div>
+                <div>
+                    <h2 id="orderSymbolTitle" style="font-size:18px;font-weight:700;"></h2>
+                    <p id="orderCurrentPrice" style="color:var(--text-muted);font-size:13px;"></p>
+                </div>
+            </div>
+            <button class="btn btn-icon modal-close" onclick="closeModal('orderModal')">
+                <i data-lucide="x"></i>
+            </button>
+        </div>
+        <div class="modal-body">
+            <div class="order-type-tabs" id="orderTypeTabs">
+                <button class="order-tab active" data-otype="market">Market</button>
+                <button class="order-tab" data-otype="limit">Limit</button>
+                <button class="order-tab" data-otype="sl">SL</button>
+                <button class="order-tab" data-otype="sl-m">SL-M</button>
+            </div>
+            <div class="order-form">
+                <div class="order-row">
+                    <div class="order-field">
+                        <label class="form-label">Quantity</label>
+                        <input type="number" id="orderQty" value="1" min="1" class="amount-input-field" style="font-size:18px;">
+                    </div>
+                    <div class="order-field" id="orderPriceField" style="display:none;">
+                        <label class="form-label">Price (&#8377;)</label>
+                        <input type="number" id="orderPrice" class="amount-input-field" style="font-size:18px;">
+                    </div>
+                </div>
+                <div class="order-field" id="orderTriggerField" style="display:none;">
+                    <label class="form-label">Trigger Price (&#8377;)</label>
+                    <input type="number" id="orderTrigger" class="amount-input-field">
+                </div>
+                <div class="order-field">
+                    <label class="form-label">Product Type</label>
+                    <div class="product-tabs">
+                        <button class="product-tab active" data-product="cnc" title="Cash & Carry — Delivery">CNC</button>
+                        <button class="product-tab" data-product="mis" title="Margin Intraday Square-off">MIS</button>
+                        <button class="product-tab" data-product="nrml" title="Normal — F&O">NRML</button>
+                    </div>
+                </div>
+                <div class="order-summary-box">
+                    <div><span>Est. Value</span><strong id="orderEstValue">—</strong></div>
+                    <div><span>Margin Required</span><strong id="orderMargin">—</strong></div>
+                    <div><span>Available Balance</span><strong id="availableBalance" class="positive-text">&#8377;10,00,000.00</strong></div>
+                </div>
+                <button class="btn btn-full btn-buy" id="confirmOrderBtn">Place Order</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ══ Fund Invest Modal ══ -->
+<div id="fundModal" class="modal-overlay hidden" onclick="overlayClose(event,'fundModal')">
+    <div class="modal glass-panel">
+        <div class="modal-header">
+            <div class="stock-symbol">
+                <div class="stock-logo" id="fundModalLogo"></div>
+                <div>
+                    <h2 id="fundModalName" style="font-size:15px;font-weight:700;max-width:300px;line-height:1.35;"></h2>
+                    <p id="fundModalHouse" style="color:var(--text-muted);font-size:12px;margin-top:3px;"></p>
+                </div>
+            </div>
+            <button class="btn btn-icon modal-close" onclick="closeModal('fundModal')">
+                <i data-lucide="x"></i>
+            </button>
+        </div>
+        <div class="modal-body">
+            <div class="fund-meta-row">
+                <div class="fund-meta-item"><span>1Y Return</span><strong class="positive-text" id="fundModal1Y"></strong></div>
+                <div class="fund-meta-item"><span>3Y Return</span><strong class="positive-text" id="fundModal3Y"></strong></div>
+                <div class="fund-meta-item"><span>Risk</span><span id="fundModalRisk"></span></div>
+            </div>
+            <div class="invest-tabs">
+                <button class="invest-tab active" data-tab="sip">SIP</button>
+                <button class="invest-tab" data-tab="lumpsum">Lump Sum</button>
+            </div>
+            <div id="sipForm">
+                <label class="form-label">Monthly SIP Amount</label>
+                <div class="sip-quick-amounts">
+                    <button class="sip-quick" data-amt="500">&#8377;500</button>
+                    <button class="sip-quick" data-amt="1000">&#8377;1K</button>
+                    <button class="sip-quick" data-amt="2000">&#8377;2K</button>
+                    <button class="sip-quick" data-amt="5000">&#8377;5K</button>
+                    <button class="sip-quick" data-amt="10000">&#8377;10K</button>
+                </div>
+                <div class="amount-input-wrap">
+                    <span class="currency-sym">&#8377;</span>
+                    <input type="number" id="sipAmount" value="5000" min="500" step="500" class="amount-input-field">
+                </div>
+                <p class="input-hint">Minimum &#8377;500 per month</p>
+                <label class="form-label">SIP Date</label>
+                <select class="filter-select" id="sipDate" style="width:100%;">
+                    <option>1st of every month</option>
+                    <option>5th of every month</option>
+                    <option>10th of every month</option>
+                    <option selected>15th of every month</option>
+                    <option>20th of every month</option>
+                    <option>25th of every month</option>
+                </select>
+                <div class="sip-preview" id="sipPreview"></div>
+            </div>
+            <div id="lumpsumForm" class="hidden">
+                <label class="form-label">One-Time Investment Amount</label>
+                <div class="sip-quick-amounts">
+                    <button class="sip-quick" data-amt="5000">&#8377;5K</button>
+                    <button class="sip-quick" data-amt="10000">&#8377;10K</button>
+                    <button class="sip-quick" data-amt="25000">&#8377;25K</button>
+                    <button class="sip-quick" data-amt="50000">&#8377;50K</button>
+                    <button class="sip-quick" data-amt="100000">&#8377;1L</button>
+                </div>
+                <div class="amount-input-wrap">
+                    <span class="currency-sym">&#8377;</span>
+                    <input type="number" id="lumpsumAmount" value="10000" min="5000" step="1000" class="amount-input-field">
+                </div>
+                <p class="input-hint">Minimum &#8377;5,000</p>
+                <div class="sip-preview" id="lumpsumPreview"></div>
+            </div>
+            <button class="btn btn-primary btn-full" id="confirmInvestBtn">Confirm Investment</button>
+        </div>
+    </div>
+</div>
+
+<!-- ══ Price Alert Modal ══ -->
+<div id="alertModal" class="modal-overlay hidden">
+    <div class="modal glass-panel" style="max-width:400px;">
+        <div class="modal-header">
+            <div>
+                <h2 style="font-size:16px;font-weight:700;">Set Price Alert</h2>
+                <p id="alertCurrentPrice" style="color:var(--text-muted);font-size:13px;margin-top:2px;"></p>
+            </div>
+            <button class="btn btn-icon" onclick="closeModal('alertModal')"><i data-lucide="x"></i></button>
+        </div>
+        <div class="modal-body">
+            <p id="alertSymbolName" style="font-weight:700;font-size:15px;margin-bottom:16px;color:var(--accent-primary);"></p>
+            <div class="order-field" style="margin-bottom:14px;">
+                <label class="form-label">Condition</label>
+                <select id="alertCondition" class="filter-select" style="width:100%;">
+                    <option value="above">Price rises above</option>
+                    <option value="below">Price falls below</option>
+                </select>
+            </div>
+            <div class="order-field" style="margin-bottom:18px;">
+                <label class="form-label">Target Price (&#8377;)</label>
+                <input type="number" id="alertTargetPrice" class="amount-input-field" placeholder="Enter price">
+            </div>
+            <button class="btn btn-primary btn-full" id="confirmAlertBtn">
+                <i data-lucide="bell" style="width:15px;height:15px;"></i> Set Alert
+            </button>
+        </div>
+    </div>
+</div>
+
+<div id="toastContainer"></div>
+
+<!-- ══ Fund Detail Modal ══ -->
+<div id="fundDetailModal" class="modal-overlay hidden" onclick="overlayClose(event,'fundDetailModal')">
+    <div class="modal glass-panel" style="max-width:640px;">
+        <div class="modal-header">
+            <div class="stock-symbol">
+                <div class="stock-logo" id="fdLogo"></div>
+                <div>
+                    <h2 id="fdName" style="font-size:15px;font-weight:700;max-width:340px;line-height:1.35;"></h2>
+                    <p id="fdHouse" style="color:var(--text-muted);font-size:12px;margin-top:3px;"></p>
+                </div>
+            </div>
+            <button class="btn btn-icon modal-close" onclick="closeModal('fundDetailModal')"><i data-lucide="x"></i></button>
+        </div>
+        <div class="modal-body">
+            <div class="modal-stats" style="grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:16px;">
+                <div class="stat-item"><span>NAV</span><strong id="fdNAV"></strong></div>
+                <div class="stat-item"><span>1Y Return</span><strong id="fd1Y" class="positive-text"></strong></div>
+                <div class="stat-item"><span>3Y Return</span><strong id="fd3Y" class="positive-text"></strong></div>
+                <div class="stat-item"><span>AUM (₹ Cr)</span><strong id="fdAUM"></strong></div>
+                <div class="stat-item"><span>Risk Level</span><strong id="fdRisk"></strong></div>
+                <div class="stat-item"><span>Category</span><strong id="fdCat"></strong></div>
+                <div class="stat-item"><span>Fund Rating</span><strong id="fdRating"></strong></div>
+                <div class="stat-item"><span>Min SIP</span><strong id="fdMinSIP"></strong></div>
+                <div class="stat-item"><span>Exit Load</span><strong id="fdExit"></strong></div>
+            </div>
+            <div style="background:rgba(255,255,255,0.04);border:1px solid var(--border-color);border-radius:12px;padding:16px;margin-bottom:16px;">
+                <h4 style="font-size:13px;font-weight:600;margin-bottom:10px;color:var(--text-muted);">RETURNS OVERVIEW</h4>
+                <div style="display:flex;gap:0;overflow:hidden;border-radius:8px;height:10px;">
+                    <div id="fdReturnBar" style="height:100%;background:linear-gradient(90deg,#6366f1,#10b981);transition:width 0.6s ease;"></div>
+                </div>
+                <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--text-muted);margin-top:8px;">
+                    <span>Category Avg</span><span id="fdCatAvg" style="color:var(--accent-primary);font-weight:700;"></span>
+                </div>
+            </div>
+            <div style="background:rgba(255,255,255,0.03);border:1px solid var(--border-color);border-radius:12px;padding:16px;margin-bottom:16px;font-size:13px;color:var(--text-muted);line-height:1.7;" id="fdDescription"></div>
+            <div style="display:flex;gap:10px;">
+                <button class="btn btn-primary btn-full" onclick="openFundInvest(currentFundDetail)"><i data-lucide="plus-circle" style="width:14px;height:14px;"></i> Invest Now</button>
+                <button class="btn btn-full" style="background:rgba(255,255,255,0.05);" onclick="closeModal('fundDetailModal')">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="script.js"></script>
+</body>
+</html>

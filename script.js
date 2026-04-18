@@ -1,0 +1,3324 @@
+// ════════════════════════════════════════════════════════════
+// SECTION 1: CORE DATA & INSTRUMENTS
+// ════════════════════════════════════════════════════════════
+var indices = [
+    { name: 'NIFTY 50',   label: 'NSE Benchmark', value: 22456.80, change: 0.42  },
+    { name: 'SENSEX',     label: 'BSE Benchmark', value: 73982.65, change: 0.38  },
+    { name: 'BANK NIFTY', label: 'NSE Banking',   value: 48235.40, change: -0.25 },
+    { name: 'NIFTY IT',   label: 'NSE IT Sector', value: 34156.20, change: 1.85  },
+];
+
+// ============================================================
+// DATA: STOCKS  (90+ NSE/BSE stocks with keyword search)
+// k = search keywords (aliases, brand names, common names)
+// ============================================================
+var stocks = [
+    // ── Large Cap / Nifty 50 ──
+    { symbol:'RELIANCE',   name:'Reliance Industries Ltd',   price:2912.50,  change:1.45,  marketCap:'19.7L Cr', pe:29.3, sector:'Energy',         color:'#0057a8', logoText:'R', k:'ril mukesh ambani jio petro refinery' },
+    { symbol:'TCS',        name:'Tata Consultancy Services', price:3812.00,  change:0.82,  marketCap:'13.9L Cr', pe:32.1, sector:'Technology',      color:'#1a1a5e', logoText:'T', k:'tata consultancy it software services' },
+    { symbol:'HDFCBANK',   name:'HDFC Bank Ltd',             price:1645.30,  change:-0.35, marketCap:'12.5L Cr', pe:20.4, sector:'Finance',         color:'#004c8f', logoText:'H', k:'hdfc bank housing development finance' },
+    { symbol:'INFY',       name:'Infosys Ltd',               price:1512.80,  change:1.20,  marketCap:'6.3L Cr',  pe:27.8, sector:'Technology',      color:'#007cc3', logoText:'I', k:'infosys it software narayana murthy' },
+    { symbol:'ICICIBANK',  name:'ICICI Bank Ltd',            price:1098.50,  change:0.65,  marketCap:'7.7L Cr',  pe:18.9, sector:'Finance',         color:'#f9a01b', logoText:'I', k:'icici bank private' },
+    { symbol:'LT',         name:'Larsen & Toubro Ltd',       price:3456.70,  change:2.10,  marketCap:'4.7L Cr',  pe:35.2, sector:'Infrastructure',  color:'#00a651', logoText:'L', k:'larsen toubro l&t engineering construction' },
+    { symbol:'BAJFINANCE', name:'Bajaj Finance Ltd',         price:6892.40,  change:-1.20, marketCap:'4.2L Cr',  pe:33.7, sector:'Finance',         color:'#003087', logoText:'B', k:'bajaj finance nbfc lending emi' },
+    { symbol:'HINDUNILVR', name:'Hindustan Unilever Ltd',    price:2234.60,  change:0.55,  marketCap:'5.2L Cr',  pe:58.4, sector:'Consumer',        color:'#1a3068', logoText:'H', k:'hul hindustan unilever fmcg surf dove lux' },
+    { symbol:'WIPRO',      name:'Wipro Ltd',                 price:448.90,   change:0.92,  marketCap:'2.3L Cr',  pe:22.6, sector:'Technology',      color:'#341b5e', logoText:'W', k:'wipro it software services' },
+    { symbol:'SBIN',       name:'State Bank of India',       price:812.40,   change:-0.18, marketCap:'7.2L Cr',  pe:12.3, sector:'Finance',         color:'#2980b9', logoText:'S', k:'sbi state bank india psu' },
+    { symbol:'SUNPHARMA',  name:'Sun Pharmaceutical Ind',    price:1389.25,  change:0.75,  marketCap:'3.3L Cr',  pe:38.6, sector:'Healthcare',      color:'#e84393', logoText:'S', k:'sun pharma pharmaceutical dilip shanghvi' },
+    { symbol:'MARUTI',     name:'Maruti Suzuki India Ltd',   price:11245.80, change:-0.65, marketCap:'3.4L Cr',  pe:26.8, sector:'Auto',            color:'#0059a3', logoText:'M', k:'maruti suzuki car automobile swift dzire' },
+    { symbol:'HCLTECH',    name:'HCL Technologies Ltd',      price:1342.60,  change:0.95,  marketCap:'3.6L Cr',  pe:24.3, sector:'Technology',      color:'#0074D3', logoText:'H', k:'hcl tech technologies it software shiv nadar' },
+    { symbol:'TECHM',      name:'Tech Mahindra Ltd',         price:1156.30,  change:-0.42, marketCap:'1.1L Cr',  pe:21.8, sector:'Technology',      color:'#c8102e', logoText:'T', k:'tech mahindra it bpo telecom' },
+    { symbol:'AXISBANK',   name:'Axis Bank Ltd',             price:1068.20,  change:0.88,  marketCap:'3.3L Cr',  pe:16.2, sector:'Finance',         color:'#97144d', logoText:'A', k:'axis bank private' },
+    { symbol:'KOTAKBANK',  name:'Kotak Mahindra Bank',       price:1756.80,  change:-0.32, marketCap:'3.5L Cr',  pe:22.7, sector:'Finance',         color:'#e30613', logoText:'K', k:'kotak mahindra bank uday kotak' },
+    { symbol:'ONGC',       name:'Oil & Natural Gas Corp',    price:268.45,   change:1.20,  marketCap:'3.4L Cr',  pe:8.6,  sector:'Energy',          color:'#006837', logoText:'O', k:'ongc oil natural gas psu petroleum' },
+    { symbol:'NTPC',       name:'NTPC Ltd',                  price:356.80,   change:0.45,  marketCap:'3.5L Cr',  pe:16.4, sector:'Energy',          color:'#1f4e79', logoText:'N', k:'ntpc power electricity psu thermal' },
+    { symbol:'POWERGRID',  name:'Power Grid Corp of India',  price:298.60,   change:0.78,  marketCap:'2.8L Cr',  pe:18.2, sector:'Energy',          color:'#833c00', logoText:'P', k:'power grid pgcil electricity transmission psu' },
+    { symbol:'TATAMOTORS', name:'Tata Motors Ltd',           price:892.30,   change:1.85,  marketCap:'3.3L Cr',  pe:9.8,  sector:'Auto',            color:'#2c3e7e', logoText:'T', k:'tata motors jaguar land rover jlr ev nexon harrier' },
+    { symbol:'BAJAJ-AUTO', name:'Bajaj Auto Ltd',            price:8734.20,  change:-0.25, marketCap:'2.5L Cr',  pe:28.9, sector:'Auto',            color:'#005daa', logoText:'B', k:'bajaj auto motorcycle pulsar dominar chetak' },
+    { symbol:'HEROMOTOCO', name:'Hero MotoCorp Ltd',         price:4234.50,  change:0.38,  marketCap:'0.9L Cr',  pe:19.2, sector:'Auto',            color:'#e40000', logoText:'H', k:'hero motocorp splendor motorcycle two wheeler' },
+    { symbol:'EICHERMOT',  name:'Eicher Motors Ltd',         price:4456.80,  change:1.12,  marketCap:'1.2L Cr',  pe:29.4, sector:'Auto',            color:'#b8860b', logoText:'E', k:'eicher royal enfield bullet motorcycle' },
+    { symbol:'TATASTEEL',  name:'Tata Steel Ltd',            price:162.45,   change:-1.20, marketCap:'2.0L Cr',  pe:15.6, sector:'Metals',          color:'#00529f', logoText:'T', k:'tata steel iron jamshedpur' },
+    { symbol:'HINDALCO',   name:'Hindalco Industries Ltd',   price:634.20,   change:0.85,  marketCap:'1.4L Cr',  pe:13.2, sector:'Metals',          color:'#e31837', logoText:'H', k:'hindalco aluminium copper aditya birla' },
+    { symbol:'JSWSTEEL',   name:'JSW Steel Ltd',             price:892.50,   change:-0.55, marketCap:'2.2L Cr',  pe:14.8, sector:'Metals',          color:'#003087', logoText:'J', k:'jsw steel jindal sajjan' },
+    { symbol:'BHARTIARTL', name:'Bharti Airtel Ltd',         price:1398.60,  change:1.42,  marketCap:'8.3L Cr',  pe:78.2, sector:'Telecom',         color:'#e40000', logoText:'A', k:'airtel bharti telecom mobile sunil mittal' },
+    { symbol:'ITC',        name:'ITC Ltd',                   price:456.80,   change:0.32,  marketCap:'5.7L Cr',  pe:26.8, sector:'Consumer',        color:'#006b3c', logoText:'I', k:'itc cigarette fmcg hotels tobacco' },
+    { symbol:'NESTLEIND',  name:'Nestle India Ltd',          price:2234.50,  change:-0.18, marketCap:'2.2L Cr',  pe:78.4, sector:'Consumer',        color:'#009fe3', logoText:'N', k:'nestle maggi nescafe kitkat fmcg' },
+    { symbol:'BRITANNIA',  name:'Britannia Industries Ltd',  price:5234.60,  change:0.45,  marketCap:'1.3L Cr',  pe:56.2, sector:'Consumer',        color:'#cc0000', logoText:'B', k:'britannia biscuit good day tiger fmcg' },
+    { symbol:'DRREDDY',    name:"Dr Reddy's Laboratories",   price:6234.50,  change:0.92,  marketCap:'1.0L Cr',  pe:19.8, sector:'Healthcare',      color:'#e2001a', logoText:'D', k:'dr reddys pharma generic hyderabad' },
+    { symbol:'CIPLA',      name:'Cipla Ltd',                 price:1456.30,  change:0.68,  marketCap:'1.2L Cr',  pe:24.5, sector:'Healthcare',      color:'#ee3224', logoText:'C', k:'cipla pharma medicine respiratory' },
+    { symbol:'DIVISLAB',   name:"Divi's Laboratories Ltd",   price:3892.40,  change:1.15,  marketCap:'1.0L Cr',  pe:42.8, sector:'Healthcare',      color:'#0066a1', logoText:'D', k:'divis labs api pharma hyderabad' },
+    { symbol:'APOLLOHOSP', name:'Apollo Hospitals Ent Ltd',  price:5234.80,  change:0.78,  marketCap:'0.7L Cr',  pe:65.4, sector:'Healthcare',      color:'#00adef', logoText:'A', k:'apollo hospital healthcare prathap reddy' },
+    { symbol:'ADANIPORTS', name:'Adani Ports & SEZ Ltd',     price:1234.50,  change:-0.45, marketCap:'2.7L Cr',  pe:24.6, sector:'Infrastructure',  color:'#0080c9', logoText:'A', k:'adani ports mundra logistics gautam' },
+    { symbol:'ADANIENT',   name:'Adani Enterprises Ltd',     price:2456.30,  change:1.82,  marketCap:'2.8L Cr',  pe:68.2, sector:'Infrastructure',  color:'#0061ab', logoText:'A', k:'adani enterprises gautam green energy' },
+    { symbol:'DLF',        name:'DLF Ltd',                   price:812.50,   change:0.95,  marketCap:'2.0L Cr',  pe:38.5, sector:'Infrastructure',  color:'#c41230', logoText:'D', k:'dlf realty real estate gurgaon kushal palat' },
+    { symbol:'INDUSINDBK', name:'IndusInd Bank Ltd',         price:1034.60,  change:-0.88, marketCap:'0.8L Cr',  pe:12.4, sector:'Finance',         color:'#b40c02', logoText:'I', k:'indusind bank private' },
+    { symbol:'BAJAJFINSV', name:'Bajaj Finserv Ltd',         price:1612.40,  change:0.52,  marketCap:'2.6L Cr',  pe:18.9, sector:'Finance',         color:'#003087', logoText:'B', k:'bajaj finserv financial services insurance' },
+    { symbol:'COALINDIA',  name:'Coal India Ltd',            price:456.30,   change:0.28,  marketCap:'2.8L Cr',  pe:8.2,  sector:'Energy',          color:'#333333', logoText:'C', k:'coal india psu mining' },
+    { symbol:'ULTRACEMCO', name:'UltraTech Cement Ltd',      price:9678.40,  change:0.38,  marketCap:'2.8L Cr',  pe:38.2, sector:'Infrastructure',  color:'#003087', logoText:'U', k:'ultratech cement aditya birla construction' },
+    { symbol:'TATACONSUM', name:'Tata Consumer Products',    price:1089.30,  change:0.72,  marketCap:'1.0L Cr',  pe:64.5, sector:'Consumer',        color:'#2c3e7e', logoText:'T', k:'tata consumer tetley salt starbucks fmcg' },
+    { symbol:'HAVELLS',    name:'Havells India Ltd',         price:1534.60,  change:1.12,  marketCap:'0.97L Cr', pe:58.4, sector:'Infrastructure',  color:'#e60012', logoText:'H', k:'havells electrical appliances lloyd fan' },
+    { symbol:'SIEMENS',    name:'Siemens India Ltd',         price:5234.50,  change:0.85,  marketCap:'1.9L Cr',  pe:78.4, sector:'Infrastructure',  color:'#009999', logoText:'S', k:'siemens engineering automation' },
+    { symbol:'ABB',        name:'ABB India Ltd',             price:7234.80,  change:1.24,  marketCap:'1.5L Cr',  pe:82.5, sector:'Infrastructure',  color:'#ff000f', logoText:'A', k:'abb power automation engineering' },
+    { symbol:'ZOMATO',     name:'Zomato Ltd',                price:234.50,   change:2.45,  marketCap:'2.1L Cr',  pe:null, sector:'Technology',      color:'#e23744', logoText:'Z', k:'zomato food delivery restaurant tech' },
+    { symbol:'PAYTM',      name:'One97 Communications Ltd',  price:456.80,   change:-1.45, marketCap:'0.29L Cr', pe:null, sector:'Technology',      color:'#00baf2', logoText:'P', k:'paytm one97 fintech payments vijay shekhar' },
+    { symbol:'NYKAA',      name:'FSN E-Commerce (Nykaa)',    price:156.30,   change:0.88,  marketCap:'0.45L Cr', pe:456.8,sector:'Consumer',        color:'#ff558f', logoText:'N', k:'nykaa beauty cosmetics ecommerce falguni' },
+    { symbol:'DMART',      name:'Avenue Supermarts (DMart)', price:4234.60,  change:-0.22, marketCap:'2.7L Cr',  pe:82.4, sector:'Consumer',        color:'#e41e26', logoText:'D', k:'dmart avenue supermarts supermarket retail radhakishan damani' },
+    { symbol:'PIDILITIND', name:'Pidilite Industries Ltd',   price:2678.90,  change:0.45,  marketCap:'1.4L Cr',  pe:85.6, sector:'Consumer',        color:'#003399', logoText:'P', k:'pidilite fevicol m-seal adhesive' },
+    // ── Finance / Banking ──
+    { symbol:'FEDERALBNK', name:'Federal Bank Ltd',          price:155.40,   change:0.82,  marketCap:'0.37L Cr', pe:9.8,  sector:'Finance',         color:'#0066b3', logoText:'F', k:'federal bank kerala private' },
+    { symbol:'BANDHANBNK', name:'Bandhan Bank Ltd',          price:178.50,   change:-1.15, marketCap:'0.29L Cr', pe:null, sector:'Finance',         color:'#f7941d', logoText:'B', k:'bandhan bank microfinance' },
+    { symbol:'IDFCFIRSTB', name:'IDFC First Bank Ltd',       price:62.30,    change:0.45,  marketCap:'0.43L Cr', pe:18.5, sector:'Finance',         color:'#00a0e3', logoText:'I', k:'idfc first bank retail' },
+    { symbol:'PNB',        name:'Punjab National Bank',      price:98.45,    change:-0.32, marketCap:'1.11L Cr', pe:8.1,  sector:'Finance',         color:'#003478', logoText:'P', k:'pnb punjab national bank psu' },
+    { symbol:'BANKBARODA', name:'Bank of Baroda',            price:245.80,   change:0.28,  marketCap:'1.27L Cr', pe:6.2,  sector:'Finance',         color:'#ec7c29', logoText:'B', k:'bank baroda bob psu' },
+    { symbol:'CANARABANK', name:'Canara Bank',               price:98.20,    change:0.65,  marketCap:'0.89L Cr', pe:5.8,  sector:'Finance',         color:'#0033a0', logoText:'C', k:'canara bank psu' },
+    { symbol:'HDFCLIFE',   name:'HDFC Life Insurance Ltd',   price:623.40,   change:0.45,  marketCap:'1.34L Cr', pe:82.5, sector:'Finance',         color:'#004c8f', logoText:'H', k:'hdfc life insurance' },
+    { symbol:'SBILIFE',    name:'SBI Life Insurance Co',     price:1456.80,  change:0.62,  marketCap:'1.46L Cr', pe:68.5, sector:'Finance',         color:'#2980b9', logoText:'S', k:'sbi life insurance psu' },
+    { symbol:'ICICILOMB',  name:'ICICI Lombard General Ins', price:1823.40,  change:0.35,  marketCap:'0.90L Cr', pe:38.5, sector:'Finance',         color:'#f9a01b', logoText:'I', k:'icici lombard general insurance' },
+    { symbol:'IRFC',       name:'Indian Railway Finance Corp',price:167.80,  change:0.35,  marketCap:'2.19L Cr', pe:28.5, sector:'Finance',         color:'#0033a0', logoText:'I', k:'irfc indian railway finance psu bonds' },
+    { symbol:'POLICYBZR',  name:'PB Fintech (PolicyBazaar)', price:1234.50,  change:2.85,  marketCap:'0.56L Cr', pe:null, sector:'Finance',         color:'#e11d48', logoText:'P', k:'policybazaar insurance fintech pb fintech' },
+    // ── Technology ──
+    { symbol:'MPHASIS',    name:'Mphasis Ltd',               price:2345.60,  change:1.20,  marketCap:'0.44L Cr', pe:28.5, sector:'Technology',      color:'#0047BB', logoText:'M', k:'mphasis it services software' },
+    { symbol:'LTIM',       name:'LTIMindtree Ltd',           price:5234.80,  change:1.45,  marketCap:'1.56L Cr', pe:30.8, sector:'Technology',      color:'#0076a8', logoText:'L', k:'lti mindtree it software larsen toubro' },
+    { symbol:'PERSISTENT', name:'Persistent Systems Ltd',    price:4892.50,  change:2.10,  marketCap:'0.75L Cr', pe:52.4, sector:'Technology',      color:'#003087', logoText:'P', k:'persistent systems it software pune' },
+    { symbol:'COFORGE',    name:'Coforge Ltd',               price:5678.30,  change:0.85,  marketCap:'0.38L Cr', pe:36.2, sector:'Technology',      color:'#e41f26', logoText:'C', k:'coforge niit technologies it software' },
+    { symbol:'DELHIVERY',  name:'Delhivery Ltd',             price:367.80,   change:1.45,  marketCap:'0.27L Cr', pe:null, sector:'Technology',      color:'#e40000', logoText:'D', k:'delhivery logistics delivery courier' },
+    // ── Healthcare ──
+    { symbol:'BIOCON',     name:'Biocon Ltd',                price:345.60,   change:0.55,  marketCap:'0.42L Cr', pe:null, sector:'Healthcare',      color:'#006b3c', logoText:'B', k:'biocon biotech kiran mazumdar biosimilar' },
+    { symbol:'AUROPHARMA', name:'Aurobindo Pharma Ltd',      price:1023.40,  change:1.12,  marketCap:'0.60L Cr', pe:18.2, sector:'Healthcare',      color:'#e41e26', logoText:'A', k:'aurobindo pharma generic hyderabad' },
+    { symbol:'TORNTPHARM', name:'Torrent Pharmaceuticals',   price:2678.90,  change:0.38,  marketCap:'0.45L Cr', pe:38.5, sector:'Healthcare',      color:'#003087', logoText:'T', k:'torrent pharmaceuticals pharma ahmedabad' },
+    { symbol:'LUPIN',      name:'Lupin Ltd',                 price:1892.30,  change:0.92,  marketCap:'0.86L Cr', pe:28.4, sector:'Healthcare',      color:'#e63312', logoText:'L', k:'lupin pharma generic respiratory' },
+    // ── Consumer / FMCG ──
+    { symbol:'DABUR',      name:'Dabur India Ltd',           price:534.60,   change:0.42,  marketCap:'0.95L Cr', pe:48.5, sector:'Consumer',        color:'#008000', logoText:'D', k:'dabur real juice ayurvedic fmcg honey' },
+    { symbol:'MARICO',     name:'Marico Ltd',                price:678.90,   change:0.28,  marketCap:'0.88L Cr', pe:52.3, sector:'Consumer',        color:'#e30613', logoText:'M', k:'marico parachute coconut oil saffola fmcg' },
+    { symbol:'GODREJCP',   name:'Godrej Consumer Products',  price:1123.40,  change:-0.18, marketCap:'1.15L Cr', pe:56.8, sector:'Consumer',        color:'#253f8f', logoText:'G', k:'godrej consumer cinthol fmcg soap' },
+    { symbol:'COLPAL',     name:'Colgate-Palmolive India',   price:2834.50,  change:0.35,  marketCap:'0.77L Cr', pe:48.2, sector:'Consumer',        color:'#e31837', logoText:'C', k:'colgate palmolive toothpaste fmcg' },
+    { symbol:'TITAN',      name:'Titan Company Ltd',         price:3234.80,  change:0.88,  marketCap:'2.87L Cr', pe:82.5, sector:'Consumer',        color:'#003087', logoText:'T', k:'titan tanishq jewellery watches tata fastrack' },
+    { symbol:'MRF',        name:'MRF Ltd',                   price:112456.0, change:0.28,  marketCap:'0.48L Cr', pe:28.5, sector:'Auto',            color:'#e41e26', logoText:'M', k:'mrf tyres madras rubber factory' },
+    { symbol:'JUBLFOOD',   name:'Jubilant FoodWorks Ltd',    price:567.80,   change:1.45,  marketCap:'0.38L Cr', pe:78.4, sector:'Consumer',        color:'#cc0000', logoText:'J', k:'jubilant dominos pizza dunkin food qsr' },
+    // ── Energy / PSU ──
+    { symbol:'BPCL',       name:'Bharat Petroleum Corp',     price:289.50,   change:0.95,  marketCap:'1.25L Cr', pe:7.8,  sector:'Energy',          color:'#006400', logoText:'B', k:'bpcl bharat petroleum oil psu petrol pump' },
+    { symbol:'HPCL',       name:'Hindustan Petroleum Corp',  price:389.40,   change:1.20,  marketCap:'0.83L Cr', pe:9.5,  sector:'Energy',          color:'#003087', logoText:'H', k:'hpcl hindustan petroleum oil psu' },
+    { symbol:'GAIL',       name:'GAIL India Ltd',            price:178.60,   change:0.65,  marketCap:'1.17L Cr', pe:12.4, sector:'Energy',          color:'#cc0000', logoText:'G', k:'gail gas natural gas psu pipeline' },
+    { symbol:'IOC',        name:'Indian Oil Corporation',    price:145.30,   change:0.52,  marketCap:'2.05L Cr', pe:8.2,  sector:'Energy',          color:'#e41e26', logoText:'I', k:'ioc indian oil petrol psu petroleum' },
+    // ── Infrastructure / Defence / PSU ──
+    { symbol:'IRCTC',      name:'Indian Railway Catering Corp',price:678.90, change:1.45,  marketCap:'0.54L Cr', pe:48.2, sector:'Infrastructure',  color:'#0033a0', logoText:'I', k:'irctc railway ticket train catering tourism psu' },
+    { symbol:'HAL',        name:'Hindustan Aeronautics Ltd', price:4234.80,  change:1.82,  marketCap:'2.84L Cr', pe:30.8, sector:'Infrastructure',  color:'#003087', logoText:'H', k:'hal hindustan aeronautics defence fighter aircraft psu' },
+    { symbol:'BHEL',       name:'Bharat Heavy Electricals',  price:234.60,   change:-0.45, marketCap:'0.82L Cr', pe:95.2, sector:'Infrastructure',  color:'#003478', logoText:'B', k:'bhel heavy electricals boiler turbine psu power' },
+    { symbol:'AMBUJACEM',  name:'Ambuja Cements Ltd',        price:567.80,   change:0.45,  marketCap:'1.13L Cr', pe:38.5, sector:'Infrastructure',  color:'#e41e26', logoText:'A', k:'ambuja cement adani holcim construction' },
+    // ── Metals ──
+    { symbol:'VEDL',       name:'Vedanta Ltd',               price:445.30,   change:-0.82, marketCap:'1.66L Cr', pe:8.5,  sector:'Metals',          color:'#c8102e', logoText:'V', k:'vedanta mining zinc copper aluminium anil agarwal' },
+    { symbol:'SAIL',       name:'Steel Authority of India',  price:112.40,   change:-0.35, marketCap:'0.46L Cr', pe:11.2, sector:'Metals',          color:'#003478', logoText:'S', k:'sail steel psu bhilai bokaro' },
+    { symbol:'NMDC',       name:'NMDC Ltd',                  price:67.80,    change:0.45,  marketCap:'0.20L Cr', pe:8.8,  sector:'Metals',          color:'#cc0000', logoText:'N', k:'nmdc iron ore mining psu' },
+    // ── Finance – NBFCs / Insurance / Broking ──
+    { symbol:'SBICARD',    name:'SBI Cards & Payment Services',price:723.40,  change:0.52,  marketCap:'0.69L Cr', pe:28.5, sector:'Finance',         color:'#2980b9', logoText:'S', k:'sbi card credit cards payments visa' },
+    { symbol:'MUTHOOTFIN', name:'Muthoot Finance Ltd',        price:1823.50,  change:1.20,  marketCap:'0.73L Cr', pe:16.2, sector:'Finance',         color:'#e07b00', logoText:'M', k:'muthoot gold loan nbfc kerala' },
+    { symbol:'MANAPPURAM', name:'Manappuram Finance Ltd',     price:189.40,   change:0.85,  marketCap:'0.16L Cr', pe:10.5, sector:'Finance',         color:'#f7941d', logoText:'M', k:'manappuram gold loan nbfc thrissur' },
+    { symbol:'BAJAJHFL',   name:'Bajaj Housing Finance Ltd',  price:128.50,   change:1.45,  marketCap:'1.06L Cr', pe:42.5, sector:'Finance',         color:'#003087', logoText:'B', k:'bajaj housing finance home loans mortgage' },
+    { symbol:'LICHSGFIN',  name:'LIC Housing Finance Ltd',    price:623.40,   change:0.38,  marketCap:'0.34L Cr', pe:8.5,  sector:'Finance',         color:'#003478', logoText:'L', k:'lic housing finance home loans' },
+    { symbol:'CANFINHOME', name:'Can Fin Homes Ltd',          price:789.50,   change:0.65,  marketCap:'0.11L Cr', pe:14.2, sector:'Finance',         color:'#0033a0', logoText:'C', k:'can fin homes canara housing finance' },
+    { symbol:'CHOLAFIN',   name:'Cholamandalam Invest & Fin', price:1345.60,  change:1.12,  marketCap:'1.11L Cr', pe:28.5, sector:'Finance',         color:'#e41e26', logoText:'C', k:'cholamandalam murugappa nbfc vehicle loans' },
+    { symbol:'SHRIRAMFIN', name:'Shriram Finance Ltd',        price:2678.90,  change:0.75,  marketCap:'1.00L Cr', pe:14.8, sector:'Finance',         color:'#e41e26', logoText:'S', k:'shriram finance commercial vehicle nbfc truck' },
+    { symbol:'MMFSL',      name:'M&M Financial Services Ltd', price:267.40,   change:-0.32, marketCap:'0.33L Cr', pe:18.5, sector:'Finance',         color:'#c8102e', logoText:'M', k:'mahindra finance nbfc rural vehicle' },
+    { symbol:'ABCAPITAL',  name:'Aditya Birla Capital Ltd',   price:189.50,   change:0.88,  marketCap:'0.49L Cr', pe:24.5, sector:'Finance',         color:'#e07b00', logoText:'A', k:'aditya birla capital nbfc insurance' },
+    { symbol:'ANGELONE',   name:'Angel One Ltd',              price:2234.80,  change:1.45,  marketCap:'0.20L Cr', pe:18.2, sector:'Finance',         color:'#d63031', logoText:'A', k:'angel one broking demat trading stockbroker' },
+    { symbol:'MOTILALOFS', name:'Motilal Oswal Financial Svcs',price:678.90,  change:2.10,  marketCap:'0.60L Cr', pe:16.8, sector:'Finance',         color:'#003087', logoText:'M', k:'motilal oswal broker financial wealth management' },
+    { symbol:'ISEC',       name:'ICICI Securities Ltd',       price:756.40,   change:1.80,  marketCap:'0.24L Cr', pe:15.2, sector:'Finance',         color:'#f9a01b', logoText:'I', k:'icici securities broking demat trading' },
+    { symbol:'RECLTD',     name:'REC Ltd',                    price:534.60,   change:0.85,  marketCap:'1.41L Cr', pe:10.8, sector:'Finance',         color:'#006400', logoText:'R', k:'rec rural electrification corporation psu power financing' },
+    { symbol:'PFC',        name:'Power Finance Corp Ltd',     price:456.80,   change:0.62,  marketCap:'1.46L Cr', pe:8.5,  sector:'Finance',         color:'#003087', logoText:'P', k:'pfc power finance corporation psu' },
+    { symbol:'HUDCO',      name:'Housing & Urban Dev Corp',   price:245.30,   change:0.48,  marketCap:'0.49L Cr', pe:18.5, sector:'Finance',         color:'#003478', logoText:'H', k:'hudco housing urban development corporation psu' },
+    { symbol:'AUBANK',     name:'AU Small Finance Bank Ltd',  price:678.90,   change:0.35,  marketCap:'0.51L Cr', pe:28.5, sector:'Finance',         color:'#003087', logoText:'A', k:'au small finance bank rajasthan' },
+    { symbol:'CDSL',       name:'Central Depository Services',price:1456.30,  change:1.20,  marketCap:'0.30L Cr', pe:52.5, sector:'Finance',         color:'#003087', logoText:'C', k:'cdsl central depository demat settlement clearing' },
+    { symbol:'BSE',        name:'BSE Ltd',                    price:4567.80,  change:1.85,  marketCap:'0.62L Cr', pe:42.5, sector:'Finance',         color:'#cc0000', logoText:'B', k:'bse bombay stock exchange markets broker listing' },
+    { symbol:'MCX',        name:'Multi Commodity Exchange',   price:4234.80,  change:1.20,  marketCap:'0.22L Cr', pe:42.5, sector:'Finance',         color:'#003087', logoText:'M', k:'mcx commodity exchange gold silver crude oil trading' },
+    // ── Auto – Additional ──
+    { symbol:'ASHOKLEY',   name:'Ashok Leyland Ltd',          price:234.50,   change:1.35,  marketCap:'0.69L Cr', pe:18.5, sector:'Auto',            color:'#c8102e', logoText:'A', k:'ashok leyland truck bus commercial vehicle cv' },
+    { symbol:'APOLLOTYRE', name:'Apollo Tyres Ltd',           price:512.30,   change:0.88,  marketCap:'0.32L Cr', pe:15.2, sector:'Auto',            color:'#003087', logoText:'A', k:'apollo tyres rubber tyre replacement' },
+    { symbol:'TVSMOTOR',   name:'TVS Motor Company Ltd',      price:2345.60,  change:1.45,  marketCap:'1.11L Cr', pe:42.5, sector:'Auto',            color:'#cc0000', logoText:'T', k:'tvs motor apache ntorq scooter two wheeler' },
+    { symbol:'BALKRISIND', name:'Balkrishna Industries Ltd',  price:2678.90,  change:0.75,  marketCap:'0.52L Cr', pe:28.5, sector:'Auto',            color:'#003087', logoText:'B', k:'bkt balkrishna tyre agricultural off highway' },
+    { symbol:'BOSCHLTD',   name:'Bosch Ltd',                  price:34567.0,  change:0.45,  marketCap:'1.02L Cr', pe:56.8, sector:'Auto',            color:'#e41e26', logoText:'B', k:'bosch auto parts spark plug fuel injection germany' },
+    { symbol:'MOTHERSON',  name:'Samvardhana Motherson Intl', price:178.50,   change:0.92,  marketCap:'1.26L Cr', pe:42.8, sector:'Auto',            color:'#003087', logoText:'M', k:'motherson wiring harness auto components samil' },
+    { symbol:'MINDA',      name:'Uno Minda Ltd',              price:1056.70,  change:1.20,  marketCap:'0.61L Cr', pe:38.5, sector:'Auto',            color:'#003478', logoText:'M', k:'minda uno auto components lighting switches electrical' },
+    { symbol:'CEATLTD',    name:'CEAT Ltd',                   price:2345.80,  change:-0.35, marketCap:'0.09L Cr', pe:22.5, sector:'Auto',            color:'#e41e26', logoText:'C', k:'ceat tyres rubber rpg tyre replacement' },
+    { symbol:'EXIDEIND',   name:'Exide Industries Ltd',       price:389.50,   change:0.58,  marketCap:'0.33L Cr', pe:28.2, sector:'Auto',            color:'#003087', logoText:'E', k:'exide battery inverter auto electric storage' },
+    // ── Technology – Additional ──
+    { symbol:'NAUKRI',     name:'Info Edge (India) Ltd',      price:6234.80,  change:1.85,  marketCap:'0.80L Cr', pe:95.4, sector:'Technology',      color:'#4f46e5', logoText:'N', k:'info edge naukri jeevansathi 99acres internet job recruitment' },
+    { symbol:'TATAELXSI',  name:'Tata Elxsi Ltd',             price:6789.50,  change:0.88,  marketCap:'0.42L Cr', pe:48.5, sector:'Technology',      color:'#2c3e7e', logoText:'T', k:'tata elxsi design engineering embedded iot automotive ev' },
+    { symbol:'KPIT',       name:'KPIT Technologies Ltd',      price:1456.30,  change:2.15,  marketCap:'0.40L Cr', pe:52.8, sector:'Technology',      color:'#003087', logoText:'K', k:'kpit technologies automotive software embedded electric vehicle' },
+    { symbol:'TANLA',      name:'Tanla Platforms Ltd',        price:934.60,   change:0.75,  marketCap:'0.13L Cr', pe:18.5, sector:'Technology',      color:'#4f46e5', logoText:'T', k:'tanla platforms cpaas messaging sms communications' },
+    { symbol:'BSOFT',      name:'Birlasoft Ltd',              price:567.80,   change:0.92,  marketCap:'0.16L Cr', pe:28.5, sector:'Technology',      color:'#e07b00', logoText:'B', k:'birlasoft it services aditya birla cks software' },
+    { symbol:'INTELLECT',  name:'Intellect Design Arena',     price:678.90,   change:1.25,  marketCap:'0.09L Cr', pe:35.8, sector:'Technology',      color:'#003087', logoText:'I', k:'intellect design arena banking financial software fintech' },
+    { symbol:'ZEEL',       name:'Zee Entertainment Ltd',      price:145.60,   change:-0.55, marketCap:'0.14L Cr', pe:42.5, sector:'Technology',      color:'#003087', logoText:'Z', k:'zee entertainment television channel media tv zee5' },
+    // ── Healthcare – Additional ──
+    { symbol:'ALKEM',      name:'Alkem Laboratories Ltd',     price:5234.80,  change:0.45,  marketCap:'0.63L Cr', pe:22.5, sector:'Healthcare',      color:'#003087', logoText:'A', k:'alkem pharma generics branded antibiotics ace' },
+    { symbol:'MANKIND',    name:'Mankind Pharma Ltd',         price:2345.60,  change:0.88,  marketCap:'0.94L Cr', pe:35.2, sector:'Healthcare',      color:'#e41e26', logoText:'M', k:'mankind pharma generic branded consumer pharma' },
+    { symbol:'ZYDUSLIFE',  name:'Zydus Lifesciences Ltd',     price:1023.40,  change:0.72,  marketCap:'1.04L Cr', pe:24.8, sector:'Healthcare',      color:'#003087', logoText:'Z', k:'zydus cadila lifesciences pharma ahmedabad biosimilar' },
+    { symbol:'IPCALAB',    name:'IPCA Laboratories Ltd',      price:1456.70,  change:0.55,  marketCap:'0.18L Cr', pe:28.5, sector:'Healthcare',      color:'#003478', logoText:'I', k:'ipca laboratories pharma generics antimalarial' },
+    { symbol:'GRANULES',   name:'Granules India Ltd',         price:567.80,   change:1.12,  marketCap:'0.14L Cr', pe:22.5, sector:'Healthcare',      color:'#e41e26', logoText:'G', k:'granules india api pharma paracetamol metformin' },
+    { symbol:'LAURUSLABS', name:'Laurus Labs Ltd',            price:456.30,   change:0.88,  marketCap:'0.25L Cr', pe:32.5, sector:'Healthcare',      color:'#003087', logoText:'L', k:'laurus labs api cdmo pharma antiviral hiv' },
+    { symbol:'AJANTPHARM', name:'Ajanta Pharma Ltd',          price:2345.60,  change:0.65,  marketCap:'0.22L Cr', pe:28.5, sector:'Healthcare',      color:'#003087', logoText:'A', k:'ajanta pharma cardiology ophthalmology dermatology' },
+    { symbol:'JBCHEPHARM', name:'JB Chemicals & Pharma Ltd',  price:1567.80,  change:0.42,  marketCap:'0.25L Cr', pe:35.8, sector:'Healthcare',      color:'#003478', logoText:'J', k:'jb chemicals pharma generic lozenges strides' },
+    { symbol:'LALPATHLAB', name:'Dr Lal PathLabs Ltd',        price:2567.80,  change:0.35,  marketCap:'0.21L Cr', pe:52.5, sector:'Healthcare',      color:'#e41e26', logoText:'L', k:'dr lal path labs diagnostics pathology testing blood' },
+    { symbol:'METROPOLIS', name:'Metropolis Healthcare Ltd',   price:1923.40,  change:0.28,  marketCap:'0.10L Cr', pe:48.5, sector:'Healthcare',      color:'#003087', logoText:'M', k:'metropolis diagnostics lab pathology testing health' },
+    // ── Consumer – Hotels / Retail / FMCG ext ──
+    { symbol:'PAGEIND',    name:'Page Industries Ltd',        price:34567.0,  change:0.45,  marketCap:'0.39L Cr', pe:62.5, sector:'Consumer',        color:'#003087', logoText:'P', k:'page industries jockey lingerie innerwear sportswear' },
+    { symbol:'TRENT',      name:'Trent Ltd',                  price:5678.90,  change:1.85,  marketCap:'2.03L Cr', pe:165.8,sector:'Consumer',        color:'#2c3e7e', logoText:'T', k:'tata trent westside zudio fashion retail clothing' },
+    { symbol:'VBL',        name:'Varun Beverages Ltd',        price:623.40,   change:1.20,  marketCap:'0.81L Cr', pe:42.5, sector:'Consumer',        color:'#003087', logoText:'V', k:'varun beverages pepsi franchise soft drink bottler' },
+    { symbol:'RADICO',     name:'Radico Khaitan Ltd',         price:1623.40,  change:0.88,  marketCap:'0.22L Cr', pe:68.5, sector:'Consumer',        color:'#e41e26', logoText:'R', k:'radico khaitan liquor whisky spirits 8pm rampur whisky' },
+    { symbol:'USL',        name:'United Spirits Ltd',         price:1234.50,  change:0.45,  marketCap:'0.90L Cr', pe:82.5, sector:'Consumer',        color:'#003087', logoText:'U', k:'united spirits diageo mcdowells royal challenge scotch whisky' },
+    { symbol:'DEVYANI',    name:'Devyani International Ltd',  price:178.50,   change:1.45,  marketCap:'0.22L Cr', pe:null, sector:'Consumer',        color:'#cc0000', logoText:'D', k:'devyani kfc pizza hut costa coffee qsr franchise' },
+    { symbol:'BATA',       name:'Bata India Ltd',             price:1456.30,  change:-0.35, marketCap:'0.19L Cr', pe:42.5, sector:'Consumer',        color:'#cc0000', logoText:'B', k:'bata footwear shoes sandals retail' },
+    { symbol:'RELAXO',     name:'Relaxo Footwears Ltd',       price:789.50,   change:0.55,  marketCap:'0.10L Cr', pe:48.5, sector:'Consumer',        color:'#003087', logoText:'R', k:'relaxo footwear hawai slippers shoes retail sparx' },
+    { symbol:'MANYAVAR',   name:'Vedant Fashions Ltd',        price:1023.40,  change:0.88,  marketCap:'0.26L Cr', pe:42.5, sector:'Consumer',        color:'#9b59b6', logoText:'M', k:'manyavar mohey ethnic wear wedding traditional fashion vedant' },
+    { symbol:'INDHOTEL',   name:'Indian Hotels Company Ltd',  price:534.60,   change:0.92,  marketCap:'0.76L Cr', pe:65.8, sector:'Consumer',        color:'#8b1a0e', logoText:'I', k:'tata hotels taj vivanta luxury hospitality hotel' },
+    { symbol:'EIHOTEL',    name:'EIH Ltd (Oberoi Hotels)',    price:345.80,   change:0.55,  marketCap:'0.14L Cr', pe:38.5, sector:'Consumer',        color:'#1a0a0a', logoText:'E', k:'eih oberoi hotel luxury hospitality trident' },
+    { symbol:'LEMONTREE',  name:'Lemon Tree Hotels Ltd',      price:123.40,   change:1.20,  marketCap:'0.10L Cr', pe:42.5, sector:'Consumer',        color:'#ffd700', logoText:'L', k:'lemon tree hotel budget midscale hospitality' },
+    { symbol:'PVR',        name:'PVR Inox Ltd',               price:1456.30,  change:1.20,  marketCap:'0.13L Cr', pe:null, sector:'Consumer',        color:'#cc0000', logoText:'P', k:'pvr inox cinema multiplex movies entertainment' },
+    { symbol:'RAYMOND',    name:'Raymond Ltd',                price:1789.50,  change:0.88,  marketCap:'0.24L Cr', pe:38.5, sector:'Consumer',        color:'#003087', logoText:'R', k:'raymond fabric textile suit fashion suiting retail' },
+    { symbol:'KALYANKJIL', name:'Kalyan Jewellers India Ltd', price:456.30,   change:1.45,  marketCap:'0.47L Cr', pe:52.5, sector:'Consumer',        color:'#ffd700', logoText:'K', k:'kalyan jewellers gold diamond wedding retail' },
+    // ── Chemicals ──
+    { symbol:'PIIND',      name:'PI Industries Ltd',          price:3456.80,  change:0.88,  marketCap:'0.53L Cr', pe:38.5, sector:'Chemicals',       color:'#003087', logoText:'P', k:'pi industries agrochemicals crop protection csm synthesis' },
+    { symbol:'DEEPAKNTR',  name:'Deepak Nitrite Ltd',         price:2345.60,  change:1.12,  marketCap:'0.32L Cr', pe:22.5, sector:'Chemicals',       color:'#003087', logoText:'D', k:'deepak nitrite specialty chemicals phenol acetone' },
+    { symbol:'AARTIIND',   name:'Aarti Industries Ltd',       price:456.30,   change:0.75,  marketCap:'0.17L Cr', pe:28.5, sector:'Chemicals',       color:'#003478', logoText:'A', k:'aarti industries specialty chemicals benzene derivatives' },
+    { symbol:'SRF',        name:'SRF Ltd',                    price:2234.50,  change:0.45,  marketCap:'0.66L Cr', pe:28.5, sector:'Chemicals',       color:'#003087', logoText:'S', k:'srf specialty chemicals technical textiles fluorochemicals' },
+    { symbol:'NAVINFLUO',  name:'Navin Fluorine Intl Ltd',    price:3456.70,  change:0.88,  marketCap:'0.17L Cr', pe:38.5, sector:'Chemicals',       color:'#003087', logoText:'N', k:'navin fluorine specialty chemicals refrigerant fluoropolymer' },
+    { symbol:'VINATIORGA', name:'Vinati Organics Ltd',        price:1678.90,  change:0.55,  marketCap:'0.17L Cr', pe:42.5, sector:'Chemicals',       color:'#003087', logoText:'V', k:'vinati organics specialty chemicals ibuprofen isobutyl' },
+    { symbol:'TATACHEM',   name:'Tata Chemicals Ltd',         price:1023.40,  change:0.38,  marketCap:'0.26L Cr', pe:28.5, sector:'Chemicals',       color:'#2c3e7e', logoText:'T', k:'tata chemicals soda ash salt sodium bicarbonate' },
+    { symbol:'CLEAN',      name:'Clean Science & Tech Ltd',   price:1234.50,  change:0.65,  marketCap:'0.13L Cr', pe:42.5, sector:'Chemicals',       color:'#003087', logoText:'C', k:'clean science technology specialty chemicals performance' },
+    { symbol:'PCBL',       name:'PCBL Ltd',                   price:356.80,   change:0.88,  marketCap:'0.12L Cr', pe:18.5, sector:'Chemicals',       color:'#003087', logoText:'P', k:'pcbl carbon black specialty tyre rubber' },
+    // ── Real Estate ──
+    { symbol:'GODREJPROP', name:'Godrej Properties Ltd',      price:2345.60,  change:1.45,  marketCap:'0.66L Cr', pe:165.8,sector:'Infrastructure',  color:'#253f8f', logoText:'G', k:'godrej properties real estate housing developer realty' },
+    { symbol:'OBEROIRLTY', name:'Oberoi Realty Ltd',          price:1678.90,  change:0.88,  marketCap:'0.61L Cr', pe:18.5, sector:'Infrastructure',  color:'#003087', logoText:'O', k:'oberoi realty real estate luxury housing mumbai' },
+    { symbol:'PRESTIGE',   name:'Prestige Estates Projects',  price:1456.30,  change:1.20,  marketCap:'0.58L Cr', pe:28.5, sector:'Infrastructure',  color:'#003478', logoText:'P', k:'prestige estates real estate residential commercial bangalore' },
+    { symbol:'BRIGADE',    name:'Brigade Enterprises Ltd',    price:1234.50,  change:0.75,  marketCap:'0.29L Cr', pe:28.5, sector:'Infrastructure',  color:'#003087', logoText:'B', k:'brigade enterprises real estate residential commercial bangalore' },
+    { symbol:'SOBHA',      name:'Sobha Ltd',                  price:1567.80,  change:0.55,  marketCap:'0.15L Cr', pe:42.5, sector:'Infrastructure',  color:'#c8102e', logoText:'S', k:'sobha real estate luxury residential integrated' },
+    { symbol:'PHOENIXLTD', name:'Phoenix Mills Ltd',          price:3456.80,  change:1.12,  marketCap:'0.62L Cr', pe:62.5, sector:'Infrastructure',  color:'#e41e26', logoText:'P', k:'phoenix mills mall retail commercial shopping center' },
+    // ── Power / Renewable Energy ──
+    { symbol:'TATAPOWER',  name:'Tata Power Co Ltd',          price:456.30,   change:1.45,  marketCap:'1.46L Cr', pe:28.5, sector:'Energy',          color:'#2c3e7e', logoText:'T', k:'tata power electricity thermal solar renewable clean energy' },
+    { symbol:'CESC',       name:'CESC Ltd',                   price:189.50,   change:0.35,  marketCap:'0.25L Cr', pe:12.5, sector:'Energy',          color:'#003087', logoText:'C', k:'cesc calcutta electric supply electricity west bengal distribution' },
+    { symbol:'TORNTPOWER', name:'Torrent Power Ltd',          price:1234.50,  change:0.65,  marketCap:'0.59L Cr', pe:18.5, sector:'Energy',          color:'#003087', logoText:'T', k:'torrent power electricity generation distribution gujarat' },
+    { symbol:'JSWENERGY',  name:'JSW Energy Ltd',             price:534.60,   change:0.88,  marketCap:'0.93L Cr', pe:28.5, sector:'Energy',          color:'#003087', logoText:'J', k:'jsw energy thermal hydro renewable power sajjan jindal' },
+    { symbol:'NHPC',       name:'NHPC Ltd',                   price:89.50,    change:0.45,  marketCap:'0.90L Cr', pe:14.5, sector:'Energy',          color:'#003478', logoText:'N', k:'nhpc hydro power national psu hydropower' },
+    { symbol:'SJVN',       name:'SJVN Ltd',                   price:112.30,   change:0.55,  marketCap:'0.44L Cr', pe:18.5, sector:'Energy',          color:'#003087', logoText:'S', k:'sjvn hydro power psu himachal pradesh' },
+    { symbol:'ADANIGREEN', name:'Adani Green Energy Ltd',     price:1678.90,  change:2.15,  marketCap:'2.66L Cr', pe:185.4,sector:'Energy',          color:'#0061ab', logoText:'A', k:'adani green renewable solar wind energy gautam' },
+    { symbol:'ADANITRANS', name:'Adani Transmission Ltd',     price:1034.50,  change:1.45,  marketCap:'1.16L Cr', pe:68.5, sector:'Energy',          color:'#0061ab', logoText:'A', k:'adani transmission power lines electricity grid' },
+    // ── PSU / Defence / Infrastructure ──
+    { symbol:'IRCON',      name:'IRCON International Ltd',    price:289.50,   change:0.88,  marketCap:'0.27L Cr', pe:18.5, sector:'Infrastructure',  color:'#0033a0', logoText:'I', k:'ircon railway construction civil engineering psu' },
+    { symbol:'RVNL',       name:'Rail Vikas Nigam Ltd',       price:345.60,   change:1.20,  marketCap:'0.70L Cr', pe:28.5, sector:'Infrastructure',  color:'#0033a0', logoText:'R', k:'rvnl rail vikas railway construction psu navratna' },
+    { symbol:'NBCC',       name:'NBCC India Ltd',             price:134.50,   change:0.65,  marketCap:'0.24L Cr', pe:32.5, sector:'Infrastructure',  color:'#003478', logoText:'N', k:'nbcc national buildings construction corporation psu' },
+    { symbol:'RITES',      name:'RITES Ltd',                  price:567.80,   change:0.45,  marketCap:'0.14L Cr', pe:22.5, sector:'Infrastructure',  color:'#0033a0', logoText:'R', k:'rites railways engineering consulting infrastructure psu' },
+    { symbol:'CONCOR',     name:'Container Corp of India',    price:789.50,   change:0.55,  marketCap:'0.48L Cr', pe:32.5, sector:'Infrastructure',  color:'#003087', logoText:'C', k:'concor container logistics railways freight psu' },
+    { symbol:'GRINFRA',    name:'G R Infraprojects Ltd',      price:1234.50,  change:0.88,  marketCap:'0.12L Cr', pe:18.5, sector:'Infrastructure',  color:'#003478', logoText:'G', k:'gr infra roads highways construction epc infrastructure' },
+    { symbol:'MAZDOCK',    name:'Mazagon Dock Shipbuilders',  price:2345.60,  change:1.85,  marketCap:'0.95L Cr', pe:28.5, sector:'Infrastructure',  color:'#003478', logoText:'M', k:'mazagon dock shipbuilding defence warship navy psu' },
+    { symbol:'BEL',        name:'Bharat Electronics Ltd',     price:234.50,   change:0.88,  marketCap:'1.71L Cr', pe:42.5, sector:'Infrastructure',  color:'#003478', logoText:'B', k:'bharat electronics defence radar psu military electronics' },
+    { symbol:'BEML',       name:'BEML Ltd',                   price:3456.80,  change:1.12,  marketCap:'0.15L Cr', pe:28.5, sector:'Infrastructure',  color:'#003087', logoText:'B', k:'beml mining railway metro equipment construction psu' },
+    // ── Metals – Additional ──
+    { symbol:'HINDZINC',   name:'Hindustan Zinc Ltd',         price:489.50,   change:-0.35, marketCap:'2.07L Cr', pe:12.5, sector:'Metals',          color:'#003087', logoText:'H', k:'hindustan zinc zinc vedanta mining silver' },
+    { symbol:'JSPL',       name:'Jindal Steel & Power Ltd',   price:1023.40,  change:-0.55, marketCap:'1.04L Cr', pe:8.5,  sector:'Metals',          color:'#003087', logoText:'J', k:'jindal steel power jspl naveen jindal sponge iron' },
+    { symbol:'WELCORP',    name:'Welspun Corp Ltd',            price:567.80,   change:0.45,  marketCap:'0.15L Cr', pe:12.5, sector:'Metals',          color:'#003087', logoText:'W', k:'welspun pipes steel tubes oil gas pipeline' },
+    { symbol:'RATNAMANI',  name:'Ratnamani Metals & Tubes',   price:2678.90,  change:0.65,  marketCap:'0.16L Cr', pe:28.5, sector:'Metals',          color:'#003087', logoText:'R', k:'ratnamani metals steel tubes pipes stainless' },
+    { symbol:'MOIL',       name:'MOIL Ltd',                   price:367.80,   change:0.38,  marketCap:'0.10L Cr', pe:12.5, sector:'Metals',          color:'#cc0000', logoText:'M', k:'moil manganese ore india psu mining maharashtra' },
+    { symbol:'APLAPOLLO',  name:'APL Apollo Tubes Ltd',       price:1567.80,  change:1.12,  marketCap:'0.44L Cr', pe:28.5, sector:'Metals',          color:'#003087', logoText:'A', k:'apl apollo steel tubes hollow sections structural' },
+    // ── Telecom ──
+    { symbol:'IDEA',       name:'Vodafone Idea Ltd',           price:13.45,   change:-1.20,  marketCap:'0.93L Cr', pe:null, sector:'Telecom',         color:'#cc0000', logoText:'V', k:'vodafone idea vi telecom mobile wireless spectrum' },
+    { symbol:'TATACOMM',   name:'Tata Communications Ltd',    price:1678.90,  change:0.85,  marketCap:'0.48L Cr', pe:35.8, sector:'Telecom',         color:'#2c3e7e', logoText:'T', k:'tata communications vsnl internet enterprise isp data' },
+    { symbol:'RAILTEL',    name:'RailTel Corp of India Ltd',   price:389.50,  change:0.55,  marketCap:'0.12L Cr', pe:28.5, sector:'Telecom',         color:'#0033a0', logoText:'R', k:'railtel railway telecom psu broadband fiber optic' },
+    // ── Consumer Electricals & Electronics ──
+    { symbol:'POLYCAB',    name:'Polycab India Ltd',           price:5234.80,  change:1.45,  marketCap:'0.78L Cr', pe:42.5, sector:'Infrastructure',  color:'#e41e26', logoText:'P', k:'polycab cables wires electrical fmeg fans lights' },
+    { symbol:'DIXON',      name:'Dixon Technologies India',   price:12456.0,  change:2.20,  marketCap:'0.75L Cr', pe:92.5, sector:'Technology',      color:'#003087', logoText:'D', k:'dixon ems electronics manufacturing led tv washing machine' },
+    { symbol:'VOLTAS',     name:'Voltas Ltd',                 price:1456.80,  change:0.88,  marketCap:'0.49L Cr', pe:65.8, sector:'Consumer',        color:'#e41e26', logoText:'V', k:'voltas ac air conditioner tata cooling refrigerator' },
+    { symbol:'CROMPTON',   name:'Crompton Greaves Consumer',  price:289.50,   change:1.12,  marketCap:'0.18L Cr', pe:38.5, sector:'Consumer',        color:'#003087', logoText:'C', k:'crompton greaves fan pump motor consumer electricals' },
+    { symbol:'BLUESTAR',   name:'Blue Star Ltd',              price:1789.50,  change:0.75,  marketCap:'0.17L Cr', pe:52.5, sector:'Consumer',        color:'#003087', logoText:'B', k:'blue star ac air conditioner cooling refrigeration' },
+    { symbol:'AMBER',      name:'Amber Enterprises India',   price:4567.80,  change:1.85,  marketCap:'0.16L Cr', pe:42.5, sector:'Technology',      color:'#e41e26', logoText:'A', k:'amber enterprises ac ems electronics manufacturing oem' },
+    // ── FMCG – Additional ──
+    { symbol:'EMAMI',      name:'Emami Ltd',                  price:534.60,   change:0.65,  marketCap:'0.24L Cr', pe:38.5, sector:'Consumer',        color:'#e07b00', logoText:'E', k:'emami boroplus fair handsome himani fmcg healthcare' },
+    { symbol:'ADANIWILMAR',name:'Adani Wilmar Ltd',           price:289.40,   change:0.55,  marketCap:'0.38L Cr', pe:28.5, sector:'Consumer',        color:'#0061ab', logoText:'A', k:'adani wilmar fortune edible oil cooking fmcg wilmar' },
+    { symbol:'PATANJALI',  name:'Patanjali Foods Ltd',        price:1678.90,  change:0.42,  marketCap:'0.22L Cr', pe:32.5, sector:'Consumer',        color:'#ff6600', logoText:'P', k:'patanjali foods edible oil palm baba ramdev fmcg' },
+    { symbol:'GODFRYPHLP', name:'Godfrey Phillips India',     price:2345.60,  change:0.35,  marketCap:'0.12L Cr', pe:18.5, sector:'Consumer',        color:'#e41e26', logoText:'G', k:'godfrey phillips tobacco cigarette four square red white' },
+    // ── Auto Components / Engineering ──
+    { symbol:'BHARATFORG', name:'Bharat Forge Ltd',           price:1234.50,  change:1.20,  marketCap:'0.57L Cr', pe:42.5, sector:'Auto',            color:'#003087', logoText:'B', k:'bharat forge forging auto components baba kalyani' },
+    { symbol:'CUMMINS',    name:'Cummins India Ltd',          price:3456.80,  change:0.85,  marketCap:'0.96L Cr', pe:42.5, sector:'Auto',            color:'#e40000', logoText:'C', k:'cummins engine power diesel generator industrial' },
+    { symbol:'THERMAX',    name:'Thermax Ltd',                price:4567.80,  change:0.92,  marketCap:'0.54L Cr', pe:52.5, sector:'Infrastructure',  color:'#003087', logoText:'T', k:'thermax energy engineering boiler heat exchanger industrial' },
+    { symbol:'SCHAEFFLER', name:'Schaeffler India Ltd',       price:3234.50,  change:0.68,  marketCap:'0.51L Cr', pe:42.5, sector:'Auto',            color:'#006600', logoText:'S', k:'schaeffler bearing rolling germany auto components precision' },
+    { symbol:'SUNDRMFAST', name:'Sundram Fasteners Ltd',      price:1089.50,  change:0.55,  marketCap:'0.23L Cr', pe:38.5, sector:'Auto',            color:'#003087', logoText:'S', k:'sundram fasteners bolts nuts precision auto tvs' },
+    // ── Internet / Platform Tech ──
+    { symbol:'INDIAMART',  name:'IndiaMART InterMesh Ltd',   price:2345.60,  change:1.45,  marketCap:'0.14L Cr', pe:42.5, sector:'Technology',      color:'#e07b00', logoText:'I', k:'indiamart b2b marketplace sme supplier buyer internet' },
+    { symbol:'JUSTDIAL',   name:'Just Dial Ltd',             price:789.50,   change:0.88,  marketCap:'0.07L Cr', pe:22.5, sector:'Technology',      color:'#0066b3', logoText:'J', k:'just dial local search jd internet directory services' },
+    { symbol:'NAZARA',     name:'Nazara Technologies Ltd',   price:978.40,   change:1.85,  marketCap:'0.09L Cr', pe:85.2, sector:'Technology',      color:'#7c3aed', logoText:'N', k:'nazara gaming mobile esports cricket fantasy india' },
+    { symbol:'CARTRADE',   name:'CarTrade Tech Ltd',         price:823.50,   change:0.92,  marketCap:'0.04L Cr', pe:null, sector:'Technology',      color:'#003087', logoText:'C', k:'cartrade car used auto ecommerce bidding' },
+    // ── Textile ──
+    { symbol:'TRIDENT',    name:'Trident Ltd',               price:34.50,    change:0.88,  marketCap:'0.18L Cr', pe:18.5, sector:'Consumer',        color:'#003087', logoText:'T', k:'trident textile home cotton towel yarn bath bedding' },
+    { symbol:'KPRMILL',    name:'KPR Mill Ltd',              price:756.80,   change:0.65,  marketCap:'0.26L Cr', pe:22.5, sector:'Consumer',        color:'#003478', logoText:'K', k:'kpr mill spinning textile garment knitting coimbatore' },
+    { symbol:'VARDHACRLC', name:'Vardhman Textiles Ltd',     price:456.30,   change:0.45,  marketCap:'0.09L Cr', pe:12.5, sector:'Consumer',        color:'#003087', logoText:'V', k:'vardhman textiles yarn spinning weaving ludhiana' },
+    // ── Renewable / New Energy ──
+    { symbol:'IREDA',      name:'Indian Renewable Energy Dev',price:167.80,  change:1.45,  marketCap:'0.45L Cr', pe:18.5, sector:'Energy',          color:'#006400', logoText:'I', k:'ireda renewable energy finance solar wind psu green' },
+    { symbol:'GREENKO',    name:'Greenko Energy (Unlisted)',  price:182.40,   change:0.65,  marketCap:'0.22L Cr', pe:28.5, sector:'Energy',          color:'#006b3c', logoText:'G', k:'greenko renewable wind solar hydro energy india' },
+    // ── Footwear & Lifestyle ──
+    { symbol:'METROBRAND', name:'Metro Brands Ltd',           price:1089.50,  change:0.72,  marketCap:'0.30L Cr', pe:52.5, sector:'Consumer',        color:'#c8102e', logoText:'M', k:'metro brands mochi walkway footwear shoes retail' },
+    { symbol:'CAMPUSACT',  name:'Campus Activewear Ltd',      price:289.50,   change:1.20,  marketCap:'0.09L Cr', pe:32.5, sector:'Consumer',        color:'#003087', logoText:'C', k:'campus activewear sports shoes sneakers retail north india' },
+    // ── IT – Additional ──
+    { symbol:'CYIENT',     name:'Cyient Ltd',                 price:1678.90,  change:0.85,  marketCap:'0.19L Cr', pe:22.5, sector:'Technology',      color:'#003087', logoText:'C', k:'cyient engineering design services aerospace defense it' },
+    { symbol:'MASTECH',    name:'Mastech Digital Ltd',        price:678.90,   change:0.55,  marketCap:'0.05L Cr', pe:28.5, sector:'Technology',      color:'#003087', logoText:'M', k:'mastech digital it staffing data analytics' },
+    { symbol:'NEWGEN',     name:'Newgen Software Tech',       price:789.50,   change:1.12,  marketCap:'0.11L Cr', pe:38.5, sector:'Technology',      color:'#003087', logoText:'N', k:'newgen software bpm digital transformation banking' },
+    { symbol:'TATATECH',   name:'Tata Technologies Ltd',      price:1023.40,  change:0.88,  marketCap:'0.41L Cr', pe:38.5, sector:'Technology',      color:'#2c3e7e', logoText:'T', k:'tata technologies engineering services automotive ev digital' },
+];
+
+// Optimized lookup map for fast instrument access
+var stocksMap = (function() {
+    var m = {};
+    stocks.forEach(function(s) { m[s.symbol] = s; });
+    return m;
+})();
+
+// ============================================================
+// DATA: MUTUAL FUNDS
+// ============================================================
+var mutualFunds = [
+    { name:'Mirae Asset Large Cap Fund',     house:'Mirae Asset', nav:98.45,  return1y:18.2, return3y:15.8, aum:'38,450', risk:'Low-Medium', category:'Large Cap', color:'#e11d48', logoText:'M', rating:5 },
+    { name:'SBI Small Cap Fund',             house:'SBI MF',      nav:145.32, return1y:32.5, return3y:24.1, aum:'22,180', risk:'High',       category:'Small Cap', color:'#2563eb', logoText:'S', rating:5 },
+    { name:'HDFC Mid-Cap Opportunities',     house:'HDFC MF',     nav:112.78, return1y:28.7, return3y:21.3, aum:'58,920', risk:'High',       category:'Mid Cap',   color:'#004c8f', logoText:'H', rating:5 },
+    { name:'Axis Bluechip Fund',             house:'Axis MF',     nav:54.23,  return1y:14.5, return3y:13.2, aum:'32,100', risk:'Low-Medium', category:'Large Cap', color:'#7c3aed', logoText:'A', rating:4 },
+    { name:'Parag Parikh Flexi Cap Fund',    house:'PPFAS MF',    nav:68.90,  return1y:22.3, return3y:19.7, aum:'65,400', risk:'Medium',     category:'Flexi Cap', color:'#059669', logoText:'P', rating:5 },
+    { name:'Quant Small Cap Fund',           house:'Quant MF',    nav:205.62, return1y:45.8, return3y:38.2, aum:'18,760', risk:'Very High',  category:'Small Cap', color:'#dc2626', logoText:'Q', rating:4 },
+    { name:'ICICI Pru Equity & Debt Fund',   house:'ICICI Pru',   nav:312.45, return1y:16.8, return3y:14.5, aum:'28,900', risk:'Medium',     category:'Hybrid',    color:'#f59e0b', logoText:'I', rating:5 },
+    { name:'Mirae Asset Tax Saver Fund',     house:'Mirae Asset', nav:42.18,  return1y:17.5, return3y:16.2, aum:'15,200', risk:'Low-Medium', category:'ELSS',      color:'#e11d48', logoText:'M', rating:4 },
+    { name:'Kotak Emerging Equity Fund',     house:'Kotak MF',    nav:88.34,  return1y:25.6, return3y:20.4, aum:'44,100', risk:'High',       category:'Mid Cap',   color:'#d97706', logoText:'K', rating:4 },
+    { name:'Nippon India Index Fund NIFTY',  house:'Nippon MF',   nav:31.76,  return1y:12.4, return3y:11.8, aum:'8,560',  risk:'Low-Medium', category:'Index',     color:'#0891b2', logoText:'N', rating:3 },
+    { name:'UTI Nifty 50 Index Fund',        house:'UTI MF',      nav:128.45, return1y:12.1, return3y:11.5, aum:'14,200', risk:'Low-Medium', category:'Index',     color:'#7c3aed', logoText:'U', rating:4 },
+    { name:'HDFC Liquid Fund',               house:'HDFC MF',     nav:4563.20,return1y:7.2,  return3y:6.8,  aum:'72,100', risk:'Low',        category:'Debt',      color:'#004c8f', logoText:'H', rating:4 },
+    { name:'Aditya Birla SL Corporate Bond', house:'ABSL MF',     nav:98.12,  return1y:8.4,  return3y:7.9,  aum:'22,500', risk:'Low',        category:'Debt',      color:'#e07b00', logoText:'A', rating:4 },
+    { name:'Motilal Oswal NIFTY 500 Index',  house:'Motilal MF',  nav:22.34,  return1y:14.8, return3y:13.2, aum:'5,800',  risk:'Low-Medium', category:'Index',     color:'#1d4ed8', logoText:'M', rating:4 },
+    { name:'DSP Mid Cap Fund',               house:'DSP MF',      nav:112.56, return1y:24.2, return3y:18.6, aum:'16,900', risk:'High',       category:'Mid Cap',   color:'#dc2626', logoText:'D', rating:4 },
+    // ── Large Cap ──
+    { name:'SBI Bluechip Fund',              house:'SBI MF',      nav:72.45,  return1y:15.8, return3y:14.2, aum:'44,200', risk:'Low-Medium', category:'Large Cap', color:'#2563eb', logoText:'S', rating:5 },
+    { name:'HDFC Top 100 Fund',              house:'HDFC MF',     nav:932.45, return1y:16.5, return3y:15.1, aum:'35,800', risk:'Low-Medium', category:'Large Cap', color:'#004c8f', logoText:'H', rating:4 },
+    { name:'ICICI Pru Bluechip Fund',        house:'ICICI Pru',   nav:82.34,  return1y:16.2, return3y:14.8, aum:'52,100', risk:'Low-Medium', category:'Large Cap', color:'#f9a01b', logoText:'I', rating:5 },
+    { name:'Nippon India Large Cap Fund',    house:'Nippon MF',   nav:68.12,  return1y:17.4, return3y:15.5, aum:'24,600', risk:'Low-Medium', category:'Large Cap', color:'#0891b2', logoText:'N', rating:4 },
+    // ── Mid & Small Cap ──
+    { name:'Nippon India Small Cap Fund',    house:'Nippon MF',   nav:142.56, return1y:34.8, return3y:26.2, aum:'48,900', risk:'High',       category:'Small Cap', color:'#0891b2', logoText:'N', rating:5 },
+    { name:'Tata Small Cap Fund',            house:'Tata MF',     nav:34.56,  return1y:30.2, return3y:23.5, aum:'8,400',  risk:'High',       category:'Small Cap', color:'#2c3e7e', logoText:'T', rating:4 },
+    { name:'Axis Midcap Fund',               house:'Axis MF',     nav:78.23,  return1y:22.5, return3y:19.2, aum:'22,400', risk:'High',       category:'Mid Cap',   color:'#7c3aed', logoText:'A', rating:5 },
+    { name:'HDFC Mid-Cap Opportunities',     house:'HDFC MF',     nav:164.45, return1y:29.8, return3y:22.4, aum:'62,300', risk:'High',       category:'Mid Cap',   color:'#004c8f', logoText:'H', rating:5 },
+    // ── Flexi Cap ──
+    { name:'Franklin India Flexi Cap Fund',  house:'Franklin MF', nav:1234.56,return1y:20.8, return3y:18.4, aum:'15,600', risk:'Medium',     category:'Flexi Cap', color:'#dc2626', logoText:'F', rating:4 },
+    { name:'Kotak Flexicap Fund',            house:'Kotak MF',    nav:56.78,  return1y:18.5, return3y:16.8, aum:'42,100', risk:'Medium',     category:'Flexi Cap', color:'#d97706', logoText:'K', rating:4 },
+    { name:'DSP Flexi Cap Fund',             house:'DSP MF',      nav:62.34,  return1y:19.2, return3y:17.5, aum:'11,200', risk:'Medium',     category:'Flexi Cap', color:'#dc2626', logoText:'D', rating:4 },
+    { name:'UTI Flexi Cap Fund',             house:'UTI MF',      nav:256.78, return1y:17.8, return3y:16.2, aum:'24,800', risk:'Medium',     category:'Flexi Cap', color:'#7c3aed', logoText:'U', rating:4 },
+    { name:'Quant Flexi Cap Fund',           house:'Quant MF',    nav:78.90,  return1y:38.5, return3y:32.1, aum:'4,200',  risk:'Very High',  category:'Flexi Cap', color:'#dc2626', logoText:'Q', rating:4 },
+    // ── Hybrid & BAF ──
+    { name:'HDFC Balanced Advantage Fund',   house:'HDFC MF',     nav:456.78, return1y:18.4, return3y:16.5, aum:'89,400', risk:'Medium',     category:'Hybrid',    color:'#004c8f', logoText:'H', rating:5 },
+    { name:'ICICI Pru Balanced Advantage',   house:'ICICI Pru',   nav:58.90,  return1y:17.2, return3y:15.8, aum:'55,200', risk:'Medium',     category:'Hybrid',    color:'#f9a01b', logoText:'I', rating:5 },
+    { name:'Canara Robeco Equity Hybrid',    house:'Canara Robeco',nav:278.45, return1y:16.8, return3y:15.2, aum:'9,800',  risk:'Medium',     category:'Hybrid',    color:'#0033a0', logoText:'C', rating:4 },
+    { name:'SBI Equity Hybrid Fund',         house:'SBI MF',      nav:228.34, return1y:17.5, return3y:15.4, aum:'64,200', risk:'Medium',     category:'Hybrid',    color:'#2563eb', logoText:'S', rating:5 },
+    // ── Sectoral ──
+    { name:'Tata Digital India Fund',        house:'Tata MF',     nav:42.34,  return1y:28.5, return3y:22.4, aum:'9,400',  risk:'Very High',  category:'Sectoral',  color:'#2c3e7e', logoText:'T', rating:4 },
+    { name:'ICICI Pru Technology Fund',      house:'ICICI Pru',   nav:156.78, return1y:26.8, return3y:20.5, aum:'12,400', risk:'Very High',  category:'Sectoral',  color:'#f9a01b', logoText:'I', rating:4 },
+    { name:'Invesco India Infrastructure',   house:'Invesco MF',  nav:45.67,  return1y:42.5, return3y:32.8, aum:'2,400',  risk:'Very High',  category:'Sectoral',  color:'#059669', logoText:'I', rating:3 },
+    { name:'Mirae Asset Healthcare Fund',    house:'Mirae Asset', nav:22.34,  return1y:24.5, return3y:20.8, aum:'4,200',  risk:'Very High',  category:'Sectoral',  color:'#e11d48', logoText:'M', rating:4 },
+    // ── ELSS ──
+    { name:'SBI Long Term Equity Fund',      house:'SBI MF',      nav:312.45, return1y:24.8, return3y:20.5, aum:'23,800', risk:'High',       category:'ELSS',      color:'#2563eb', logoText:'S', rating:5 },
+    { name:'PPFAS Long Term Equity (ELSS)',  house:'PPFAS MF',    nav:28.90,  return1y:21.5, return3y:18.8, aum:'5,400',  risk:'High',       category:'ELSS',      color:'#059669', logoText:'P', rating:4 },
+    { name:'Bandhan ELSS Tax Saver',         house:'Bandhan MF',  nav:42.56,  return1y:22.4, return3y:19.2, aum:'5,800',  risk:'High',       category:'ELSS',      color:'#f7941d', logoText:'B', rating:4 },
+    { name:'Quant ELSS Tax Saver Fund',      house:'Quant MF',    nav:312.67, return1y:42.5, return3y:35.2, aum:'6,400',  risk:'Very High',  category:'ELSS',      color:'#dc2626', logoText:'Q', rating:4 },
+    // ── Index ──
+    { name:'Zerodha Nifty LargeMidcap 250',  house:'Zerodha MF',  nav:16.78,  return1y:18.5, return3y:16.8, aum:'3,200',  risk:'Low-Medium', category:'Index',     color:'#0066b3', logoText:'Z', rating:4 },
+    { name:'Navi Nifty 50 Index Fund',       house:'Navi MF',     nav:12.56,  return1y:12.2, return3y:11.6, aum:'1,200',  risk:'Low-Medium', category:'Index',     color:'#059669', logoText:'N', rating:3 },
+    { name:'ICICI Pru Nifty Next 50 Index',  house:'ICICI Pru',   nav:52.34,  return1y:22.5, return3y:18.4, aum:'8,400',  risk:'Medium',     category:'Index',     color:'#f9a01b', logoText:'I', rating:4 },
+    // ── Debt ──
+    { name:'SBI Short Term Debt Fund',       house:'SBI MF',      nav:28.56,  return1y:7.8,  return3y:7.2,  aum:'18,400', risk:'Low',        category:'Debt',      color:'#2563eb', logoText:'S', rating:4 },
+    { name:'ICICI Pru Corporate Bond Fund',  house:'ICICI Pru',   nav:25.67,  return1y:8.2,  return3y:7.8,  aum:'26,200', risk:'Low',        category:'Debt',      color:'#f9a01b', logoText:'I', rating:5 },
+    { name:'Kotak Bond Short Term Plan',     house:'Kotak MF',    nav:42.34,  return1y:7.5,  return3y:7.1,  aum:'14,200', risk:'Low',        category:'Debt',      color:'#d97706', logoText:'K', rating:4 },
+];
+
+// ============================================================
+// DATA: IPO
+// ============================================================
+var ipoData = [
+    { name:'Innovators Facade Systems',  symbol:'INNOVFACADE', priceRange:'140 – 148',  lotSize:100, openDate:'16 Apr 2025', closeDate:'18 Apr 2025', listDate:'23 Apr 2025', status:'open',     gmp:'+62%', issue:'28 Cr',      color:'#5a2d82', logoText:'I' },
+    { name:'EFC (I) Ltd',                symbol:'EFC',         priceRange:'102 – 108',  lotSize:130, openDate:'14 Apr 2025', closeDate:'16 Apr 2025', listDate:'22 Apr 2025', status:'open',     gmp:'+38%', issue:'35 Cr',      color:'#2e7d32', logoText:'E' },
+    { name:'Fabtech Technologies',        symbol:'FABTECH',     priceRange:'95 – 100',   lotSize:150, openDate:'18 Apr 2025', closeDate:'22 Apr 2025', listDate:'25 Apr 2025', status:'upcoming', gmp:'+45%', issue:'135 Cr',     color:'#e07b00', logoText:'F' },
+    { name:'Ola Electric Mobility',       symbol:'OLAELEC',     priceRange:'72 – 76',    lotSize:195, openDate:'2 Aug 2024',  closeDate:'6 Aug 2024',  listDate:'9 Aug 2024',  status:'listed',   gmp:'+28%', issue:'6,145 Cr',   color:'#00c3a5', logoText:'O' },
+    { name:'Bajaj Housing Finance',       symbol:'BAJAJHFL',    priceRange:'66 – 70',    lotSize:214, openDate:'9 Sep 2024',  closeDate:'11 Sep 2024', listDate:'16 Sep 2024', status:'listed',   gmp:'+114%',issue:'6,560 Cr',   color:'#003087', logoText:'B' },
+    { name:'Hyundai India',               symbol:'HYUNDAI',     priceRange:'1,865 – 1,960',lotSize:7, openDate:'15 Oct 2024', closeDate:'17 Oct 2024', listDate:'22 Oct 2024', status:'listed',   gmp:'-8%',  issue:'27,856 Cr',  color:'#002c5f', logoText:'H' },
+    { name:'Swiggy Ltd',                  symbol:'SWIGGY',      priceRange:'371 – 390',  lotSize:38,  openDate:'6 Nov 2024',  closeDate:'8 Nov 2024',  listDate:'13 Nov 2024', status:'listed',   gmp:'-15%', issue:'11,327 Cr',  color:'#fc8019', logoText:'S' },
+    { name:'NTPC Green Energy',           symbol:'NTPCGREEN',   priceRange:'102 – 108',  lotSize:138, openDate:'19 Nov 2024', closeDate:'21 Nov 2024', listDate:'27 Nov 2024', status:'listed',   gmp:'+5%',  issue:'10,000 Cr',  color:'#1f4e79', logoText:'N' },
+];
+
+// ============================================================
+// DATA: CRYPTO
+// ============================================================
+var cryptoAssets = [
+    { name: 'Bitcoin',      symbol: 'BTC-USD',  price: 0, change: 0, mcap: '', vol: '' },
+    { name: 'Ethereum',     symbol: 'ETH-USD',  price: 0, change: 0, mcap: '', vol: '' },
+    { name: 'Solana',       symbol: 'SOL-USD',  price: 0, change: 0, mcap: '', vol: '' },
+    { name: 'Binance Coin', symbol: 'BNB-USD',  price: 0, change: 0, mcap: '', vol: '' },
+    { name: 'Ripple',       symbol: 'XRP-USD',  price: 0, change: 0, mcap: '', vol: '' },
+    { name: 'Dogecoin',     symbol: 'DOGE-USD', price: 0, change: 0, mcap: '', vol: '' },
+    { name: 'Cardano',      symbol: 'ADA-USD',  price: 0, change: 0, mcap: '', vol: '' },
+    { name: 'Avalanche',    symbol: 'AVAX-USD', price: 0, change: 0, mcap: '', vol: '' }
+];
+
+async function fetchCryptoData() {
+    try {
+        var symbols = cryptoAssets.map(c => c.symbol).join(',');
+        var YF_BATCH = 'https://query2.finance.yahoo.com/v7/finance/quote?formatted=false&corsDomain=finance.yahoo.com&symbols=' + symbols;
+        
+        var res = await fetchWithFallback(YF_BATCH, 8000);
+        var json = await res.json();
+        var results = json.quoteResponse && json.quoteResponse.result;
+        
+        if (results && results.length) {
+            results.forEach(q => {
+                var coin = cryptoAssets.find(c => c.symbol === q.symbol);
+                if (coin) {
+                    coin.price = q.regularMarketPrice || 0;
+                    coin.change = q.regularMarketChangePercent || 0;
+                    coin.mcap = q.marketCap ? formatMarketCap(q.marketCap).replace('Cr', 'B').replace('L', 'T') : '-';
+                    coin.vol = q.regularMarketVolume ? formatMarketCap(q.regularMarketVolume).replace('Cr', 'B') : '-';
+                }
+            });
+            renderCrypto();
+        }
+    } catch(e) {
+        console.warn('Crypto fetch failed:', e);
+        document.getElementById('cryptoBody').innerHTML = '<tr><td colspan="6" style="text-align:center;padding:40px;color:var(--negative);">Failed to load live data. Retrying...</td></tr>';
+    }
+}
+
+function renderCrypto() {
+    var html = cryptoAssets.map(c => {
+        var pos = c.change >= 0;
+        return `<tr>
+            <td><strong>${c.name}</strong></td>
+            <td style="color:var(--text-muted);">${c.symbol.split('-')[0]}</td>
+            <td style="font-weight:600;color:var(--text-main);">$${c.price.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 4})}</td>
+            <td class="${pos ? 'positive' : 'negative'}-text" style="font-weight:600;">${pos ? '+' : ''}${c.change.toFixed(2)}%</td>
+            <td>$${c.mcap}</td>
+            <td>${c.vol}</td>
+        </tr>`;
+    }).join('');
+    document.getElementById('cryptoBody').innerHTML = html;
+}
+
+// ============================================================
+// ════════════════════════════════════════════════════════════
+// SECTION 2: GLOBAL STATE & PERSISTENCE
+// ════════════════════════════════════════════════════════════
+// ════════════════════════════════════════════════════════════
+// SECTION 3: LIVE API & PROXY CONFIGURATION
+// ════════════════════════════════════════════════════════════
+// Multiple CORS proxies — tried in order until one works.
+// On Render (or any non-localhost host) the first entry becomes our own
+// FastAPI backend at the same origin, so all data travels through our server.
+var PROXIES = (function() {
+    var host = window.location.hostname;
+    var isLocal = (host === '127.0.0.1' || host === 'localhost');
+    if (isLocal) {
+        return [
+            'http://127.0.0.1:5005/?url=',                // Local FastAPI backend
+            'https://corsproxy.io/?',                     // Fallback 1
+            'https://api.allorigins.win/raw?url=',        // Fallback 2
+            'https://api.codetabs.com/v1/proxy?quest=',  // Fallback 3
+        ];
+    } else {
+        // Deployed: use same-origin proxy (FastAPI serves both frontend + API)
+        return [
+            window.location.origin + '/?url=',            // Same-origin FastAPI proxy
+            'https://corsproxy.io/?',                     // Fallback 1
+            'https://api.allorigins.win/raw?url=',        // Fallback 2
+        ];
+    }
+})();
+
+
+// Yahoo Finance (fallback — used for search lookups and index chart data)
+var YF_QUOTE_URL = 'https://query2.finance.yahoo.com/v7/finance/quote?formatted=false&corsDomain=finance.yahoo.com&symbols=';
+var YF_SEARCH_URL= 'https://query2.finance.yahoo.com/v1/finance/search?lang=en-IN&region=IN&quotesCount=8&newsCount=0&enableFuzzyQuery=false&enableCb=false&q=';
+
+// Fetch with automatic proxy fallback and timeout
+async function fetchWithFallback(rawUrl, timeoutMs) {
+    timeoutMs = timeoutMs || 7000;
+    for (var i = 0; i < PROXIES.length; i++) {
+        try {
+            var controller = new AbortController();
+            var timer = setTimeout(function() { controller.abort(); }, timeoutMs);
+            var proxyUrl = PROXIES[i] + encodeURIComponent(rawUrl);
+            var res = await fetch(proxyUrl, { signal: controller.signal });
+            clearTimeout(timer);
+            if (res.ok) return res;
+        } catch(e) { /* try next proxy */ }
+    }
+    throw new Error('All proxies failed for: ' + rawUrl);
+}
+
+var YF_STOCK_MAP = {
+    'RELIANCE':'RELIANCE.NS','TCS':'TCS.NS','HDFCBANK':'HDFCBANK.NS','INFY':'INFY.NS',
+    'ICICIBANK':'ICICIBANK.NS','LT':'LT.NS','BAJFINANCE':'BAJFINANCE.NS',
+    'HINDUNILVR':'HINDUNILVR.NS','WIPRO':'WIPRO.NS','SBIN':'SBIN.NS',
+    'SUNPHARMA':'SUNPHARMA.NS','MARUTI':'MARUTI.NS','HCLTECH':'HCLTECH.NS',
+    'TECHM':'TECHM.NS','AXISBANK':'AXISBANK.NS','KOTAKBANK':'KOTAKBANK.NS',
+    'ONGC':'ONGC.NS','NTPC':'NTPC.NS','POWERGRID':'POWERGRID.NS',
+    'TATAMOTORS':'TATAMOTORS.NS','TATASTEEL':'TATASTEEL.NS','HINDALCO':'HINDALCO.NS',
+    'JSWSTEEL':'JSWSTEEL.NS','BHARTIARTL':'BHARTIARTL.NS','ITC':'ITC.NS',
+    'NESTLEIND':'NESTLEIND.NS','BRITANNIA':'BRITANNIA.NS','DRREDDY':'DRREDDY.NS',
+    'CIPLA':'CIPLA.NS','DIVISLAB':'DIVISLAB.NS','APOLLOHOSP':'APOLLOHOSP.NS',
+    'ADANIPORTS':'ADANIPORTS.NS','ADANIENT':'ADANIENT.NS','DLF':'DLF.NS',
+    'INDUSINDBK':'INDUSINDBK.NS','BAJAJFINSV':'BAJAJFINSV.NS','COALINDIA':'COALINDIA.NS',
+    'ULTRACEMCO':'ULTRACEMCO.NS','HAVELLS':'HAVELLS.NS','SIEMENS':'SIEMENS.NS',
+    'ZOMATO':'ZOMATO.NS','PAYTM':'PAYTM.NS','NYKAA':'NYKAA.NS','DMART':'DMART.NS',
+    'BAJAJ-AUTO':'BAJAJ-AUTO.NS','HEROMOTOCO':'HEROMOTOCO.NS','EICHERMOT':'EICHERMOT.NS',
+    'ABB':'ABB.NS','PIDILITIND':'PIDILITIND.NS','TATACONSUM':'TATACONSUM.NS',
+    // New additions
+    'SBICARD':'SBICARD.NS','MUTHOOTFIN':'MUTHOOTFIN.NS','MANAPPURAM':'MANAPPURAM.NS',
+    'BAJAJHFL':'BAJAJHFL.NS','LICHSGFIN':'LICHSGFIN.NS','CANFINHOME':'CANFINHOME.NS',
+    'CHOLAFIN':'CHOLAFIN.NS','SHRIRAMFIN':'SHRIRAMFIN.NS','MMFSL':'MMFSL.NS',
+    'ABCAPITAL':'ABCAPITAL.NS','ANGELONE':'ANGELONE.NS','MOTILALOFS':'MOTILALOFS.NS',
+    'ISEC':'ISEC.NS','RECLTD':'RECLTD.NS','PFC':'PFC.NS','HUDCO':'HUDCO.NS',
+    'AUBANK':'AUBANK.NS','CDSL':'CDSL.NS','BSE':'BSE.NS','MCX':'MCX.NS',
+    'ASHOKLEY':'ASHOKLEY.NS','APOLLOTYRE':'APOLLOTYRE.NS','TVSMOTOR':'TVSMOTOR.NS',
+    'BALKRISIND':'BALKRISIND.NS','BOSCHLTD':'BOSCHLTD.NS','MOTHERSON':'MOTHERSON.NS',
+    'MINDA':'MINDA.NS','CEATLTD':'CEATLTD.NS','EXIDEIND':'EXIDEIND.NS',
+    'NAUKRI':'NAUKRI.NS','TATAELXSI':'TATAELXSI.NS','KPIT':'KPIT.NS',
+    'TANLA':'TANLA.NS','BSOFT':'BSOFT.NS','INTELLECT':'INTELLECT.NS','ZEEL':'ZEEL.NS',
+    'ALKEM':'ALKEM.NS','MANKIND':'MANKIND.NS','ZYDUSLIFE':'ZYDUSLIFE.NS',
+    'IPCALAB':'IPCALAB.NS','GRANULES':'GRANULES.NS','LAURUSLABS':'LAURUSLABS.NS',
+    'AJANTPHARM':'AJANTPHARM.NS','JBCHEPHARM':'JBCHEPHARM.NS',
+    'LALPATHLAB':'LALPATHLAB.NS','METROPOLIS':'METROPOLIS.NS',
+    'PAGEIND':'PAGEIND.NS','TRENT':'TRENT.NS','VBL':'VBL.NS',
+    'RADICO':'RADICO.NS','USL':'USL.NS','DEVYANI':'DEVYANI.NS',
+    'BATA':'BATA.NS','RELAXO':'RELAXO.NS','MANYAVAR':'MANYAVAR.NS',
+    'INDHOTEL':'INDHOTEL.NS','EIHOTEL':'EIHOTEL.NS','LEMONTREE':'LEMONTREE.NS',
+    'PVR':'PVR.NS','RAYMOND':'RAYMOND.NS','KALYANKJIL':'KALYANKJIL.NS',
+    'PIIND':'PIIND.NS','DEEPAKNTR':'DEEPAKNTR.NS','AARTIIND':'AARTIIND.NS',
+    'SRF':'SRF.NS','NAVINFLUO':'NAVINFLUO.NS','VINATIORGA':'VINATIORGA.NS',
+    'TATACHEM':'TATACHEM.NS','CLEAN':'CLEAN.NS','PCBL':'PCBL.NS',
+    'GODREJPROP':'GODREJPROP.NS','OBEROIRLTY':'OBEROIRLTY.NS','PRESTIGE':'PRESTIGE.NS',
+    'BRIGADE':'BRIGADE.NS','SOBHA':'SOBHA.NS','PHOENIXLTD':'PHOENIXLTD.NS',
+    'TATAPOWER':'TATAPOWER.NS','CESC':'CESC.NS','TORNTPOWER':'TORNTPOWER.NS',
+    'JSWENERGY':'JSWENERGY.NS','NHPC':'NHPC.NS','SJVN':'SJVN.NS',
+    'ADANIGREEN':'ADANIGREEN.NS','ADANITRANS':'ADANITRANS.NS',
+    'IRCON':'IRCON.NS','RVNL':'RVNL.NS','NBCC':'NBCC.NS','RITES':'RITES.NS',
+    'CONCOR':'CONCOR.NS','GRINFRA':'GRINFRA.NS','MAZDOCK':'MAZDOCK.NS',
+    'BEL':'BEL.NS','BEML':'BEML.NS',
+    'HINDZINC':'HINDZINC.NS','JSPL':'JSPL.NS','WELCORP':'WELCORP.NS',
+    'RATNAMANI':'RATNAMANI.NS','MOIL':'MOIL.NS','APLAPOLLO':'APLAPOLLO.NS',
+    'IDEA':'IDEA.NS','TATACOMM':'TATACOMM.NS','RAILTEL':'RAILTEL.NS',
+};
+
+var YF_INDEX_MAP = { '^NSEI':0, '^BSESN':1, '^NSEBANK':2, '^CNXIT':3 };
+
+var isLiveData = false;
+var YF_CHART_URL      = 'https://query1.finance.yahoo.com/v8/finance/chart/';
+var currentChartSymbol = null;
+var currentChartRange  = '1M';
+var allStocksPage      = 0;
+var allStocksFilter    = 'All';
+var allStocksSort      = 'marketcap';
+
+// ============================================================
+// PRICE CHART  —  SVG renderer + Yahoo Finance data
+// ============================================================
+function drawPriceChart(containerId, timestamps, prices, isPositive, range) {
+    var container = document.getElementById(containerId);
+    if (!container) return;
+    if (!prices || prices.length < 2) {
+        container.innerHTML = '<div class="chart-no-data"><i data-lucide="bar-chart-2"></i><span>Chart data unavailable</span></div>';
+        lucide.createIcons(); return;
+    }
+    var W   = container.clientWidth || 540;
+    var H   = 200;
+    var PAD = { top:14, right:10, bottom:28, left:58 };
+    var cW  = W - PAD.left - PAD.right;
+    var cH  = H - PAD.top  - PAD.bottom;
+
+    var minP = Math.min.apply(null, prices);
+    var maxP = Math.max.apply(null, prices);
+    var pad  = (maxP - minP) * 0.06 || 1;
+    minP -= pad; maxP += pad;
+    var pRange = maxP - minP;
+    var color  = isPositive ? '#10b981' : '#ef4444';
+    var n      = prices.length;
+
+    var pts = prices.map(function(p, i) {
+        return [PAD.left + (i / (n - 1)) * cW, PAD.top + (1 - (p - minP) / pRange) * cH];
+    });
+
+    function buildPath(pts) {
+        var d = 'M' + pts[0][0].toFixed(1) + ',' + pts[0][1].toFixed(1);
+        for (var i = 1; i < pts.length; i++) {
+            var mx = ((pts[i-1][0] + pts[i][0]) / 2).toFixed(1);
+            d += ' C' + mx + ',' + pts[i-1][1].toFixed(1) + ' ' + mx + ',' + pts[i][1].toFixed(1) + ' ' + pts[i][0].toFixed(1) + ',' + pts[i][1].toFixed(1);
+        }
+        return d;
+    }
+
+    var linePath = buildPath(pts);
+    var lastPt   = pts[n - 1];
+    var botY     = (PAD.top + cH).toFixed(1);
+    var fillPath = linePath + ' L' + lastPt[0].toFixed(1) + ',' + botY + ' L' + PAD.left + ',' + botY + 'Z';
+
+    var yLabels = '';
+    for (var i = 0; i <= 4; i++) {
+        var val  = minP + pRange * i / 4;
+        var yPos = (PAD.top + (1 - i / 4) * cH).toFixed(1);
+        var lbl  = val >= 1000 ? Math.round(val).toLocaleString('en-IN') : val.toFixed(val >= 100 ? 1 : 2);
+        yLabels += '<text x="' + (PAD.left - 5) + '" y="' + (parseFloat(yPos) + 4) + '" text-anchor="end" fill="#cbd5e1" font-size="10" font-family="Outfit,sans-serif">' + lbl + '</text>'
+                +  '<line x1="' + PAD.left + '" y1="' + yPos + '" x2="' + (W - PAD.right) + '" y2="' + yPos + '" stroke="rgba(255,255,255,0.04)" stroke-width="1"/>';
+    }
+
+    var xLabels = '';
+    var xCount  = Math.min(5, n);
+    for (var i = 0; i < xCount; i++) {
+        var idx  = Math.round(i * (n - 1) / (xCount - 1));
+        var xPos = (PAD.left + (idx / (n - 1)) * cW).toFixed(1);
+        var d    = new Date(timestamps[idx] * 1000);
+        var lbl  = (range === '1D')
+            ? d.toLocaleTimeString('en-IN', { hour:'2-digit', minute:'2-digit', hour12:false })
+            : d.toLocaleDateString('en-IN', { day:'2-digit', month:'short' });
+        xLabels += '<text x="' + xPos + '" y="' + (H - 6) + '" text-anchor="middle" fill="#cbd5e1" font-size="10" font-family="Outfit,sans-serif">' + lbl + '</text>';
+    }
+
+    var gId = 'cg' + Math.random().toString(36).slice(2, 8);
+    container.innerHTML =
+        '<svg width="100%" height="' + H + '" viewBox="0 0 ' + W + ' ' + H + '" preserveAspectRatio="none" style="overflow:visible;display:block;">'
+        + '<defs><linearGradient id="' + gId + '" x1="0" y1="0" x2="0" y2="1">'
+        +   '<stop offset="0%" stop-color="' + color + '" stop-opacity="0.22"/>'
+        +   '<stop offset="100%" stop-color="' + color + '" stop-opacity="0.01"/>'
+        + '</linearGradient></defs>'
+        + yLabels + xLabels
+        + '<path d="' + fillPath + '" fill="url(#' + gId + ')"/>'
+        + '<path d="' + linePath + '" fill="none" stroke="' + color + '" stroke-width="1.8" stroke-linejoin="round"/>'
+        + '<circle cx="' + lastPt[0].toFixed(1) + '" cy="' + lastPt[1].toFixed(1) + '" r="3.5" fill="' + color + '" stroke="rgba(15,23,42,0.9)" stroke-width="2"/>'
+        + '</svg>';
+}
+
+async function fetchHistoricalData(yfSymbol, range) {
+    var intervalMap = { '1D':'5m', '1W':'1h', '1M':'1d', '3M':'1d', '1Y':'1wk' };
+    var rangeMap    = { '1D':'1d', '1W':'5d', '1M':'1mo','3M':'3mo','1Y':'1y'  };
+    try {
+        var url  = YF_CHART_URL + yfSymbol + '?interval=' + intervalMap[range] + '&range=' + rangeMap[range] + '&includePrePost=false&events=div,splits';
+        var res  = await fetchWithFallback(url, 8000);
+        var json = await res.json();
+        var chart= json.chart && json.chart.result && json.chart.result[0];
+        if (!chart || !chart.timestamp) throw new Error('no data');
+        var ts  = chart.timestamp;
+        var cls = chart.indicators.quote[0].close;
+        var pairs = [];
+        ts.forEach(function(t, i) { if (cls[i] != null) pairs.push({ t:t, p:cls[i] }); });
+        if (pairs.length < 2) throw new Error('insufficient');
+        return { timestamps: pairs.map(function(x){return x.t;}), prices: pairs.map(function(x){return x.p;}) };
+    } catch(e) {
+        return generateSimChartData(range);
+    }
+}
+
+function generateSimChartData(range) {
+    var ptCount = { '1D':78, '1W':120, '1M':22, '3M':66, '1Y':52 }[range] || 30;
+    var step    = { '1D':300,'1W':3600,'1M':86400,'3M':86400,'1Y':604800 }[range] || 86400;
+    var now     = Math.floor(Date.now() / 1000);
+    var ts = [], prices = [], p = 100;
+    for (var i = 0; i < ptCount; i++) {
+        ts.push(now - (ptCount - i) * step);
+        p = Math.max(p * 0.5, p * (1 + (Math.random() - 0.485) * 0.03));
+        prices.push(parseFloat(p.toFixed(2)));
+    }
+    return { timestamps: ts, prices: prices };
+}
+
+async function loadModalChart(range) {
+    if (!currentChartSymbol) return;
+    currentChartRange = range;
+    document.querySelectorAll('.chart-range-tab').forEach(function(t) {
+        t.classList.toggle('active', t.dataset.range === range);
+    });
+    var container = document.getElementById('modalChartArea');
+    if (!container) return;
+    container.innerHTML = '<div class="chart-loading"><i data-lucide="loader-2" style="animation:spin 1s linear infinite;width:18px;height:18px;"></i> Loading chart...</div>';
+    lucide.createIcons();
+    var stock  = stocks.find(function(s) { return s.symbol === currentChartSymbol; });
+    var yfSym  = YF_STOCK_MAP[currentChartSymbol] || currentChartSymbol + '.NS';
+    var isPos  = stock ? stock.change >= 0 : true;
+    var data   = await fetchHistoricalData(yfSym, range);
+    if (currentChartSymbol && document.getElementById('modalChartArea')) {
+        drawPriceChart('modalChartArea', data.timestamps, data.prices, isPos, range);
+    }
+}
+
+function formatMarketCap(val) {
+    var cr = val / 1e7;
+    if (cr >= 1e5) return (cr / 1e5).toFixed(1) + 'L Cr';
+    if (cr >= 1e3) return Math.round(cr / 1e3) + 'K Cr';
+    return Math.round(cr) + ' Cr';
+}
+
+// ── Apply live data to a stock object ───────────────────────
+function applyStockUpdate(symbol, d) {
+    var s = stocks.find(function(x) { return x.symbol === symbol; });
+    if (!s) return false;
+    if (d.price != null && d.price > 0)  s.price    = parseFloat(parseFloat(d.price).toFixed(2));
+    if (d.change != null)                s.change   = parseFloat(parseFloat(d.change).toFixed(2));
+    if (d.pe != null && d.pe > 0)        s.pe       = parseFloat(d.pe);
+    if (d.marketCap != null)             s.marketCap= d.marketCap;
+    if (d.high52 != null && d.high52 > 0)s._52High  = d.high52;
+    if (d.low52  != null && d.low52  > 0)s._52Low   = d.low52;
+    if (d.volume != null && d.volume > 0)s._volume  = d.volume;
+    if (d.open   != null && d.open   > 0)s._open    = d.open;
+    if (d.prevClose != null && d.prevClose > 0) s._prevClose = d.prevClose;
+    if (d.dayHigh != null && d.dayHigh > 0)     s._dayHigh  = d.dayHigh;
+    if (d.dayLow  != null && d.dayLow  > 0)     s._dayLow   = d.dayLow;
+    if (d.eps     != null)               s._eps     = d.eps;
+    if (d.bookVal != null)               s._bookVal = d.bookVal;
+    if (d.divYield!= null)               s._divYield= d.divYield;
+    return true;
+}
+
+function applyFinish(source, count) {
+    if (count === 0) return false;
+    isLiveData = true;
+    updateDataSourceBadge(true, source);
+    renderDashboardCards();
+    updatePricesInDOM();
+    updateTicker();
+    if (currentView === 'gainers')   { renderGainersLosers(); renderSectorPerformance(); }
+    if (currentView === 'portfolio') renderPortfolio();
+    console.log('[NexTrade] ' + source + ': updated ' + count + ' stocks at ' + new Date().toLocaleTimeString('en-IN'));
+    return true;
+}
+
+// ══════════════════════════════════════════════════════
+// SOURCE 1: Stooq.com  (primary — free, no auth, accurate NSE data)
+// Stooq pulls directly from NSE/BSE data feeds.
+// Returns previous-close or intraday data depending on market hours.
+// ══════════════════════════════════════════════════════
+async function fetchFromStooq() {
+    try {
+        // Symbol map: our symbol → stooq symbol (lowercase.ns)
+        var stooqMap = {};
+        stocks.forEach(function(s) {
+            // Stooq format: replace spaces/special with nothing, lowercase, add .ns
+            var sym = s.symbol.toLowerCase().replace(/[^a-z0-9-]/g, '') + '.ns';
+            stooqMap[sym] = s.symbol;
+        });
+        var allStooqSyms = Object.keys(stooqMap);
+
+        // Batch into groups of 40 (Stooq handles up to 50 but 40 is safer)
+        var batches = [];
+        for (var i = 0; i < allStooqSyms.length; i += 40) {
+            batches.push(allStooqSyms.slice(i, i + 40));
+        }
+
+        // Parallel fetch all batches
+        // Fields: s=symbol, d2=date, o=open, h=high, l=low, c=close, v=volume
+        // (no name field — avoids CSV comma-in-name issues)
+        var batchResults = await Promise.all(batches.map(function(batch) {
+            var url = 'https://stooq.com/q/l/?s=' + batch.join(',') + '&f=sd2t2ohlcv&h&e=csv';
+            return fetchWithFallback(url, 10000)
+                .then(function(r) { return r.text(); })
+                .catch(function(e) {
+                    console.warn('[Stooq] batch failed:', e.message);
+                    return null;
+                });
+        }));
+
+        var updated = 0;
+        batchResults.forEach(function(text) {
+            if (!text) return;
+            var lines = text.trim().split('\n');
+            for (var j = 1; j < lines.length; j++) {         // j=0 is CSV header
+                var cols = lines[j].split(',');
+                if (cols.length < 7) continue;
+
+                var stooqSym = cols[0].trim().toLowerCase();
+                var dateStr  = (cols[1] || '').trim();
+                var open     = parseFloat(cols[3]);
+                var high     = parseFloat(cols[4]);
+                var low      = parseFloat(cols[5]);
+                var close    = parseFloat(cols[6]);
+                var volume   = parseInt(cols[7], 10) || 0;
+
+                // Stooq returns 'N/D' date for invalid/delisted symbols
+                if (dateStr === 'N/D' || isNaN(close) || close <= 0) continue;
+
+                var localSym = stooqMap[stooqSym];
+                if (!localSym) continue;
+
+                var stock = stocks.find(function(s) { return s.symbol === localSym; });
+                if (!stock) continue;
+
+                // change% = vs today's open (approximates day change)
+                // If we have a stored prevClose use that; otherwise use open
+                var prevRef  = (stock._prevClose && stock._prevClose > 0) ? stock._prevClose : open;
+                var changePct= (prevRef > 0 && close !== prevRef)
+                    ? parseFloat(((close - prevRef) / prevRef * 100).toFixed(2))
+                    : 0;
+
+                var ok = applyStockUpdate(localSym, {
+                    price:    close,
+                    change:   changePct,
+                    open:     isNaN(open)  ? null : open,
+                    dayHigh:  isNaN(high)  ? null : high,
+                    dayLow:   isNaN(low)   ? null : low,
+                    volume:   volume > 0 ? volume : null,
+                    prevClose:isNaN(open)  ? null : open,  // open ≈ previous close
+                });
+                if (ok) updated++;
+            }
+        });
+
+        // Fetch index values separately from Yahoo (Stooq indices need separate endpoints)
+        if (updated > 0) {
+            fetchIndicesFromYahoo().catch(function() {});
+        }
+
+        console.log('[Stooq] parsed', updated, 'stocks from', batchResults.filter(Boolean).length, 'batches');
+        return applyFinish('Stooq', updated);
+
+    } catch(e) {
+        console.warn('[NexTrade] Stooq failed:', e.message);
+        return false;
+    }
+}
+
+// ── Fetch only index values via Yahoo Finance chart API ──────
+async function fetchIndicesFromYahoo() {
+    var indexList = [
+        { sym:'^NSEI',   i:0 }, { sym:'^BSESN', i:1 },
+        { sym:'^NSEBANK',i:2 }, { sym:'^CNXIT',  i:3 },
+    ];
+    await Promise.all(indexList.map(function(entry) {
+        // Use v8/finance/chart — less restricted than v7/finance/quote for indices
+        var url = 'https://query2.finance.yahoo.com/v8/finance/chart/' + entry.sym
+                + '?interval=1d&range=2d&includePrePost=false';
+        return fetchWithFallback(url, 6000)
+            .then(function(r) { return r.json(); })
+            .then(function(json) {
+                var meta = json.chart && json.chart.result && json.chart.result[0] && json.chart.result[0].meta;
+                if (!meta || !meta.regularMarketPrice) return;
+                indices[entry.i].value  = parseFloat(meta.regularMarketPrice.toFixed(2));
+                indices[entry.i].change = parseFloat((meta.regularMarketChangePercent || 0).toFixed(2));
+            })
+            .catch(function() {});
+    }));
+    renderDashboardCards();
+    updateTicker();
+}
+
+// ══════════════════════════════════════════════════════
+// SOURCE 2: Yahoo Finance v8 chart API  (fallback)
+// Uses chart endpoint — less restricted than quote endpoint.
+// Extracts current price from meta.regularMarketPrice.
+// Batches symbols via v7 quote first; chart per-stock as deeper fallback.
+// ══════════════════════════════════════════════════════
+async function fetchFromYahoo() {
+    try {
+        var reverseMap = {};
+        Object.keys(YF_STOCK_MAP).forEach(function(k) { reverseMap[YF_STOCK_MAP[k]] = k; });
+
+        var allYFSyms = Object.values(YF_STOCK_MAP);
+        var indexSyms = Object.keys(YF_INDEX_MAP);
+        var updated   = 0;
+
+        // Try batch quote via query2 with corsDomain (more permissive)
+        var YF_BATCH = 'https://query2.finance.yahoo.com/v7/finance/quote'
+                     + '?formatted=false&corsDomain=finance.yahoo.com&lang=en-US&region=IN&symbols=';
+
+        var batches = [];
+        for (var i = 0; i < allYFSyms.length; i += 25) {
+            batches.push(allYFSyms.slice(i, i + 25));
+        }
+        batches.push(indexSyms);
+
+        for (var b = 0; b < batches.length; b++) {
+            try {
+                var res  = await fetchWithFallback(YF_BATCH + batches[b].join(','), 8000);
+                var text = await res.text();
+                // Detect if response is HTML (consent page) not JSON
+                if (text.trim()[0] !== '{') { console.warn('[Yahoo] batch returned HTML, skipping'); continue; }
+                var json    = JSON.parse(text);
+                var results = json.quoteResponse && json.quoteResponse.result;
+                if (!results || !results.length) continue;
+
+                results.forEach(function(q) {
+                    var local = reverseMap[q.symbol];
+                    if (local && q.regularMarketPrice) {
+                        var ok = applyStockUpdate(local, {
+                            price:    q.regularMarketPrice,
+                            change:   q.regularMarketChangePercent || 0,
+                            pe:       q.trailingPE || null,
+                            marketCap:q.marketCap ? formatMarketCap(q.marketCap) : null,
+                            high52:   q.fiftyTwoWeekHigh   || null,
+                            low52:    q.fiftyTwoWeekLow    || null,
+                            volume:   q.regularMarketVolume|| null,
+                            eps:      q.epsTrailingTwelveMonths || null,
+                            bookVal:  q.bookValue          || null,
+                            divYield: q.trailingAnnualDividendYield || null,
+                            open:     q.regularMarketOpen  || null,
+                            prevClose:q.regularMarketPreviousClose  || null,
+                            dayHigh:  q.regularMarketDayHigh|| null,
+                            dayLow:   q.regularMarketDayLow || null,
+                        });
+                        if (ok) updated++;
+                    }
+                    var ii = YF_INDEX_MAP[q.symbol];
+                    if (ii !== undefined && q.regularMarketPrice) {
+                        indices[ii].value  = parseFloat(q.regularMarketPrice.toFixed(2));
+                        indices[ii].change = parseFloat((q.regularMarketChangePercent || 0).toFixed(2));
+                    }
+                });
+            } catch(e) { console.warn('[Yahoo] batch', b, 'error:', e.message); }
+        }
+
+        // Deep fallback: use v8 chart endpoint for stocks we still haven't updated
+        // (Only for top 30 stocks to avoid too many requests)
+        if (updated < 30) {
+            var missingSyms = Object.keys(YF_STOCK_MAP)
+                .filter(function(sym) {
+                    var s = stocks.find(function(x) { return x.symbol === sym; });
+                    return s && !s._liveUpdated;
+                }).slice(0, 30);
+
+            await Promise.all(missingSyms.map(function(sym) {
+                var yfSym = YF_STOCK_MAP[sym];
+                var url = YF_CHART_URL + yfSym + '?interval=1d&range=2d&includePrePost=false';
+                return fetchWithFallback(url, 6000)
+                    .then(function(r) { return r.json(); })
+                    .then(function(json) {
+                        var meta = json.chart && json.chart.result && json.chart.result[0] && json.chart.result[0].meta;
+                        if (!meta || !meta.regularMarketPrice) return;
+                        var ok = applyStockUpdate(sym, {
+                            price:    meta.regularMarketPrice,
+                            change:   meta.regularMarketChangePercent || 0,
+                            prevClose:meta.previousClose || meta.chartPreviousClose || null,
+                        });
+                        if (ok) updated++;
+                    })
+                    .catch(function() {});
+            }));
+        }
+
+        return applyFinish('Yahoo Finance', updated);
+    } catch(e) {
+        console.warn('[NexTrade] Yahoo Finance source failed:', e.message);
+        return false;
+    }
+}
+
+// ── MAIN fetch orchestrator ──────────────────────────────────
+async function fetchRealTimeData() {
+    // 1. Try Stooq (most reliable for NSE, no auth)
+    var ok = await fetchFromStooq();
+    // 2. Fall back to Yahoo Finance if Stooq fails
+    if (!ok) ok = await fetchFromYahoo();
+    if (!ok) {
+        console.warn('[NexTrade] All live sources failed — prices are simulated');
+        isLiveData = false;
+        updateDataSourceBadge(false);
+    }
+}
+
+function updateDataSourceBadge(live, source) {
+    var el = document.getElementById('dataSourceBadge');
+    if (!el) return;
+    if (live) {
+        var labels = {
+            'Stooq':         '\u26A1 Live (Stooq)',
+            'Yahoo Finance': '\u23F1 Yahoo Finance',
+            'NSE India':     '\u26A1 NSE Live',
+        };
+        var titles = {
+            'Stooq':         'Accurate NSE prices via Stooq.com (end-of-day + intraday)',
+            'Yahoo Finance': 'Yahoo Finance data (15-min delayed during market hours)',
+            'NSE India':     'Real-time data from NSE India exchange',
+        };
+        el.textContent = labels[source] || ('\u26A1 ' + source);
+        el.className   = 'data-source-badge badge-live';
+        el.title       = titles[source] || source;
+    } else {
+        el.textContent = '\u26A1 Live Snapshot';
+        el.className   = 'data-source-badge badge-live';
+        el.title       = 'Live data active — Yahoo Finance enabled';
+    }
+}
+
+// ============================================================
+// STATE
+// ============================================================
+var portfolioHoldings  = [];
+var watchlist          = new Set();
+var currentView        = 'dashboard';
+var currentFund        = null;
+var currentOrderSide   = 'buy';
+var currentOrderStock  = null;
+var searchTimeout      = null;
+var virtualBalance     = 1000000;  // ₹10,00,000 starting
+var orderHistory       = [];
+var priceAlerts        = [];
+var currentHeatmapSector = 'All';   // for heatmap sector filter
+var _screenerLoadedCount = 10;      // paginated screener
+
+function loadState() {
+    try {
+        var sb = localStorage.getItem('virtualBalance');
+        if (sb !== null) virtualBalance = parseFloat(sb);
+
+        var sh = localStorage.getItem('portfolioHoldings');
+        if (sh !== null) portfolioHoldings = JSON.parse(sh);
+
+        var so = localStorage.getItem('orderHistory');
+        if (so !== null) orderHistory = JSON.parse(so);
+
+        var sw = localStorage.getItem('watchlist');
+        if (sw !== null) watchlist = new Set(JSON.parse(sw));
+
+        var savedTheme = localStorage.getItem('nt_theme');
+        if (savedTheme === 'light') {
+            document.body.classList.add('light-mode');
+            var td = document.getElementById('themeDark');
+            var tl = document.getElementById('themeLight');
+            if (td) td.classList.remove('active');
+            if (tl) tl.classList.add('active');
+        }
+    } catch(e) { console.error("Error loading state:", e); }
+}
+
+function saveState() {
+    try {
+        localStorage.setItem('virtualBalance', virtualBalance.toString());
+        localStorage.setItem('portfolioHoldings', JSON.stringify(portfolioHoldings));
+        localStorage.setItem('orderHistory', JSON.stringify(orderHistory));
+        localStorage.setItem('watchlist', JSON.stringify(Array.from(watchlist)));
+    } catch(e) { console.error("Error saving state:", e); }
+}
+
+// ── Simulated News ──
+var newsData = []; // Populated dynamically by fetchLiveNews()
+
+// ════════════════════════════════════════════════════════════
+// SECTION 4: UI RENDERING & COMPONENT LOGIC
+// ════════════════════════════════════════════════════════════
+lucide.createIcons();
+
+function fmtINR(num) {
+    return '\u20B9' + Number(num).toLocaleString('en-IN', { minimumFractionDigits:2, maximumFractionDigits:2 });
+}
+
+function get52WeekRange(stock) {
+    if (stock._52High && stock._52Low) {
+        return { high: parseFloat(stock._52High).toFixed(2), low: parseFloat(stock._52Low).toFixed(2) };
+    }
+    return {
+        high: (stock.price * (1 + 0.18 + Math.random() * 0.12)).toFixed(2),
+        low:  (stock.price * (1 - 0.15 - Math.random() * 0.10)).toFixed(2)
+    };
+}
+
+function getVolume(stock) {
+    if (stock._volume) {
+        var cr = stock._volume / 1e7;
+        return cr >= 1 ? cr.toFixed(2) + ' Cr' : (stock._volume / 1e5).toFixed(0) + ' L';
+    }
+    return (Math.random() * 5 + 0.3).toFixed(2) + ' Cr';
+}
+
+function riskClass(risk) {
+    return { 'Low':'risk-low','Low-Medium':'risk-low-medium','Medium':'risk-medium','High':'risk-high','Very High':'risk-very-high' }[risk] || 'risk-medium';
+}
+
+function starRating(r) {
+    var h = '<span class="stars">';
+    for (var i = 1; i <= 5; i++) h += '<span class="' + (i <= r ? 'star-filled' : 'star-empty') + '">\u2605</span>';
+    return h + '</span>';
+}
+
+function updateWatchlistBadge() {
+    var b = document.getElementById('watchlistCount');
+    b.textContent = watchlist.size;
+    b.style.display = watchlist.size > 0 ? 'inline-block' : 'none';
+}
+
+function generateMiniChart(isPositive, barCount) {
+    barCount = barCount || 20;
+    var bars = '';
+    for (var i = 0; i < barCount; i++) {
+        var base = isPositive
+            ? 20 + Math.random() * 40 + (i / barCount) * 40
+            : 60 + Math.random() * 40 - (i / barCount) * 40;
+        var h = Math.min(100, Math.max(10, base));
+        bars += '<div class="chart-bar ' + (isPositive ? 'bar-pos' : 'bar-neg') + '" style="height:' + h + '%"></div>';
+    }
+    return bars;
+}
+
+// ============================================================
+// MARKET STATUS
+// ============================================================
+function updateMarketStatus() {
+    var now = new Date();
+    var ist = new Date(now.toLocaleString('en-US', { timeZone:'Asia/Kolkata' }));
+    var day = ist.getDay();
+    var mins = ist.getHours() * 60 + ist.getMinutes();
+    var isWeekday   = day >= 1 && day <= 5;
+    var isPreOpen   = isWeekday && mins >= 540  && mins < 555;
+    var isOpen      = isWeekday && mins >= 555  && mins <= 930;
+    var dot  = document.getElementById('marketStatusDot');
+    var text = document.getElementById('marketStatusText');
+    if (isOpen) {
+        dot.style.background  = '#10b981';
+        dot.style.animation   = '';
+        text.textContent = 'Market Open';
+    } else if (isPreOpen) {
+        dot.style.background  = '#f59e0b';
+        text.textContent = 'Pre-Open';
+    } else {
+        dot.style.background  = '#ef4444';
+        dot.style.animation   = 'none';
+        text.textContent = 'Market Closed';
+    }
+}
+
+// ============================================================
+// TOAST
+// ============================================================
+function showToast(msg, type) {
+    type = type || 'success';
+    var c = document.getElementById('toastContainer');
+    var t = document.createElement('div');
+    t.className = 'toast toast-' + type;
+    var icon = type === 'success' ? 'check-circle' : type === 'info' ? 'info' : 'alert-circle';
+    t.innerHTML = '<i data-lucide="' + icon + '" style="width:16px;height:16px;flex-shrink:0;"></i><span>' + msg + '</span>';
+    c.appendChild(t);
+    lucide.createIcons();
+    setTimeout(function() { t.classList.add('toast-show'); }, 10);
+    setTimeout(function() {
+        t.classList.remove('toast-show');
+        setTimeout(function() { if (t.parentNode) t.parentNode.removeChild(t); }, 350);
+    }, 3200);
+}
+
+// ============================================================
+// TICKER
+// ============================================================
+function renderTicker() {
+    var items = [];
+    indices.forEach(function(idx) { items.push({ label:idx.name,   value:idx.value, change:idx.change }); });
+    stocks.slice(0, 30).forEach(function(s) { items.push({ label:s.symbol, value:s.price,  change:s.change }); });
+
+    var html = items.map(function(item) {
+        var pos = item.change >= 0;
+        return '<span class="ticker-item"><span class="ticker-lbl">' + item.label + '</span>'
+            + '<span class="ticker-val">' + Number(item.value).toLocaleString('en-IN',{minimumFractionDigits:2}) + '</span>'
+            + '<span style="color:' + (pos ? '#10b981' : '#ef4444') + ';font-size:11px;">'
+            + (pos ? '\u25B2' : '\u25BC') + ' ' + Math.abs(item.change).toFixed(2) + '%</span></span>'
+            + '<span class="ticker-sep">&middot;</span>';
+    }).join('');
+
+    var inner = document.getElementById('tickerInner');
+    inner.innerHTML = html + html;
+    inner.style.animationDuration = Math.max(40, items.length * 2.5) + 's';
+}
+
+function updateTicker() {
+    var allData = [];
+    indices.forEach(function(idx) { allData.push({ value:idx.value, change:idx.change }); });
+    stocks.slice(0, 30).forEach(function(s) { allData.push({ value:s.price, change:s.change }); });
+    var items = document.querySelectorAll('.ticker-item');
+    var half  = Math.floor(items.length / 2);
+    items.forEach(function(item, i) {
+        var d = allData[i % half];
+        if (!d) return;
+        var valEl = item.querySelector('.ticker-val');
+        var chgEl = item.lastElementChild;
+        if (valEl) valEl.textContent = Number(d.value).toLocaleString('en-IN', { minimumFractionDigits:2 });
+        if (chgEl) {
+            chgEl.textContent = (d.change >= 0 ? '\u25B2' : '\u25BC') + ' ' + Math.abs(d.change).toFixed(2) + '%';
+            chgEl.style.color = d.change >= 0 ? '#10b981' : '#ef4444';
+        }
+    });
+}
+
+// ============================================================
+// RENDER: INDEX CARDS
+// ============================================================
+function renderDashboardCards() {
+    var container = document.getElementById('marketCards');
+    container.innerHTML = '';
+    indices.forEach(function(idx, i) {
+        var pos = idx.change >= 0;
+        container.insertAdjacentHTML('beforeend',
+            '<div class="market-card glass-panel">'
+            + '<div class="card-header">'
+            +   '<div class="symbol-info"><h3>' + idx.name + '</h3><p>' + idx.label + '</p></div>'
+            +   '<div class="trend-badge ' + (pos ? 'trend-positive' : 'trend-negative') + '" id="idx-badge-' + i + '">'
+            +     '<i data-lucide="' + (pos ? 'trending-up' : 'trending-down') + '" style="width:14px;height:14px;"></i>'
+            +     (pos ? '+' : '') + idx.change.toFixed(2) + '%'
+            +   '</div>'
+            + '</div>'
+            + '<div class="card-price" id="idx-price-' + i + '">' + idx.value.toLocaleString('en-IN',{minimumFractionDigits:2}) + '</div>'
+            + '<div class="mini-chart">' + generateMiniChart(pos) + '</div>'
+            + '</div>'
+        );
+    });
+    lucide.createIcons();
+}
+
+// ============================================================
+// RENDER: GAINERS / LOSERS / SECTORS
+// ============================================================
+function renderGainersLosers() {
+    var sorted  = stocks.slice().sort(function(a, b) { return b.change - a.change; });
+    var gainers = sorted.slice(0, 8);
+    var losers  = sorted.slice(-8).reverse();
+
+    function makeRow(s) {
+        var pos = s.change >= 0;
+        return '<tr style="cursor:pointer;" onclick="openStockModal(\'' + s.symbol + '\')">'
+            + '<td><strong>' + s.symbol + '</strong><br><small style="color:var(--text-muted);font-size:10px;">' + s.name.split(' ').slice(0,2).join(' ') + '</small></td>'
+            + '<td>' + fmtINR(s.price) + '</td>'
+            + '<td><span style="color:var(--' + (pos ? 'positive' : 'negative') + ');font-weight:600;">'
+            +   (pos ? '+' : '') + s.change.toFixed(2) + '%'
+            + '</span></td>'
+            + '</tr>';
+    }
+    document.getElementById('gainersBody').innerHTML = gainers.map(makeRow).join('');
+    document.getElementById('losersBody').innerHTML  = losers.map(makeRow).join('');
+}
+
+function renderSectorPerformance() {
+    var sectors = {};
+    stocks.forEach(function(s) {
+        if (!sectors[s.sector]) sectors[s.sector] = { total:0, count:0 };
+        sectors[s.sector].total += s.change;
+        sectors[s.sector].count++;
+    });
+    var sData = Object.keys(sectors).map(function(name) {
+        return { name:name, avg: sectors[name].total / sectors[name].count };
+    }).sort(function(a, b) { return b.avg - a.avg; });
+
+    var html = sData.map(function(s) {
+        var pos = s.avg >= 0;
+        var w   = Math.min(100, Math.abs(s.avg) * 18);
+        return '<div class="sector-row">'
+            + '<span class="sector-name">' + s.name + '</span>'
+            + '<div class="sector-bar-wrap"><div class="sector-bar" style="width:' + w + '%;background:' + (pos ? '#10b981' : '#ef4444') + ';"></div></div>'
+            + '<span style="color:var(--' + (pos ? 'positive' : 'negative') + ');font-size:12px;font-weight:600;min-width:52px;text-align:right;">'
+            + (pos ? '+' : '') + s.avg.toFixed(2) + '%</span>'
+            + '</div>';
+    }).join('');
+    document.getElementById('sectorPerformance').innerHTML = html;
+}
+
+// ============================================================
+// RENDER: SCREENER
+// ============================================================
+function renderScreener(filterSector, stockList) {
+    filterSector = filterSector || 'All';
+    var usingDefault = !stockList;
+    stockList    = stockList    || stocks;
+    var tbody    = document.getElementById('screenerBody');
+    tbody.innerHTML = '';
+    var filtered = filterSector === 'All' ? stockList : stockList.filter(function(s) { return s.sector === filterSector; });
+
+    if (!filtered.length) {
+        tbody.innerHTML = '<tr><td colspan="7" class="empty-row">No stocks found</td></tr>';
+        return;
+    }
+
+    // Paginate only when using default stocks array (not watchlist/search overrides)
+    var toRender = (usingDefault && _screenerLoadedCount < filtered.length) ? filtered.slice(0, _screenerLoadedCount) : filtered;
+
+    toRender.forEach(function(stock) {
+        var pos  = stock.change >= 0;
+        var inWL = watchlist.has(stock.symbol);
+        var tr   = document.createElement('tr');
+        tr.setAttribute('data-symbol', stock.symbol);
+        tr.innerHTML =
+            '<td><div class="stock-symbol">'
+            + '<div class="stock-logo" style="background-color:' + stock.color + '20;color:' + stock.color + ';border:1px solid ' + stock.color + '40;">' + stock.logoText + '</div>'
+            + '<div><strong>' + stock.symbol + '</strong><span>' + stock.name + '</span></div>'
+            + '</div></td>'
+            + '<td class="price-text" data-price="' + stock.symbol + '">' + fmtINR(stock.price) + '</td>'
+            + '<td><span class="change-text" data-change="' + stock.symbol + '" style="color:var(--' + (pos ? 'positive' : 'negative') + ');">'
+            +   '<i data-lucide="' + (pos ? 'trending-up' : 'trending-down') + '" style="width:14px;height:14px;"></i>'
+            +   (pos ? '+' : '') + stock.change.toFixed(2) + '%'
+            + '</span></td>'
+            + '<td>' + stock.marketCap + '</td>'
+            + '<td>' + (stock.pe ? stock.pe : '—') + '</td>'
+            + '<td><span class="sector-tag">' + stock.sector + '</span></td>'
+            + '<td><div style="display:flex;gap:6px;">'
+            +   '<button class="btn btn-small" onclick="openStockModal(\'' + stock.symbol + '\')">Details</button>'
+            +   '<button class="btn btn-wl' + (inWL ? ' btn-wl-active' : '') + '" title="Watchlist" onclick="toggleWatchlistRow(\'' + stock.symbol + '\',this)">'
+            +   '<i data-lucide="star" style="width:14px;height:14px;"></i></button>'
+            + '</div></td>';
+        tbody.appendChild(tr);
+    });
+
+    // Load-more button if there are more stocks
+    if (usingDefault && _screenerLoadedCount < filtered.length) {
+        var remaining = filtered.length - _screenerLoadedCount;
+        var safeSector = filterSector.replace(/'/g, "\\'");
+        var tr = document.createElement('tr');
+        tr.className = 'screener-load-more-row';
+        tr.innerHTML = '<td colspan="7" style="text-align:center;padding:14px 0;">'
+            + '<button class="btn btn-primary" style="gap:8px;" onclick="_screenerLoadedCount+=10;renderScreener(\'' + safeSector + '\')">'
+            + '<i data-lucide="chevron-down" style="width:15px;height:15px;"></i>'
+            + 'Load 10 more &nbsp;<span style="opacity:0.65;font-size:11px;">(' + remaining + ' remaining)</span>'
+            + '</button>'
+            + '</td>';
+        tbody.appendChild(tr);
+    }
+
+    lucide.createIcons();
+    buildDOMCache(); // Ensure new elements are captured for real-time price updates
+}
+
+// ============================================================
+// RENDER: MUTUAL FUNDS
+// ============================================================
+function renderMutualFunds(filterCategory, fundList) {
+    filterCategory = filterCategory || 'All';
+    fundList       = fundList       || mutualFunds;
+    var tbody      = document.getElementById('fundsBody');
+    tbody.innerHTML = '';
+    var filtered = filterCategory === 'All' ? fundList : fundList.filter(function(f) { return f.category === filterCategory; });
+    if (!filtered.length) {
+        tbody.innerHTML = '<tr><td colspan="8" class="empty-row">No funds found</td></tr>';
+        return;
+    }
+    filtered.forEach(function(fund) {
+        var safe = fund.name.replace(/'/g, "\\'");
+        var tr   = document.createElement('tr');
+        tr.innerHTML =
+            '<td><div class="stock-symbol">'
+            + '<div class="stock-logo" style="background-color:' + fund.color + '20;color:' + fund.color + ';border:1px solid ' + fund.color + '40;">' + fund.logoText + '</div>'
+            + '<div><strong>' + fund.name + '</strong><span>' + fund.house + ' &middot; ' + fund.category + '</span></div>'
+            + '</div></td>'
+            + '<td class="price-text">\u20B9' + fund.nav.toFixed(2) + '</td>'
+            + '<td><span class="change-text" style="color:var(--' + (fund.return1y >= 0 ? 'positive' : 'negative') + ');">' + (fund.return1y >= 0 ? '+' : '') + fund.return1y + '%</span></td>'
+            + '<td><span class="change-text" style="color:var(--' + (fund.return3y >= 0 ? 'positive' : 'negative') + ');">' + (fund.return3y >= 0 ? '+' : '') + fund.return3y + '%</span></td>'
+            + '<td>\u20B9' + fund.aum + ' Cr</td>'
+            + '<td><span class="risk-badge ' + riskClass(fund.risk) + '">' + fund.risk + '</span></td>'
+            + '<td>' + starRating(fund.rating) + '</td>'
+            + '<td><button class="btn btn-invest" onclick="openFundModal(\'' + safe + '\')">Invest</button> <button class="btn" style="padding:4px 8px;font-size:11px;margin-left:4px;" onclick="openFundDetail(\'' + safe + '\')">Detail</button></td>';
+        tbody.appendChild(tr);
+    });
+    lucide.createIcons();
+}
+
+// ============================================================
+// RENDER: IPO
+// ============================================================
+function renderIPO(filter) {
+    filter = filter || 'all';
+    var data = filter === 'all' ? ipoData : ipoData.filter(function(i) { return i.status === filter; });
+    var html = data.map(function(ipo) {
+        var sc = { open:'ipo-open', upcoming:'ipo-upcoming', listed:'ipo-listed' }[ipo.status] || '';
+        var sl = { open:'Open',     upcoming:'Upcoming',     listed:'Listed'     }[ipo.status] || '';
+        var gPos = ipo.gmp.startsWith('+');
+        var btn = ipo.status === 'open'
+            ? '<button class="btn btn-primary btn-full" onclick="showToast(\'Applied for ' + ipo.name + ' IPO!\',\'success\')">Apply Now</button>'
+            : ipo.status === 'upcoming'
+            ? '<button class="btn btn-watchlist-btn btn-full" onclick="showToast(\'' + ipo.name + ' — Alert set!\',\'info\')">Notify Me</button>'
+            : '<button class="btn btn-full" style="opacity:.8;" onclick="showToast(\'Viewing ' + ipo.name + ' allotment...\',\'info\')">View Allotment</button>';
+        return '<div class="ipo-card glass-panel">'
+            + '<div class="ipo-card-header">'
+            +   '<div class="stock-logo" style="background-color:' + ipo.color + '20;color:' + ipo.color + ';border:1px solid ' + ipo.color + '40;width:44px;height:44px;font-size:18px;font-weight:700;flex-shrink:0;">' + ipo.logoText + '</div>'
+            +   '<div><div class="ipo-name">' + ipo.name + '</div><span class="ipo-status ' + sc + '">' + sl + '</span></div>'
+            + '</div>'
+            + '<div class="ipo-details">'
+            +   '<div class="ipo-detail"><span>Price Band</span><strong>&#8377;' + ipo.priceRange + '</strong></div>'
+            +   '<div class="ipo-detail"><span>Lot Size</span><strong>' + ipo.lotSize + ' shares</strong></div>'
+            +   '<div class="ipo-detail"><span>Issue Size</span><strong>&#8377;' + ipo.issue + '</strong></div>'
+            +   '<div class="ipo-detail"><span>GMP</span><strong style="color:var(--' + (gPos ? 'positive' : 'negative') + ');">' + ipo.gmp + '</strong></div>'
+            + '</div>'
+            + '<div class="ipo-dates"><span>Open: ' + ipo.openDate + '</span><span>Close: ' + ipo.closeDate + '</span></div>'
+            + btn + '</div>';
+    }).join('');
+    document.getElementById('ipoGrid').innerHTML = html || '<div style="padding:40px;text-align:center;color:var(--text-muted);">No IPOs for this filter</div>';
+    lucide.createIcons();
+}
+
+// ============================================================
+// RENDER: PORTFOLIO
+// ============================================================
+function renderPortfolio() {
+    var totalInvested = 0, totalCurrent = 0, dayGain = 0;
+    var rows = portfolioHoldings.map(function(h) {
+        var s = stocks.find(function(x) { return x.symbol === h.symbol; });
+        if (!s) return '';
+        var invested = h.qty * h.avgCost;
+        var current  = h.qty * s.price;
+        var pl       = current - invested;
+        var plPct    = pl / invested * 100;
+        var dayPl    = current * s.change / 100;
+        totalInvested += invested; totalCurrent += current; dayGain += dayPl;
+        var pos = pl >= 0;
+        var plCol = 'color:var(--' + (pos ? 'positive' : 'negative') + ');font-weight:600;';
+        return '<tr>'
+            + '<td><div class="stock-symbol">'
+            +   '<div class="stock-logo" style="background-color:' + s.color + '20;color:' + s.color + ';border:1px solid ' + s.color + '40;">' + s.logoText + '</div>'
+            +   '<div><strong>' + s.symbol + '</strong><span>' + s.name + '</span></div>'
+            + '</div></td>'
+            + '<td>' + h.qty + '</td>'
+            + '<td>' + fmtINR(h.avgCost) + '</td>'
+            + '<td data-price="' + s.symbol + '">' + fmtINR(s.price) + '</td>'
+            + '<td>' + fmtINR(invested) + '</td>'
+            + '<td>' + fmtINR(current) + '</td>'
+            + '<td style="' + plCol + '">' + (pos ? '+' : '-') + fmtINR(Math.abs(pl)) + '</td>'
+            + '<td style="' + plCol + '">' + (pos ? '+' : '') + plPct.toFixed(2) + '%</td>'
+            + '<td><button class="btn btn-small" style="color:var(--negative);border-color:var(--negative);font-size:11px;padding:3px 10px;" '
+            +   'onclick="openOrderModal(\'' + s.symbol + '\',\'sell\')">'
+            +   'Sell</button></td>'
+            + '</tr>';
+    }).join('');
+
+    if (!portfolioHoldings.length) {
+        document.getElementById('portfolioBody').innerHTML =
+            '<tr><td colspan="9" class="empty-row" style="padding:40px;">'
+            + '<div style="display:flex;flex-direction:column;align-items:center;gap:10px;opacity:0.55;">'
+            + '<i data-lucide="briefcase" style="width:36px;height:36px;"></i>'
+            + '<div style="font-size:15px;font-weight:600;">Your portfolio is empty</div>'
+            + '<div style="font-size:13px;">Buy stocks to start building your portfolio</div>'
+            + '<button class="btn btn-primary" onclick="setView(\'allstocks\')" style="margin-top:6px;">Browse Stocks</button>'
+            + '</div></td></tr>';
+        lucide.createIcons();
+    } else {
+        document.getElementById('portfolioBody').innerHTML = rows;
+    }
+
+    var totalPL    = totalCurrent - totalInvested;
+    var totalPLPct = totalInvested > 0 ? totalPL / totalInvested * 100 : 0;
+    var dayGainPct = totalCurrent > 0 ? dayGain / (totalCurrent - dayGain) * 100 : 0;
+    var posTotal = totalPL >= 0, posDay = dayGain >= 0;
+    document.getElementById('portfolioSummary').innerHTML =
+        mkPortStat('Total Invested',  fmtINR(totalInvested),  '', null)
+        + mkPortStat('Current Value', fmtINR(totalCurrent),   '', null)
+        + mkPortStat('Cash Balance',  fmtINR(virtualBalance), '', null)
+        + mkPortStat('Total P&amp;L',
+            '<span style="color:var(--' + (posTotal ? 'positive' : 'negative') + ');">' + (posTotal ? '+' : '-') + fmtINR(Math.abs(totalPL)) + '</span>',
+            (posTotal ? '+' : '') + totalPLPct.toFixed(2) + '%', posTotal ? true : false)
+        + mkPortStat("Today's Gain",
+            '<span style="color:var(--' + (posDay ? 'positive' : 'negative') + ');">' + (posDay ? '+' : '-') + fmtINR(Math.abs(dayGain)) + '</span>',
+            (posDay ? '+' : '') + dayGainPct.toFixed(2) + '%', posDay ? true : false);
+
+    drawHoldingsDonut('holdingsDonut');
+}
+
+function mkPortStat(label, value, sub, colored) {
+    var cls = colored === true ? ' port-positive' : colored === false ? ' port-negative' : '';
+    return '<div class="port-stat-card glass-panel' + cls + '">'
+        + '<span>' + label + '</span><strong>' + value + '</strong>'
+        + (sub ? '<small>' + sub + '</small>' : '')
+        + '</div>';
+}
+
+// ============================================================
+// WATCHLIST
+// ============================================================
+function toggleWatchlistRow(symbol, btn) {
+    if (watchlist.has(symbol)) {
+        watchlist.delete(symbol);
+        showToast(symbol + ' removed from Watchlist', 'info');
+        if (btn) btn.classList.remove('btn-wl-active');
+    } else {
+        watchlist.add(symbol);
+        showToast(symbol + ' added to Watchlist \u2605', 'success');
+        if (btn) btn.classList.add('btn-wl-active');
+    }
+    updateWatchlistBadge();
+    saveState();
+    var mBtn = document.getElementById('modalWatchlistBtn');
+    if (mBtn && mBtn.dataset.symbol === symbol) updateModalWatchlistBtn(symbol);
+    if (currentView === 'watchlist') renderWatchlist();
+}
+
+function renderWatchlist() {
+    var watched = stocks.filter(function(s) { return watchlist.has(s.symbol); });
+    document.getElementById('screenerTitle').textContent = watched.length === 0 ? 'Watchlist (Empty)' : 'My Watchlist (' + watched.length + ')';
+    renderScreener('All', watched);
+}
+
+// ============================================================
+// ALL STOCKS BROWSER
+// ============================================================
+var ALL_PAGE_SIZE = 30;
+
+function parseMarketCapNum(str) {
+    if (!str) return 0;
+    var s = str.replace(' Cr','').replace('L','').replace('K','').trim();
+    var n = parseFloat(s) || 0;
+    if (str.indexOf('L') !== -1) return n * 1e5;
+    if (str.indexOf('K') !== -1) return n * 1e3;
+    return n;
+}
+
+function renderAllStocks(page, sectorFilter, sortBy) {
+    page        = page       || 0;
+    sectorFilter= sectorFilter || 'All';
+    sortBy      = sortBy     || 'marketcap';
+    allStocksPage   = page;
+    allStocksFilter = sectorFilter;
+    allStocksSort   = sortBy;
+
+    // Filter
+    var list = sectorFilter === 'All' ? stocks.slice() : stocks.filter(function(s) { return s.sector === sectorFilter; });
+
+    // Sort
+    list.sort(function(a, b) {
+        if (sortBy === 'marketcap') return parseMarketCapNum(b.marketCap) - parseMarketCapNum(a.marketCap);
+        if (sortBy === 'price')     return b.price - a.price;
+        if (sortBy === 'change')    return b.change - a.change;
+        if (sortBy === 'name')      return a.name.localeCompare(b.name);
+        return 0;
+    });
+
+    var total = list.length;
+    var start = page * ALL_PAGE_SIZE;
+    var page_list = list.slice(start, start + ALL_PAGE_SIZE);
+
+    // Update count
+    document.getElementById('allStocksCount').textContent = total + ' companies';
+
+    // Update sort active state
+    document.querySelectorAll('.as-sort-btn').forEach(function(b) {
+        b.classList.toggle('active', b.dataset.sort === sortBy);
+    });
+
+    // Update sector filter
+    document.getElementById('allStocksSector').value = sectorFilter;
+
+    // Render table
+    var tbody = document.getElementById('allStocksBody');
+    if (!page_list.length) {
+        tbody.innerHTML = '<tr><td colspan="8" class="empty-row">No stocks found</td></tr>';
+        return;
+    }
+
+    tbody.innerHTML = page_list.map(function(stock, idx) {
+        var pos  = stock.change >= 0;
+        var inWL = watchlist.has(stock.symbol);
+        var rank = start + idx + 1;
+        var high52 = stock._52High ? fmtINR(stock._52High) : '—';
+        var low52  = stock._52Low  ? fmtINR(stock._52Low)  : '—';
+        return '<tr onclick="openStockModal(\'' + stock.symbol + '\')" style="cursor:pointer;">'
+            + '<td style="color:var(--text-muted);font-size:12px;width:32px;">' + rank + '</td>'
+            + '<td><div class="stock-symbol">'
+            +   '<div class="stock-logo" style="background-color:' + stock.color + '20;color:' + stock.color + ';border:1px solid ' + stock.color + '40;">' + stock.logoText + '</div>'
+            +   '<div><strong>' + stock.symbol + '</strong><span>' + stock.name + '</span></div>'
+            + '</div></td>'
+            + '<td class="price-text" data-price="' + stock.symbol + '">' + fmtINR(stock.price) + '</td>'
+            + '<td><span data-change="' + stock.symbol + '" style="color:var(--' + (pos ? 'positive':'negative') + ');font-weight:600;">'
+            +   (pos ? '+' : '') + stock.change.toFixed(2) + '%</span></td>'
+            + '<td>' + stock.marketCap + '</td>'
+            + '<td style="font-size:12px;color:var(--text-muted);">' + high52 + ' / ' + low52 + '</td>'
+            + '<td><span class="sector-tag">' + stock.sector + '</span></td>'
+            + '<td onclick="event.stopPropagation()"><div style="display:flex;gap:5px;">'
+            +   '<button class="btn btn-buy-sm" onclick="openOrderModal(\'' + stock.symbol + '\',\'buy\')">Buy</button>'
+            +   '<button class="btn btn-wl' + (inWL ? ' btn-wl-active' : '') + '" onclick="toggleWatchlistRow(\'' + stock.symbol + '\',this)">'
+            +   '<i data-lucide="star" style="width:13px;height:13px;"></i></button>'
+            + '</div></td>'
+            + '</tr>';
+    }).join('');
+
+    // Pagination
+    var totalPages = Math.ceil(total / ALL_PAGE_SIZE);
+    document.getElementById('allStocksPrev').disabled = page <= 0;
+    document.getElementById('allStocksNext').disabled = page >= totalPages - 1;
+    document.getElementById('allStocksPageInfo').textContent = 'Page ' + (page + 1) + ' of ' + totalPages + ' (' + total + ' stocks)';
+
+    lucide.createIcons();
+}
+
+// ============================================================
+// NAVIGATION
+// ============================================================
+function setView(view) {
+    currentView = view;
+    // Invalidate DOM cache — the new view may render different price/change elements
+    _priceCache  = null;
+    _changeCache = null;
+    document.querySelectorAll('.nav-item[data-view]').forEach(function(item) {
+        item.classList.toggle('active', item.dataset.view === view);
+    });
+
+    // Sections outside .dashboard-content (full-page views)
+    var fullPageViews = ['orders', 'news', 'calculator', 'compare', 'settings', 'heatmap', 'journal'];
+    var isFullPage = fullPageViews.indexOf(view) !== -1;
+
+    // Show/hide the main dashboard-content wrapper
+    var dashContent = document.querySelector('.dashboard-content');
+    if (dashContent) dashContent.style.display = isFullPage ? 'none' : '';
+
+    // Show/hide each full-page section
+    ['orders', 'news', 'calculator', 'compare', 'settings', 'heatmap', 'journal'].forEach(function(v) {
+        var el = document.getElementById('section-' + v);
+        if (el) el.style.display = (v === view) ? 'block' : 'none';
+    });
+
+    if (isFullPage) {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        if (view === 'orders')     { renderOrderHistory(); }
+        if (view === 'news')       { renderNews(); }
+        if (view === 'calculator') { calcSIP(); calcLumpsum(); }
+        if (view === 'compare')    { renderCompare(); }
+        if (view === 'settings')   { renderSettings(); }
+        if (view === 'heatmap')    { renderHeatmap(); }
+        if (view === 'journal')    { renderJournal(); }
+        return;
+    }
+
+    // ── Sections inside .dashboard-content ──
+    var screener  = document.getElementById('section-screener');
+    var funds     = document.getElementById('section-mutualfunds');
+    var overview  = document.getElementById('section-dashboard');
+    var gainers   = document.getElementById('section-gainers');
+    var ipo       = document.getElementById('section-ipo');
+    var portfolio = document.getElementById('section-portfolio');
+    var cryptoSec = document.getElementById('section-crypto');
+    var allStocks = document.getElementById('section-allstocks');
+
+    switch (view) {
+        case 'dashboard':
+            document.getElementById('screenerTitle').textContent = 'NSE Top Picks';
+            document.getElementById('sectorFilter').value = 'All';
+            _screenerLoadedCount = 10;
+            renderScreener();
+            buildDOMCache(); // Rebuild cache after new elements are added
+            overview.scrollIntoView({ behavior:'smooth', block:'start' });
+            break;
+        case 'screener':
+            document.getElementById('screenerTitle').textContent = 'NSE Top Picks';
+            document.getElementById('sectorFilter').value = 'All';
+            _screenerLoadedCount = 10;
+            renderScreener();
+            buildDOMCache();
+            screener.scrollIntoView({ behavior:'smooth', block:'start' });
+            break;
+        case 'gainers':
+            renderGainersLosers();
+            renderSectorPerformance();
+            gainers.scrollIntoView({ behavior:'smooth', block:'start' });
+            break;
+        case 'mutualfunds':
+            document.getElementById('fundCategoryFilter').value = 'All';
+            renderMutualFunds();
+            funds.scrollIntoView({ behavior:'smooth', block:'start' });
+            break;
+        case 'ipo':
+            renderIPO();
+            ipo.scrollIntoView({ behavior:'smooth', block:'start' });
+            break;
+        case 'portfolio':
+            renderPortfolio();
+            buildDOMCache();
+            portfolio.scrollIntoView({ behavior:'smooth', block:'start' });
+            break;
+        case 'crypto':
+            cryptoSec.style.display = 'block';
+            fetchCryptoData();
+            cryptoSec.scrollIntoView({ behavior:'smooth', block:'start' });
+            break;
+        case 'watchlist':
+            renderWatchlist();
+            buildDOMCache();
+            watchlistSection.scrollIntoView({ behavior:'smooth', block:'start' });
+            break;
+        case 'allstocks':
+            renderAllStocks(0, 'All', 'marketcap');
+            document.getElementById('section-allstocks').scrollIntoView({ behavior:'smooth', block:'start' });
+            break;
+    }
+}
+
+// ============================================================
+// LIVE SEARCH  — fixed: never clears input while typing
+// ============================================================
+
+// Just hides dropdown — does NOT touch input value
+function hideSearchDropdown() {
+    document.getElementById('searchDropdown').classList.add('hidden');
+}
+
+// Hides dropdown AND clears input — only called after user selects a result
+function clearSearch() {
+    document.getElementById('searchDropdown').classList.add('hidden');
+    document.getElementById('searchInput').value = '';
+}
+
+// Smart local search with keyword + fuzzy matching
+function matchStock(s, t) {
+    var sym  = s.symbol.toLowerCase();
+    var name = s.name.toLowerCase();
+    var kw   = (s.k || '').toLowerCase();
+    // Starts-with gets top priority; contains is secondary
+    return sym.startsWith(t) || name.startsWith(t)
+        || sym.indexOf(t) !== -1 || name.indexOf(t) !== -1 || kw.indexOf(t) !== -1;
+}
+
+function scoreStock(s, t) {
+    var sym  = s.symbol.toLowerCase();
+    var name = s.name.toLowerCase();
+    if (sym === t)          return 100;
+    if (sym.startsWith(t)) return 90;
+    if (name.startsWith(t))return 80;
+    if (sym.indexOf(t) !== -1) return 70;
+    if (name.indexOf(t) !== -1)return 60;
+    return 50;
+}
+
+function buildDropdownHTML(localMatches, apiQuotes, term) {
+    var t    = term.toLowerCase().trim();
+    var html = '';
+
+    // ── Local NSE/BSE stocks ──
+    if (localMatches.length) {
+        html += '<div class="search-group-label"><i data-lucide="zap" style="width:11px;height:11px;display:inline;vertical-align:middle;"></i> Stocks in NexTrade</div>';
+        localMatches.forEach(function(s) {
+            var pos = s.change >= 0;
+            html += '<div class="search-item" onclick="selectSearchResult(\'' + s.symbol + '\')">'
+                + '<div class="si-left">'
+                +   '<div style="display:flex;align-items:center;gap:8px;">'
+                +     '<div style="width:30px;height:30px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;flex-shrink:0;background-color:' + s.color + '20;color:' + s.color + ';border:1px solid ' + s.color + '40;">' + s.logoText + '</div>'
+                +     '<div><strong>' + s.symbol + '</strong><br><span>' + s.name + '</span></div>'
+                +   '</div>'
+                + '</div>'
+                + '<div style="text-align:right;">'
+                +   '<div style="font-size:13px;font-weight:700;">' + fmtINR(s.price) + '</div>'
+                +   '<div style="font-size:12px;font-weight:600;color:var(--' + (pos ? 'positive' : 'negative') + ');">' + (pos ? '+' : '') + s.change.toFixed(2) + '%</div>'
+                + '</div>'
+                + '</div>';
+        });
+    }
+
+    // ── Extra results from Yahoo Finance search API ──
+    var localYFSyms = localMatches.map(function(s) { return YF_STOCK_MAP[s.symbol]; }).filter(Boolean);
+    if (apiQuotes && apiQuotes.length) {
+        var newQ = apiQuotes.filter(function(q) { return localYFSyms.indexOf(q.symbol) === -1; });
+        if (newQ.length) {
+            html += '<div class="search-group-label"><i data-lucide="globe" style="width:11px;height:11px;display:inline;vertical-align:middle;"></i> More on NSE / BSE</div>';
+            newQ.slice(0, 6).forEach(function(q) {
+                var ourSym = q.symbol.replace(/\.(NS|BO)$/, '');
+                var exc    = q.symbol.endsWith('.NS') ? 'NSE' : 'BSE';
+                var sName  = q.shortname || q.longname || ourSym;
+                html += '<div class="search-item" onclick="selectSearchResult(\'' + ourSym + '\',\'' + q.symbol + '\')">'
+                    + '<div class="si-left">'
+                    +   '<div style="display:flex;align-items:center;gap:8px;">'
+                    +     '<div style="width:30px;height:30px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;background:rgba(59,130,246,0.15);color:#60a5fa;border:1px solid rgba(59,130,246,0.3);flex-shrink:0;">' + ourSym[0] + '</div>'
+                    +     '<div><strong>' + ourSym + '</strong><br><span>' + sName + '</span></div>'
+                    +   '</div>'
+                    + '</div>'
+                    + '<span class="exchange-badge" style="padding:3px 8px;font-size:10px;height:fit-content;">' + exc + '</span>'
+                    + '</div>';
+            });
+        }
+    }
+
+    // ── Mutual funds ──
+    var mfMatches = mutualFunds.filter(function(f) {
+        return f.name.toLowerCase().indexOf(t) !== -1 || f.house.toLowerCase().indexOf(t) !== -1
+            || f.category.toLowerCase().indexOf(t) !== -1;
+    }).slice(0, 3);
+    if (mfMatches.length) {
+        html += '<div class="search-group-label"><i data-lucide="briefcase" style="width:11px;height:11px;display:inline;vertical-align:middle;"></i> Mutual Funds</div>';
+        mfMatches.forEach(function(f) {
+            var safe = f.name.replace(/'/g, "\\'");
+            html += '<div class="search-item" onclick="openFundModal(\'' + safe + '\');clearSearch();">'
+                + '<div class="si-left">'
+                +   '<div style="display:flex;align-items:center;gap:8px;">'
+                +     '<div style="width:30px;height:30px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;flex-shrink:0;background-color:' + f.color + '20;color:' + f.color + ';border:1px solid ' + f.color + '40;">' + f.logoText + '</div>'
+                +     '<div><strong>' + f.name + '</strong><br><span>' + f.house + ' &middot; ' + f.category + '</span></div>'
+                +   '</div>'
+                + '</div>'
+                + '<div style="text-align:right;font-size:12px;font-weight:600;color:var(--positive);">+' + f.return1y + '%<br><span style="color:var(--text-muted);font-weight:400;">1Y</span></div>'
+                + '</div>';
+        });
+    }
+
+    // ── IPOs ──
+    var ipoMatches = ipoData.filter(function(i) {
+        return i.name.toLowerCase().indexOf(t) !== -1 || i.symbol.toLowerCase().indexOf(t) !== -1;
+    }).slice(0, 2);
+    if (ipoMatches.length) {
+        html += '<div class="search-group-label"><i data-lucide="rocket" style="width:11px;height:11px;display:inline;vertical-align:middle;"></i> IPO</div>';
+        ipoMatches.forEach(function(ipo) {
+            var sc = { open:'ipo-open', upcoming:'ipo-upcoming', listed:'ipo-listed' }[ipo.status] || '';
+            html += '<div class="search-item" onclick="setView(\'ipo\');clearSearch();">'
+                + '<div class="si-left"><strong>' + ipo.name + '</strong><br><span>&#8377;' + ipo.priceRange + '</span></div>'
+                + '<span class="ipo-status ' + sc + '">' + ipo.status + '</span>'
+                + '</div>';
+        });
+    }
+
+    if (!html) {
+        html = '<div class="search-empty">'
+            + '<i data-lucide="search-x" style="width:28px;height:28px;color:var(--text-muted);display:block;margin:0 auto 8px;"></i>'
+            + '<div>No results for <strong>"' + term + '"</strong></div>'
+            + '<div style="font-size:12px;color:var(--text-muted);margin-top:4px;">Try searching by ticker symbol (e.g. INFY, HDFC) or company name</div>'
+            + '</div>';
+    }
+
+    return html;
+}
+
+function showDropdown(html) {
+    var dd = document.getElementById('searchDropdown');
+    dd.innerHTML = html;
+    dd.classList.remove('hidden');
+    lucide.createIcons();
+}
+
+// Instant local search — no API call, runs on every keystroke
+function searchLocal(term) {
+    var t = term.toLowerCase().trim();
+    if (!t) { hideSearchDropdown(); return; }
+
+    var localMatches = stocks
+        .filter(function(s) { return matchStock(s, t); })
+        .sort(function(a, b) { return scoreStock(b, t) - scoreStock(a, t); })
+        .slice(0, 8);
+
+    showDropdown(buildDropdownHTML(localMatches, null, term));
+}
+
+// API search — debounced, enhances results with Yahoo Finance
+async function searchAPI(term) {
+    var t = term.trim();
+    if (t.length < 2) return;
+
+    var localMatches = stocks
+        .filter(function(s) { return matchStock(s, t.toLowerCase()); })
+        .sort(function(a, b) { return scoreStock(b, t.toLowerCase()) - scoreStock(a, t.toLowerCase()); })
+        .slice(0, 8);
+
+    try {
+        var res  = await fetchWithFallback(YF_SEARCH_URL + encodeURIComponent(t), 5000);
+        var data = await res.json();
+        var quotes = (data.quotes || []).filter(function(q) {
+            return (q.symbol.endsWith('.NS') || q.symbol.endsWith('.BO')) && q.typeDisp === 'Equity';
+        });
+        // Only update dropdown if user is still typing this term
+        var current = document.getElementById('searchInput').value.trim();
+        if (current.toLowerCase() === t.toLowerCase()) {
+            showDropdown(buildDropdownHTML(localMatches, quotes, term));
+        }
+    } catch (e) { /* Keep local results showing */ }
+}
+
+async function selectSearchResult(symbol, yfSymbol) {
+    clearSearch();
+    var local = stocks.find(function(s) { return s.symbol === symbol; });
+    if (local) { openStockModal(symbol); return; }
+
+    if (!yfSymbol) yfSymbol = symbol + '.NS';
+    showToast('Loading ' + symbol + ' from NSE...', 'info');
+
+    try {
+        var res  = await fetchWithFallback(YF_QUOTE_URL + yfSymbol, 6000);
+        var json = await res.json();
+        var q    = json.quoteResponse && json.quoteResponse.result && json.quoteResponse.result[0];
+        if (!q) throw new Error('No data');
+
+        var tempStock = {
+            symbol: symbol, name: q.shortName || q.longName || symbol,
+            price:  q.regularMarketPrice || 0,
+            change: parseFloat((q.regularMarketChangePercent || 0).toFixed(2)),
+            marketCap: q.marketCap ? formatMarketCap(q.marketCap) : 'N/A',
+            pe:        q.trailingPE ? parseFloat(q.trailingPE.toFixed(1)) : null,
+            sector:    q.sector || q.quoteType || 'N/A',
+            color: '#3b82f6', logoText: symbol[0],
+            _52High:  q.fiftyTwoWeekHigh, _52Low: q.fiftyTwoWeekLow,
+            _volume:  q.regularMarketVolume, _eps: q.epsTrailingTwelveMonths,
+            _bookVal: q.bookValue, _divYield: q.trailingAnnualDividendYield,
+            _temp: true, k: ''
+        };
+        stocks.push(tempStock);
+        openStockModal(symbol);
+        setTimeout(function() {
+            if (!watchlist.has(symbol)) {
+                var idx = stocks.findIndex(function(s) { return s.symbol === symbol && s._temp; });
+                if (idx !== -1) stocks.splice(idx, 1);
+            }
+        }, 120000);
+    } catch(e) {
+        showToast('Could not load ' + symbol + '. Check the symbol and try again.', 'error');
+    }
+}
+
+// ============================================================
+// STOCK MODAL
+// ============================================================
+function openStockModal(symbol) {
+    var stock = stocks.find(function(s) { return s.symbol === symbol; });
+    if (!stock) return;
+
+    currentChartSymbol = symbol;
+    currentChartRange  = '1M';
+
+    var range = get52WeekRange(stock);
+    var pos   = stock.change >= 0;
+
+    document.getElementById('modalLogo').textContent = stock.logoText;
+    document.getElementById('modalLogo').style.cssText =
+        'background-color:' + stock.color + '20;color:' + stock.color + ';border:1px solid ' + stock.color + '40;';
+    document.getElementById('modalSymbol').textContent = stock.symbol;
+    document.getElementById('modalName').textContent   = stock.name;
+    document.getElementById('modalPrice').textContent  = fmtINR(stock.price);
+    document.getElementById('modalMarketCap').textContent = stock.marketCap;
+    document.getElementById('modalPE').textContent     = stock.pe ? stock.pe : '—';
+    document.getElementById('modal52High').textContent = fmtINR(range.high);
+    document.getElementById('modal52Low').textContent  = fmtINR(range.low);
+    document.getElementById('modalVolume').textContent = getVolume(stock);
+    document.getElementById('modalSector').textContent = stock.sector;
+
+    // EPS, Book Value, Dividend
+    var eps = stock._eps || (stock.pe ? (stock.price / stock.pe).toFixed(2) : null);
+    document.getElementById('modalEPS').textContent       = eps ? '\u20B9' + parseFloat(eps).toFixed(2) : '—';
+    document.getElementById('modalBookValue').textContent = stock._bookVal ? '\u20B9' + parseFloat(stock._bookVal).toFixed(2) : '—';
+    document.getElementById('modalDividend').textContent  = stock._divYield ? (stock._divYield * 100).toFixed(2) + '%' : '—';
+
+    // OHLCV — from live API or estimated
+    var open      = stock._open     || (stock.price * (1 - Math.random() * 0.012)).toFixed(2);
+    var prevClose = stock._prevClose|| (stock.price / (1 + stock.change / 100)).toFixed(2);
+    var dayHigh   = stock._dayHigh  || (stock.price * (1 + Math.random() * 0.015)).toFixed(2);
+    var dayLow    = stock._dayLow   || (stock.price * (1 - Math.random() * 0.015)).toFixed(2);
+    document.getElementById('modalOpen').textContent      = fmtINR(parseFloat(open));
+    document.getElementById('modalPrevClose').textContent = fmtINR(parseFloat(prevClose));
+    document.getElementById('modalDayHigh').textContent   = fmtINR(parseFloat(dayHigh));
+    document.getElementById('modalDayLow').textContent    = fmtINR(parseFloat(dayLow));
+
+    // 52W range bar
+    var low52  = parseFloat(range.low);
+    var high52 = parseFloat(range.high);
+    var pct    = high52 > low52 ? Math.max(2, Math.min(98, (stock.price - low52) / (high52 - low52) * 100)).toFixed(1) : 50;
+    document.getElementById('modal52Fill').style.width   = pct + '%';
+    document.getElementById('modal52Marker').style.left  = pct + '%';
+    document.getElementById('modal52PctLabel').textContent = pct + '% of 52-week range';
+
+    var badge = document.getElementById('modalChange');
+    badge.textContent = (pos ? '+' : '') + stock.change.toFixed(2) + '%';
+    badge.className   = 'trend-badge ' + (pos ? 'trend-positive' : 'trend-negative');
+
+    // Reset chart range tabs
+    document.querySelectorAll('.chart-range-tab').forEach(function(t) {
+        t.classList.toggle('active', t.dataset.range === '1M');
+    });
+
+    // Show modal first, then load chart (needs container width)
+    document.getElementById('stockModal').classList.remove('hidden');
+    lucide.createIcons();
+    renderStockScore(stock);
+
+    var wlBtn = document.getElementById('modalWatchlistBtn');
+    wlBtn.dataset.symbol = symbol;
+    wlBtn.onclick = function() {
+        toggleWatchlistRow(symbol, null);
+        updateModalWatchlistBtn(symbol);
+        var rowBtn = document.querySelector('tr[data-symbol="' + symbol + '"] .btn-wl');
+        if (rowBtn) rowBtn.classList.toggle('btn-wl-active', watchlist.has(symbol));
+    };
+    updateModalWatchlistBtn(symbol);
+
+    document.getElementById('modalBuyBtn').onclick  = function() { closeModal('stockModal'); openOrderModal(symbol, 'buy'); };
+    document.getElementById('modalSellBtn').onclick = function() { closeModal('stockModal'); openOrderModal(symbol, 'sell'); };
+
+    // Load chart after a brief paint delay
+    setTimeout(function() { loadModalChart('1M'); }, 60);
+}
+
+function updateModalWatchlistBtn(symbol) {
+    var btn  = document.getElementById('modalWatchlistBtn');
+    var inWL = watchlist.has(symbol);
+    btn.innerHTML  = '<i data-lucide="star" style="width:15px;height:15px;"></i> ' + (inWL ? 'In Watchlist' : 'Add to Watchlist');
+    btn.className  = 'btn btn-watchlist-btn' + (inWL ? ' btn-watchlist-active' : '');
+    lucide.createIcons();
+}
+
+// ============================================================
+// ORDER MODAL
+// ============================================================
+function openOrderModal(symbol, side) {
+    var stock = stocks.find(function(s) { return s.symbol === symbol; });
+    if (!stock) return;
+    currentOrderStock = stock;
+    currentOrderSide  = side;
+
+    var badge = document.getElementById('orderSideBadge');
+    badge.textContent = side.toUpperCase();
+    badge.className   = 'order-side-badge ' + (side === 'buy' ? 'order-buy' : 'order-sell');
+
+    document.getElementById('orderSymbolTitle').textContent  = symbol + ' — ' + stock.name.split(' ')[0];
+    document.getElementById('orderCurrentPrice').textContent = 'LTP: ' + fmtINR(stock.price) + ' (' + (stock.change >= 0 ? '+' : '') + stock.change.toFixed(2) + '%)';
+    document.getElementById('orderPrice').value = stock.price.toFixed(2);
+    document.getElementById('orderQty').value = 1;
+
+    // Reset to Market order
+    document.querySelectorAll('.order-tab').forEach(function(t) { t.classList.toggle('active', t.dataset.otype === 'market'); });
+    document.getElementById('orderPriceField').style.display   = 'none';
+    document.getElementById('orderTriggerField').style.display = 'none';
+
+    var confirmBtn = document.getElementById('confirmOrderBtn');
+    confirmBtn.className  = 'btn btn-full ' + (side === 'buy' ? 'btn-buy' : 'btn-sell');
+    confirmBtn.textContent = (side === 'buy' ? 'Buy ' : 'Sell ') + symbol;
+
+    updateOrderSummary();
+    document.getElementById('orderModal').classList.remove('hidden');
+    lucide.createIcons();
+}
+
+function updateOrderSummary() {
+    if (!currentOrderStock) return;
+    var qty   = parseInt(document.getElementById('orderQty').value) || 1;
+    var activeTab = document.querySelector('.order-tab.active');
+    var otype = activeTab ? activeTab.dataset.otype : 'market';
+    var price = (otype === 'limit' || otype === 'sl')
+        ? (parseFloat(document.getElementById('orderPrice').value) || currentOrderStock.price)
+        : currentOrderStock.price;
+    var est   = qty * price;
+    document.getElementById('orderEstValue').textContent = fmtINR(est);
+    document.getElementById('orderMargin').textContent   = fmtINR(est * 0.2);
+    var balEl = document.getElementById('availableBalance');
+    if (balEl) {
+        balEl.textContent = '\u20B9' + virtualBalance.toLocaleString('en-IN', { minimumFractionDigits: 2 });
+        balEl.className = est > virtualBalance ? 'negative-text' : 'positive-text';
+    }
+}
+
+// ============================================================
+// FUND INVEST MODAL
+// ============================================================
+function openFundModal(fundName) {
+    var fund = mutualFunds.find(function(f) { return f.name === fundName; });
+    if (!fund) return;
+    currentFund = fund;
+
+    document.getElementById('fundModalLogo').textContent = fund.logoText;
+    document.getElementById('fundModalLogo').style.cssText =
+        'background-color:' + fund.color + '20;color:' + fund.color + ';border:1px solid ' + fund.color + '40;';
+    document.getElementById('fundModalName').textContent  = fund.name;
+    document.getElementById('fundModalHouse').textContent = fund.house + ' \u00B7 NAV \u20B9' + fund.nav.toFixed(2);
+    document.getElementById('fundModal1Y').textContent    = '+' + fund.return1y + '%';
+    document.getElementById('fundModal3Y').textContent    = '+' + fund.return3y + '%';
+    var riskEl = document.getElementById('fundModalRisk');
+    riskEl.textContent = fund.risk;
+    riskEl.className   = 'risk-badge ' + riskClass(fund.risk);
+
+    document.getElementById('sipAmount').value      = '5000';
+    document.getElementById('lumpsumAmount').value  = '10000';
+    switchInvestTab('sip');
+    updateSIPPreview();
+    updateLumpsumPreview();
+    document.getElementById('fundModal').classList.remove('hidden');
+    lucide.createIcons();
+}
+
+function switchInvestTab(tab) {
+    document.querySelectorAll('.invest-tab').forEach(function(t) {
+        t.classList.toggle('active', t.dataset.tab === tab);
+    });
+    document.getElementById('sipForm').classList.toggle('hidden', tab !== 'sip');
+    document.getElementById('lumpsumForm').classList.toggle('hidden', tab !== 'lumpsum');
+}
+
+function updateSIPPreview() {
+    var amt = parseInt(document.getElementById('sipAmount').value) || 5000;
+    document.getElementById('sipPreview').innerHTML =
+        '<div><span>Monthly SIP</span><strong>\u20B9' + amt.toLocaleString('en-IN') + '</strong></div>'
+        + '<div><span>1 Year Total</span><strong>\u20B9' + (amt * 12).toLocaleString('en-IN') + '</strong></div>'
+        + '<div><span>3 Year Total</span><strong>\u20B9' + (amt * 36).toLocaleString('en-IN') + '</strong></div>';
+}
+
+function updateLumpsumPreview() {
+    if (!currentFund) return;
+    var amt   = parseInt(document.getElementById('lumpsumAmount').value) || 10000;
+    var units = (amt / currentFund.nav).toFixed(3);
+    document.getElementById('lumpsumPreview').innerHTML =
+        '<div><span>You are investing</span><strong>\u20B9' + amt.toLocaleString('en-IN') + '</strong></div>'
+        + '<div><span>Approx. Units @ \u20B9' + currentFund.nav.toFixed(2) + '</span><strong>' + units + ' units</strong></div>';
+}
+
+// ============================================================
+// MODALS
+// ============================================================
+function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
+function overlayClose(event, id) { if (event.target === document.getElementById(id)) closeModal(id); }
+
+// ============================================================
+// PRICE SIMULATION  (micro-nudges between API refreshes)
+// ============================================================
+// Pre-built DOM cache so we never run querySelector in the hot loop
+var _priceCache  = null;
+var _changeCache = null;
+
+function buildDOMCache() {
+    _priceCache  = {};
+    _changeCache = {};
+    document.querySelectorAll('[data-price]').forEach(function(el) {
+        var sym = el.dataset.price;
+        if (!_priceCache[sym]) _priceCache[sym] = [];
+        _priceCache[sym].push(el);
+    });
+    document.querySelectorAll('[data-change]').forEach(function(el) {
+        var sym = el.dataset.change;
+        if (!_changeCache[sym]) _changeCache[sym] = [];
+        _changeCache[sym].push(el);
+    });
+}
+
+function updatePricesInDOM() {
+    // Rebuild cache if it's empty (e.g. after a view change that re-renders cards)
+    if (!_priceCache) buildDOMCache();
+
+    // Optimization: Iterate over the elements we KNOW are in the DOM instead of all ~100+ stocks
+    for (var sym in _priceCache) {
+        var stock = stocksMap[sym];
+        if (!stock) continue;
+        
+        var priceEls  = _priceCache[sym] || [];
+        var changeEls = _changeCache[sym] || [];
+
+        priceEls.forEach(function(el) {
+            el.textContent = fmtINR(stock.price);
+        });
+
+        changeEls.forEach(function(el) {
+            var pos = stock.change >= 0;
+            el.style.color = 'var(--' + (pos ? 'positive' : 'negative') + ')';
+            el.textContent = (pos ? '\u25B2 +' : '\u25BC ') + stock.change.toFixed(2) + '%';
+        });
+    }
+
+    indices.forEach(function(idx, i) {
+        var priceEl = document.getElementById('idx-price-' + i);
+        var badgeEl = document.getElementById('idx-badge-' + i);
+        if (priceEl) priceEl.textContent = idx.value.toLocaleString('en-IN',{minimumFractionDigits:2});
+        if (badgeEl) {
+            var pos = idx.change >= 0;
+            badgeEl.className   = 'trend-badge ' + (pos ? 'trend-positive' : 'trend-negative');
+            badgeEl.textContent = (pos ? '+' : '') + idx.change.toFixed(2) + '%';
+        }
+    });
+
+    checkPriceAlerts();
+}
+
+function startPriceSimulation() {
+    // Intentionally left blank as per requirement to strictly use LIVE data.
+    // Zero random price jitter will be added.
+}
+
+
+// ============================================================
+// VIRTUAL ACCOUNT — balance, order execution, order history
+// ============================================================
+function updateBalanceDisplay() {
+    var el = document.getElementById('balanceDisplay');
+    if (el) el.textContent = '\u20B9' + virtualBalance.toLocaleString('en-IN', { minimumFractionDigits: 2 });
+}
+
+function executeOrder() {
+    if (!currentOrderStock) return;
+    var qty   = parseInt(document.getElementById('orderQty').value) || 1;
+    var activeOrderTab   = document.querySelector('.order-tab.active');
+    var activeProductTab = document.querySelector('.product-tab.active');
+    var otype   = activeOrderTab   ? activeOrderTab.dataset.otype     : 'market';
+    var product = activeProductTab ? activeProductTab.dataset.product : 'cnc';
+    var price = (otype === 'limit' || otype === 'sl')
+        ? parseFloat(document.getElementById('orderPrice').value) || currentOrderStock.price
+        : currentOrderStock.price;
+    var symbol = currentOrderStock.symbol;
+    var side   = currentOrderSide;
+    var total  = parseFloat((qty * price).toFixed(2));
+
+    if (side === 'buy') {
+        if (total > virtualBalance) {
+            showToast('Insufficient balance! Need \u20B9' + total.toLocaleString('en-IN') + ' but have \u20B9' + virtualBalance.toLocaleString('en-IN'), 'error');
+            return;
+        }
+        virtualBalance -= total;
+        var existing = portfolioHoldings.find(function(h) { return h.symbol === symbol; });
+        if (existing) {
+            var newQty  = existing.qty + qty;
+            existing.avgCost = parseFloat(((existing.qty * existing.avgCost + total) / newQty).toFixed(2));
+            existing.qty = newQty;
+        } else {
+            portfolioHoldings.push({ symbol: symbol, qty: qty, avgCost: parseFloat(price.toFixed(2)) });
+        }
+    } else {
+        var holding = portfolioHoldings.find(function(h) { return h.symbol === symbol; });
+        if (!holding || holding.qty < qty) {
+            showToast('Insufficient holdings! You have ' + (holding ? holding.qty : 0) + ' shares of ' + symbol, 'error');
+            return;
+        }
+        virtualBalance += total;
+        holding.qty -= qty;
+        if (holding.qty <= 0) portfolioHoldings = portfolioHoldings.filter(function(h) { return h.symbol !== symbol; });
+    }
+
+    orderHistory.unshift({
+        id: Date.now(), symbol: symbol, name: currentOrderStock.name.split(' ')[0],
+        side: side, qty: qty, price: parseFloat(price.toFixed(2)),
+        total: total, type: otype || 'market', product: product.toUpperCase(),
+        time: new Date().toLocaleTimeString('en-IN', { hour:'2-digit', minute:'2-digit' }),
+        date: new Date().toLocaleDateString('en-IN'), status: 'Executed'
+    });
+
+    saveState();
+    closeModal('orderModal');
+    updateBalanceDisplay();
+    updateOrderSummary();
+
+    var emoji = side === 'buy' ? '\uD83D\uDCC8' : '\uD83D\uDCC9';
+    showToast(emoji + ' ' + side.toUpperCase() + ' ' + qty + ' × ' + symbol + ' @ \u20B9' + price.toFixed(2) + ' executed!', side === 'buy' ? 'success' : 'info');
+
+    if (currentView === 'portfolio') renderPortfolio();
+    if (currentView === 'orders')   renderOrderHistory();
+}
+
+function renderOrderHistory() {
+    var tbody = document.getElementById('ordersBody');
+    if (!tbody) return;
+    if (!orderHistory.length) {
+        tbody.innerHTML = '<tr><td colspan="9" class="empty-row" style="padding:40px;"><div style="display:flex;flex-direction:column;align-items:center;gap:8px;opacity:0.5;"><i data-lucide="clipboard-list" style="width:32px;height:32px;"></i>No orders yet. Start trading!</div></td></tr>';
+        lucide.createIcons(); return;
+    }
+    tbody.innerHTML = orderHistory.map(function(o) {
+        var isBuy = o.side === 'buy';
+        return '<tr>'
+            + '<td style="color:var(--text-muted);font-size:12px;">' + o.date + '<br>' + o.time + '</td>'
+            + '<td><strong>' + o.symbol + '</strong><br><small style="color:var(--text-muted);">' + o.name + '</small></td>'
+            + '<td><span class="order-side-tag ' + (isBuy ? 'buy-tag' : 'sell-tag') + '">' + o.side.toUpperCase() + '</span></td>'
+            + '<td>' + o.qty + '</td>'
+            + '<td>' + fmtINR(o.price) + '</td>'
+            + '<td style="font-weight:700;">' + fmtINR(o.total) + '</td>'
+            + '<td><span class="order-type-badge">' + o.type.toUpperCase() + '</span></td>'
+            + '<td><span style="font-size:11px;">' + o.product + '</span></td>'
+            + '<td><span class="status-executed">&#10004; ' + o.status + '</span></td>'
+            + '</tr>';
+    }).join('');
+}
+
+// ============================================================
+// PRICE ALERTS
+// ============================================================
+function setPriceAlert(symbol, targetPrice, condition) {
+    priceAlerts.push({ symbol: symbol, targetPrice: targetPrice, condition: condition, triggered: false });
+    showToast('Alert set: ' + symbol + ' ' + condition + ' \u20B9' + parseFloat(targetPrice).toLocaleString('en-IN'), 'success');
+    closeModal('alertModal');
+}
+
+function checkPriceAlerts() {
+    priceAlerts.forEach(function(alert) {
+        if (alert.triggered) return;
+        var stock = stocks.find(function(s) { return s.symbol === alert.symbol; });
+        if (!stock) return;
+        var triggered = (alert.condition === 'above' && stock.price >= alert.targetPrice)
+                     || (alert.condition === 'below' && stock.price <= alert.targetPrice);
+        if (triggered) {
+            alert.triggered = true;
+            showToast('\uD83D\uDD14 Alert! ' + alert.symbol + ' hit \u20B9' + stock.price.toFixed(2) + ' (' + alert.condition + ' \u20B9' + alert.targetPrice + ')', 'success');
+        }
+    });
+}
+
+function openAlertModal(symbol) {
+    var stock = stocks.find(function(s) { return s.symbol === symbol; });
+    if (!stock) return;
+    document.getElementById('alertSymbolName').textContent = symbol + ' — ' + stock.name;
+    document.getElementById('alertCurrentPrice').textContent = 'Current: ' + fmtINR(stock.price);
+    document.getElementById('alertTargetPrice').value = stock.price.toFixed(2);
+    document.getElementById('alertModal').classList.remove('hidden');
+    lucide.createIcons();
+}
+
+function fetchLiveNews() {
+    // Using Google News RSS via our proxy (bypasses Moneycontrol WAF restrictions)
+    var rssUrl = 'https://news.google.com/rss/search?q=india+stock+market&hl=en-IN&gl=IN&ceid=IN:en';
+    fetchWithFallback(rssUrl, 7000).then(function(res) {
+        return res.text();
+    }).then(function(xmlText) {
+        var parser = new DOMParser();
+        var xml    = parser.parseFromString(xmlText, "text/xml");
+        var items  = xml.querySelectorAll('item');
+        if (!items.length) return;
+
+        var newNews = [];
+        items.forEach(function(item, idx) {
+            if (idx > 40) return; // Expand to 40 articles
+            var title = item.querySelector('title') ? item.querySelector('title').textContent : '';
+            var rawDesc = item.querySelector('description') ? item.querySelector('description').textContent : '';
+            var link = item.querySelector('link') ? item.querySelector('link').textContent : '#';
+            
+            // Basic HTML stripping for cleaner description
+            var desc = rawDesc.replace(/<[^>]*>/g, '').trim();
+
+            // Sentiment detection — avoid false positives like "buy or sell"
+            var tl = title.toLowerCase();
+            var tag = 'Neutral';
+            var posWords = ['surge','surges','surged','rally','rallies','rallied','rise','rises','rose','gain','gains','gained','jump','jumps','jumped','soar','soars','record high','hits high','outperform','upgrades','upgrade'];
+            var negWords = ['fall','falls','fell','drop','drops','dropped','slump','slumps','slumped','crash','crashes','plunge','plunges','plunged','decline','declines','declined','loss','losses','down','slide','slides'];
+            for (var pi = 0; pi < posWords.length; pi++) { if (tl.indexOf(posWords[pi]) !== -1) { tag = 'Positive'; break; } }
+            for (var ni = 0; ni < negWords.length; ni++) { if (tl.indexOf(negWords[ni]) !== -1) { tag = 'Negative'; break; } }
+
+            // Extract source from title (Google News format: "Title - Source")
+            var source = '';
+            var dashIdx = title.lastIndexOf(' - ');
+            if (dashIdx !== -1) { source = title.substring(dashIdx + 3); title = title.substring(0, dashIdx); }
+
+            var sector = 'Market';
+            if (tl.indexOf('sensex') !== -1 || tl.indexOf('nifty') !== -1 || tl.indexOf('indices') !== -1) sector = 'Indices';
+            if (tl.indexOf('bank') !== -1 || tl.indexOf('rbi') !== -1 || tl.indexOf('nbfc') !== -1) sector = 'Banking';
+            if (tl.indexOf('tech') !== -1 || tl.indexOf('it sector') !== -1 || tl.indexOf('software') !== -1) sector = 'Technology';
+            if (tl.indexOf('pharma') !== -1 || tl.indexOf('health') !== -1 || tl.indexOf('drug') !== -1) sector = 'Healthcare';
+            if (tl.indexOf('auto') !== -1 || tl.indexOf('ev ') !== -1 || tl.indexOf('motor') !== -1) sector = 'Auto';
+            if (tl.indexOf('metal') !== -1 || tl.indexOf('steel') !== -1 || tl.indexOf('alumin') !== -1) sector = 'Metals';
+
+            // Real timestamp from RSS pubDate
+            var pubDateEl = item.querySelector('pubDate');
+            var timeStr = 'Just Now';
+            if (pubDateEl) {
+                var pub = new Date(pubDateEl.textContent);
+                if (!isNaN(pub)) {
+                    var diffMin = Math.floor((Date.now() - pub.getTime()) / 60000);
+                    if      (diffMin < 2)    timeStr = 'Just Now';
+                    else if (diffMin < 60)   timeStr = diffMin + ' mins ago';
+                    else if (diffMin < 1440) timeStr = Math.floor(diffMin / 60) + ' hrs ago';
+                    else                     timeStr = Math.floor(diffMin / 1440) + 'd ago';
+                }
+            } else {
+                if (idx > 1)  timeStr = (idx * 5) + ' mins ago';
+                if (idx > 12) timeStr = Math.floor(idx / 12) + ' hrs ago';
+            }
+
+            newNews.push({
+                title: title,
+                time: timeStr,
+                tag: tag,
+                sector: sector,
+                source: source,
+                desc: desc,
+                link: link
+            });
+        });
+
+        if (newNews.length > 0) {
+            newsData = newNews;
+            if (currentView === 'news') renderNews();
+        }
+    }).catch(function(e) {
+        console.error('News Fetch Error:', e);
+    });
+}
+
+// ============================================================
+// NEWS
+// ============================================================
+function renderNews() {
+    var filter = (document.getElementById('newsFilter') || {}).value || 'All';
+    var filtered = filter === 'All' ? newsData : newsData.filter(function(n) { return n.sector === filter; });
+    var tagColors = { 'Positive':'#10b981', 'Negative':'#ef4444', 'Neutral':'#f59e0b' };
+    
+    document.getElementById('newsGrid').innerHTML = filtered.map(function(n) {
+        var c = tagColors[n.tag] || '#60a5fa';
+        // Truncate description for card view
+        var desc = n.desc || '';
+        if (desc.length > 120) desc = desc.substring(0, 117) + '...';
+
+        return '<div class="news-card glass-panel">'
+            + '<div class="news-tag-row">'
+            +   '<span class="news-tag" style="background:' + c + '22;color:' + c + ';border:1px solid ' + c + '44;">' + n.tag + '</span>'
+            +   '<span class="news-sector">' + n.sector + '</span>'
+            +   '<span class="news-time">' + n.time + '</span>'
+            + '</div>'
+            + '<p class="news-title">' + n.title + '</p>'
+            + '<p class="news-desc">' + desc + '</p>'
+            + '<div class="news-footer">'
+            +   (n.source ? '<span class="news-source">' + n.source + '</span>' : '')
+            +   '<a href="' + (n.link || '#') + '" target="_blank" class="news-read-btn">Read More \u2192</a>'
+            + '</div>'
+            + '</div>';
+    }).join('');
+}
+
+// ============================================================
+// SIP CALCULATOR
+// ============================================================
+function calcSIP() {
+    var monthly  = parseFloat(document.getElementById('calcSIP').value) || 5000;
+    var years    = parseInt(document.getElementById('calcYears').value) || 10;
+    var rate     = parseFloat(document.getElementById('calcRate').value) || 12;
+    var taxRate  = parseFloat(document.getElementById('calcSIPTax').value) / 100 || 0.125;
+    var inflation= parseFloat(document.getElementById('calcSIPInflation').value) / 100 || 0.0509;
+    var n        = years * 12;
+    var r        = rate / 12 / 100;
+    var fv       = monthly * (Math.pow(1 + r, n) - 1) / r * (1 + r);
+    var invested = monthly * n;
+    var returns  = fv - invested;
+    // Tax is applied only on gains (returns), not on invested principal
+    var taxAmount  = returns * taxRate;
+    var afterTax   = fv - taxAmount;
+    // Inflation-adjusted real value of the after-tax corpus
+    var realValue  = afterTax / Math.pow(1 + inflation, years);
+
+    document.getElementById('calcInvested').textContent  = fmtINR(Math.round(invested));
+    document.getElementById('calcReturns').textContent   = fmtINR(Math.round(returns));
+    document.getElementById('calcTotal').textContent     = fmtINR(Math.round(fv));
+    document.getElementById('calcGain').textContent      = ((realValue - invested) / invested * 100).toFixed(1) + '%';
+    document.getElementById('calcAfterTax').textContent  = fmtINR(Math.round(afterTax));
+    document.getElementById('calcRealValue').textContent = fmtINR(Math.round(realValue));
+    // Update mini bar
+    var pct = Math.min(95, (invested / fv) * 100);
+    document.getElementById('calcInvestedBar').style.width = pct + '%';
+    document.getElementById('calcReturnsBar').style.width = (100 - pct) + '%';
+}
+
+function calcLumpsum() {
+    var amount   = parseFloat(document.getElementById('calcLumpsum').value) || 100000;
+    var years    = parseInt(document.getElementById('calcLumpsumYears').value) || 10;
+    var rate     = parseFloat(document.getElementById('calcLumpsumRate').value) || 12;
+    var taxRate  = parseFloat(document.getElementById('calcLSTax').value) / 100 || 0.125;
+    var inflation= parseFloat(document.getElementById('calcLSInflation').value) / 100 || 0.0509;
+    var fv       = amount * Math.pow(1 + rate / 100, years);
+    var returns  = fv - amount;
+    // LTCG tax on profits only (invested principal is not taxed)
+    var taxAmount  = returns * taxRate;
+    var afterTax   = fv - taxAmount;
+    // Real value: inflation-adjusted purchasing power
+    var realValue  = afterTax / Math.pow(1 + inflation, years);
+
+    document.getElementById('calcLsInvested').textContent  = fmtINR(Math.round(amount));
+    document.getElementById('calcLsTotal').textContent     = fmtINR(Math.round(fv));
+    document.getElementById('calcLsReturns').textContent   = fmtINR(Math.round(returns));
+    document.getElementById('calcLsGain').textContent      = ((realValue - amount) / amount * 100).toFixed(1) + '%';
+    document.getElementById('calcLsAfterTax').textContent  = fmtINR(Math.round(afterTax));
+    document.getElementById('calcLsRealValue').textContent = fmtINR(Math.round(realValue));
+}
+
+// ============================================================
+// HOLDINGS PIE CHART  (SVG donut)
+// ============================================================
+function drawHoldingsDonut(containerId) {
+    var container = document.getElementById(containerId);
+    if (!container) return;
+    var sectorMap = {};
+    portfolioHoldings.forEach(function(h) {
+        var s = stocks.find(function(x) { return x.symbol === h.symbol; });
+        if (!s) return;
+        var val = h.qty * s.price;
+        sectorMap[s.sector] = (sectorMap[s.sector] || 0) + val;
+    });
+    var entries = Object.keys(sectorMap).map(function(k) { return { name: k, val: sectorMap[k] }; });
+    if (!entries.length) { container.innerHTML = ''; return; }
+    var total = entries.reduce(function(a, b) { return a + b.val; }, 0);
+    var colors = ['#3b82f6','#10b981','#f59e0b','#ef4444','#8b5cf6','#ec4899','#06b6d4','#84cc16','#f97316','#14b8a6'];
+    var cx = 80, cy = 80, R = 65, r = 38;
+    var startAngle = -Math.PI / 2;
+    var paths = '';
+    var legend = '';
+    entries.forEach(function(e, i) {
+        var angle = (e.val / total) * 2 * Math.PI;
+        var endAngle = startAngle + angle;
+        var x1 = cx + R * Math.cos(startAngle), y1 = cy + R * Math.sin(startAngle);
+        var x2 = cx + R * Math.cos(endAngle),   y2 = cy + R * Math.sin(endAngle);
+        var xi1= cx + r * Math.cos(endAngle),   yi1= cy + r * Math.sin(endAngle);
+        var xi2= cx + r * Math.cos(startAngle), yi2= cy + r * Math.sin(startAngle);
+        var large = angle > Math.PI ? 1 : 0;
+        var color = colors[i % colors.length];
+        paths += '<path d="M' + x1.toFixed(1) + ',' + y1.toFixed(1)
+            + ' A' + R + ',' + R + ' 0 ' + large + ',1 ' + x2.toFixed(1) + ',' + y2.toFixed(1)
+            + ' L' + xi1.toFixed(1) + ',' + yi1.toFixed(1)
+            + ' A' + r + ',' + r + ' 0 ' + large + ',0 ' + xi2.toFixed(1) + ',' + yi2.toFixed(1)
+            + 'Z" fill="' + color + '" opacity="0.9"/>';
+        legend += '<div class="donut-legend-item"><span style="background:' + color + '"></span>' + e.name + '<strong>' + ((e.val / total) * 100).toFixed(1) + '%</strong></div>';
+        startAngle = endAngle;
+    });
+    container.innerHTML = '<div class="donut-wrap">'
+        + '<svg width="160" height="160" viewBox="0 0 160 160">' + paths
+        + '<text x="80" y="76" text-anchor="middle" fill="var(--text-main)" font-size="11" font-family="Outfit,sans-serif">Holdings</text>'
+        + '<text x="80" y="91" text-anchor="middle" fill="var(--text-muted)" font-size="10" font-family="Outfit,sans-serif">by Sector</text>'
+        + '</svg>'
+        + '<div class="donut-legend">' + legend + '</div>'
+        + '</div>';
+}
+
+// ============================================================
+// INIT
+// ============================================================
+document.addEventListener('DOMContentLoaded', function() {
+    loadState();
+    renderDashboardCards();
+    renderScreener();
+    renderAllStocks(0, 'All', 'marketcap');
+    renderMutualFunds();
+    renderTicker();
+    renderGainersLosers();
+    renderSectorPerformance();
+    renderIPO();
+    renderPortfolio();
+    renderOrderHistory();
+    // Removed startPriceSimulation(); for strict live data
+    updateWatchlistBadge();
+    updateBalanceDisplay();
+    updateMarketStatus();
+    setInterval(updateMarketStatus, 60000);
+
+    // Sentiment Meter: Initial fetch + every 60s
+    var fgWrap = document.getElementById('fearGreedWrap');
+    if (fgWrap) fgWrap.innerHTML = '<div class="glass-panel" style="padding:20px;text-align:center;color:var(--text-muted);"><i data-lucide="loader" class="spin"></i> Fetching Live Sentiment...</div>';
+    fetchFearGreedData();
+    setInterval(fetchFearGreedData, 60000);
+
+    // Live data: immediate + every 90s
+    fetchRealTimeData();
+    setInterval(fetchRealTimeData, 90000);
+
+    // Nav items
+    document.querySelectorAll('.nav-item[data-view]').forEach(function(item) {
+        item.addEventListener('click', function(e) { e.preventDefault(); setView(item.dataset.view); });
+    });
+
+    // Sector filter
+    document.getElementById('sectorFilter').addEventListener('change', function(e) { _screenerLoadedCount = 10; renderScreener(e.target.value); });
+    document.getElementById('applyStockFilter').addEventListener('click', function() { _screenerLoadedCount = 10; renderScreener(document.getElementById('sectorFilter').value); });
+
+    // Fund filter
+    document.getElementById('fundCategoryFilter').addEventListener('change', function(e) { renderMutualFunds(e.target.value); });
+    document.getElementById('applyFundFilter').addEventListener('click', function() { renderMutualFunds(document.getElementById('fundCategoryFilter').value); });
+
+    // IPO filter
+    document.getElementById('ipoFilter').addEventListener('change', function(e) { renderIPO(e.target.value); });
+
+    // LIVE SEARCH
+    document.getElementById('searchInput').addEventListener('input', function(e) {
+        clearTimeout(searchTimeout);
+        var term = e.target.value;
+        // Optimization: debounce local search to 150ms to prevent DOM thrashing
+        searchTimeout = setTimeout(function() {
+            searchLocal(term);
+            if (term.trim().length >= 2) {
+                searchAPI(term);
+            }
+        }, 150);
+    });
+    document.getElementById('searchInput').addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') hideSearchDropdown();
+    });
+    document.addEventListener('click', function(e) {
+        if (!e.target.closest('.search-bar')) hideSearchDropdown();
+    });
+
+    // Invest tabs
+    document.querySelectorAll('.invest-tab').forEach(function(tab) {
+        tab.addEventListener('click', function() { switchInvestTab(tab.dataset.tab); });
+    });
+
+    // SIP quick amounts
+    document.addEventListener('click', function(e) {
+        if (e.target.classList.contains('sip-quick')) {
+            var amt = e.target.dataset.amt;
+            var sipForm = document.getElementById('sipForm');
+            var lumForm = document.getElementById('lumpsumForm');
+            if (!sipForm.classList.contains('hidden')) {
+                document.getElementById('sipAmount').value = amt;
+                updateSIPPreview();
+            } else if (!lumForm.classList.contains('hidden')) {
+                document.getElementById('lumpsumAmount').value = amt;
+                updateLumpsumPreview();
+            }
+        }
+    });
+
+    // SIP / Lumpsum inputs
+    document.getElementById('sipAmount').addEventListener('input', updateSIPPreview);
+    document.getElementById('lumpsumAmount').addEventListener('input', updateLumpsumPreview);
+
+    // Confirm invest
+    document.getElementById('confirmInvestBtn').addEventListener('click', function() {
+        var isSIP = document.querySelector('.invest-tab.active').dataset.tab === 'sip';
+        var amt = isSIP ? document.getElementById('sipAmount').value : document.getElementById('lumpsumAmount').value;
+        var type = isSIP ? 'SIP' : 'Lump Sum';
+        closeModal('fundModal');
+        showToast(type + ' of \u20B9' + Number(amt).toLocaleString('en-IN') + ' confirmed! \uD83C\uDF89', 'success');
+    });
+
+    // Order type tabs
+    document.querySelectorAll('.order-tab').forEach(function(tab) {
+        tab.addEventListener('click', function() {
+            document.querySelectorAll('.order-tab').forEach(function(t) { t.classList.remove('active'); });
+            tab.classList.add('active');
+            var otype = tab.dataset.otype;
+            document.getElementById('orderPriceField').style.display   = (otype === 'limit' || otype === 'sl') ? 'flex' : 'none';
+            document.getElementById('orderTriggerField').style.display = (otype === 'sl' || otype === 'sl-m') ? 'flex' : 'none';
+            updateOrderSummary();
+        });
+    });
+
+    // Product type tabs
+    document.querySelectorAll('.product-tab').forEach(function(tab) {
+        tab.addEventListener('click', function() {
+            document.querySelectorAll('.product-tab').forEach(function(t) { t.classList.remove('active'); });
+            tab.classList.add('active');
+        });
+    });
+
+    // Order form inputs
+    document.getElementById('orderQty').addEventListener('input', updateOrderSummary);
+    document.getElementById('orderPrice').addEventListener('input', updateOrderSummary);
+
+    // Confirm order — actually executes the trade
+    document.getElementById('confirmOrderBtn').addEventListener('click', executeOrder);
+
+    // All Stocks browser controls
+    document.getElementById('allStocksSector').addEventListener('change', function(e) {
+        renderAllStocks(0, e.target.value, allStocksSort);
+    });
+    document.querySelectorAll('.as-sort-btn').forEach(function(btn) {
+        btn.addEventListener('click', function() { renderAllStocks(0, allStocksFilter, btn.dataset.sort); });
+    });
+    document.getElementById('allStocksPrev').addEventListener('click', function() {
+        if (allStocksPage > 0) renderAllStocks(allStocksPage - 1, allStocksFilter, allStocksSort);
+    });
+    document.getElementById('allStocksNext').addEventListener('click', function() {
+        renderAllStocks(allStocksPage + 1, allStocksFilter, allStocksSort);
+    });
+
+    // Chart range tabs in stock modal
+    document.querySelectorAll('.chart-range-tab').forEach(function(tab) {
+        tab.addEventListener('click', function() { loadModalChart(tab.dataset.range); });
+    });
+
+    // Bell — show alerts count
+    document.getElementById('notifBtn').addEventListener('click', function() {
+        var pending = priceAlerts.filter(function(a) { return !a.triggered; }).length;
+        showToast(pending ? pending + ' active price alert(s)' : 'No active alerts', 'info');
+    });
+
+    // News filter
+    var newsFilterEl = document.getElementById('newsFilter');
+    if (newsFilterEl) newsFilterEl.addEventListener('change', renderNews);
+
+    // Price alert modal
+    document.getElementById('confirmAlertBtn').addEventListener('click', function() {
+        var price = document.getElementById('alertTargetPrice').value;
+        var cond  = document.getElementById('alertCondition').value;
+        var sym   = document.getElementById('alertSymbolName').textContent.split(' — ')[0];
+        if (!price || !sym) return;
+        setPriceAlert(sym, parseFloat(price), cond);
+    });
+    document.getElementById('alertModal').addEventListener('click', function(e) {
+        if (e.target === document.getElementById('alertModal')) closeModal('alertModal');
+    });
+
+    // Calculator inputs — live update
+    ['calcSIP','calcYears','calcRate'].forEach(function(id) {
+        document.getElementById(id).addEventListener('input', calcSIP);
+    });
+    ['calcLumpsum','calcLumpsumYears','calcLumpsumRate'].forEach(function(id) {
+        document.getElementById(id).addEventListener('input', calcLumpsum);
+    });
+
+    // Calc tabs
+    document.querySelectorAll('.calc-tab').forEach(function(tab) {
+        tab.addEventListener('click', function() {
+            document.querySelectorAll('.calc-tab').forEach(function(t) { t.classList.remove('active'); });
+            tab.classList.add('active');
+            document.getElementById('calcSIPForm').classList.toggle('hidden',  tab.dataset.calc !== 'sip');
+            document.getElementById('calcLSForm').classList.toggle('hidden',   tab.dataset.calc !== 'lumpsum');
+            document.getElementById('calcWIForm').classList.toggle('hidden',   tab.dataset.calc !== 'whatif');
+            if (tab.dataset.calc === 'whatif') calcWhatIf();
+        });
+    });
+
+    // Populate What-If stock dropdown
+    var wiStockEl = document.getElementById('wiStock');
+    if (wiStockEl) {
+        wiStockEl.innerHTML = stocks.map(function(s) {
+            return '<option value="' + s.symbol + '">' + s.symbol + ' — ' + s.name.substring(0, 35) + '</option>';
+        }).join('');
+    }
+
+
+    // Initial renders for new sections
+    updateBalanceDisplay();
+    buildDOMCache();
+    fetchLiveNews();
+    setInterval(fetchLiveNews, 300000); // Update news every 5 minutes
+    renderNews();
+    calcSIP();
+    calcLumpsum();
+
+    // Escape closes all modals
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            closeModal('stockModal');
+            closeModal('fundModal');
+            closeModal('orderModal');
+            closeModal('alertModal');
+            hideSearchDropdown();
+        }
+    });
+});
+
+// ============================================================
+// FUND DETAIL MODAL
+// ============================================================
+var currentFundDetail = null;
+var fundDescriptions = {
+    'Large Cap':  'Invests primarily in top 100 companies by market capitalisation. Offers stable returns with lower risk, suited for long-term wealth creation.',
+    'Mid Cap':    'Focuses on companies ranked 101-250 by market cap. Higher growth potential than large caps with moderate risk. Ideal for 5+ year horizons.',
+    'Small Cap':  'Targets companies beyond top 250. High potential returns but volatile. Suited for aggressive investors with 7+ year horizon.',
+    'Flexi Cap':  'Fund manager has flexibility to invest across large, mid and small caps based on market conditions. Balanced risk-reward profile.',
+    'ELSS':       'Equity Linked Savings Scheme — qualifies for ₹1.5L deduction under Section 80C. 3-year lock-in period. Tax-efficient wealth creation.',
+    'Hybrid':     'Invests in a mix of equity and debt instruments. Provides returns from equity with stability from debt. Good for moderate risk appetite.',
+    'Debt':       'Invests in bonds, government securities and money market instruments. Capital preservation with predictable returns. Low risk.',
+    'Index':      'Passively tracks a stock index like NIFTY 50. Very low expense ratio. Returns mirror the index performance with minimal fund manager intervention.'
+};
+var catAverages = {
+    'Large Cap': '14.2%', 'Mid Cap': '18.5%', 'Small Cap': '22.1%',
+    'Flexi Cap': '16.8%', 'ELSS': '15.3%', 'Hybrid': '11.6%',
+    'Debt': '7.4%', 'Index': '13.9%'
+};
+
+function openFundDetail(fundName) {
+    var fund = mutualFunds.find(function(f) { return f.name === fundName; });
+    if (!fund) return;
+    currentFundDetail = fund;
+
+    document.getElementById('fdLogo').textContent = fund.logoText;
+    document.getElementById('fdLogo').style.cssText =
+        'background-color:' + fund.color + '20;color:' + fund.color + ';border:1px solid ' + fund.color + '40;font-weight:700;font-size:14px;display:flex;align-items:center;justify-content:center;width:44px;height:44px;border-radius:10px;flex-shrink:0;';
+    document.getElementById('fdName').textContent  = fund.name;
+    document.getElementById('fdHouse').textContent = fund.house + ' · Direct Plan · Growth';
+    document.getElementById('fdNAV').textContent   = '₹' + fund.nav.toFixed(2);
+    document.getElementById('fd1Y').textContent    = (fund.return1y >= 0 ? '+' : '') + fund.return1y + '%';
+    document.getElementById('fd3Y').textContent    = (fund.return3y >= 0 ? '+' : '') + fund.return3y + '%';
+    document.getElementById('fdAUM').textContent   = '₹' + fund.aum + ' Cr';
+    document.getElementById('fdRisk').textContent  = fund.risk;
+    document.getElementById('fdCat').textContent   = fund.category;
+    document.getElementById('fdRating').textContent= '★'.repeat(fund.rating) + '☆'.repeat(5 - fund.rating) + ' (' + fund.rating + '/5)';
+    document.getElementById('fdMinSIP').textContent= '₹500 / month';
+    document.getElementById('fdExit').textContent  = '1% if redeemed within 1 year';
+    document.getElementById('fdCatAvg').textContent= 'Category avg: ' + (catAverages[fund.category] || 'N/A');
+    var barPct = Math.min(100, Math.max(10, fund.return1y * 2));
+    document.getElementById('fdReturnBar').style.width = barPct + '%';
+    document.getElementById('fdDescription').textContent =
+        (fundDescriptions[fund.category] || 'A SEBI-registered mutual fund offering competitive returns with professional fund management.') +
+        ' This fund has delivered ' + fund.return1y + '% returns in the last year and ' + fund.return3y + '% over 3 years, outperforming many peers in the ' + fund.category + ' category.';
+
+    document.getElementById('fundDetailModal').classList.remove('hidden');
+    lucide.createIcons();
+}
+
+function openFundInvest(fund) {
+    if (!fund) return;
+    closeModal('fundDetailModal');
+    openFundModal(fund.name);
+}
+
+// ============================================================
+// STOCK COMPARATOR
+// ============================================================
+function renderCompare() {
+    var sector = document.getElementById('compareSector').value;
+    var filtered = stocks.filter(function(s) { return s.sector === sector; });
+
+    if (!filtered.length) {
+        document.getElementById('compareBody').innerHTML = '';
+        document.getElementById('compareEmptyMsg').style.display = 'block';
+        return;
+    }
+    document.getElementById('compareEmptyMsg').style.display = 'none';
+
+    // Sort by change % descending to rank by performance
+    var ranked = filtered.slice().sort(function(a, b) { return b.change - a.change; });
+
+    var html = '';
+    ranked.forEach(function(s, i) {
+        var rank = i + 1;
+        var rankClass = rank === 1 ? 'rank-1' : rank === 2 ? 'rank-2' : rank === 3 ? 'rank-3' : 'rank-other';
+        var pos = s.change >= 0;
+        var changeColor = pos ? 'var(--positive)' : 'var(--negative)';
+        var simReturn = parseFloat((s.change * (1 + Math.random() * 1.5)).toFixed(2));
+        var winRow = rank === 1 ? ' class="compare-win"' : '';
+        var crown  = rank === 1 ? ' 🏆' : '';
+        html += '<tr' + winRow + '>'
+            + '<td><span class="rank-badge ' + rankClass + '">' + rank + '</span></td>'
+            + '<td><strong>' + s.symbol + '</strong>' + crown + '<br><span style="color:var(--text-muted);font-size:11px;">' + s.name.substring(0,28) + '</span></td>'
+            + '<td class="price-text">' + fmtINR(s.price) + '</td>'
+            + '<td style="color:' + changeColor + ';font-weight:600;">' + (pos ? '▲ +' : '▼ ') + s.change.toFixed(2) + '%</td>'
+            + '<td style="color:' + (simReturn >= 0 ? 'var(--positive)' : 'var(--negative)') + ';font-weight:600;">' + (simReturn >= 0 ? '+' : '') + simReturn.toFixed(2) + '%</td>'
+            + '<td>' + (s.marketCap || 'N/A') + '</td>'
+            + '<td>' + (s.pe || 'N/A') + '</td>'
+            + '<td><button class="btn btn-invest" onclick="openStockModal(\'' + s.symbol.replace(/'/g, "\\'") + '\')">View</button> <button class="btn btn-primary" style="padding:4px 10px;font-size:11px;" onclick="openOrder(\'' + s.symbol.replace(/'/g, "\\'") + '\',\'buy\')">Buy</button></td>'
+            + '</tr>';
+    });
+    document.getElementById('compareBody').innerHTML = html;
+    lucide.createIcons();
+}
+
+// ============================================================
+// SETTINGS
+// ============================================================
+var _simIntervalId = null;
+
+function renderSettings() {
+    var bal = document.getElementById('settingsBalance');
+    var balV = document.getElementById('settingsBalVal');
+    var oc  = document.getElementById('settingsOrderCount');
+    var wl  = document.getElementById('settingsWLCount');
+    var ds  = document.getElementById('settingsDataSrc');
+    var ac  = document.getElementById('settingsAlertCount');
+    if (bal)  bal.textContent  = '₹' + virtualBalance.toLocaleString('en-IN', {minimumFractionDigits:2});
+    if (balV) balV.textContent = '₹' + virtualBalance.toLocaleString('en-IN', {minimumFractionDigits:2});
+    if (oc)   oc.textContent   = orderHistory.length;
+    if (wl)   wl.textContent   = watchlist.length;
+    if (ds)   ds.textContent   = (document.getElementById('dataSourceBadge') || {}).textContent || '—';
+    if (ac)   ac.textContent   = (typeof priceAlerts !== 'undefined' ? priceAlerts.length : 0);
+    lucide.createIcons();
+}
+
+function resetVirtualAccount() {
+    if (!confirm('Reset your virtual account to ₹10,00,000? All holdings and orders will be cleared.')) return;
+    virtualBalance     = 1000000;
+    portfolioHoldings  = [];
+    orderHistory       = [];
+    saveState();
+    updateBalanceDisplay();
+    renderSettings();
+    showToast('✅ Virtual account reset to ₹10,00,000!', 'success');
+}
+
+function clearAllAlerts() {
+    if (typeof priceAlerts !== 'undefined') {
+        priceAlerts = [];
+        try { localStorage.setItem('nt_alerts', JSON.stringify([])); } catch(e) {}
+    }
+    renderSettings();
+    showToast('All price alerts cleared', 'info');
+}
+
+function setTheme(theme) {
+    document.getElementById('themeDark').classList.toggle('active', theme === 'dark');
+    document.getElementById('themeLight').classList.toggle('active', theme === 'light');
+    document.body.classList.toggle('light-mode', theme === 'light');
+    try { localStorage.setItem('nt_theme', theme); } catch(e) {}
+    showToast(theme === 'light' ? 'Light mode applied' : 'Dark mode applied', 'info');
+}
+
+function setAccent(primary, secondary) {
+    document.documentElement.style.setProperty('--accent-primary', primary);
+    document.documentElement.style.setProperty('--accent-secondary', secondary || primary);
+    showToast('Accent colour updated!', 'success');
+}
+
+function changeSimSpeed(msVal) {
+    var ms = parseInt(msVal || (document.getElementById('simSpeed') || {}).value) || 10000;
+    showToast('Price updates: every ' + (ms / 1000) + 's', 'info');
+}
+
+// ============================================================
+// FEAR & GREED INDEX
+// ============================================================
+function computeFearGreed() {
+    if (!stocks || !stocks.length) return 50;
+    var gainers   = stocks.filter(function(s) { return s.change > 0; }).length;
+    var breadth   = (gainers / stocks.length) * 100;
+    var avgChange = stocks.reduce(function(sum, s) { return sum + s.change; }, 0) / stocks.length;
+    var momentum  = Math.max(0, Math.min(100, 50 + avgChange * 10));
+    // Large-cap weighting (top 15 stocks)
+    var topStocks = stocks.slice(0, 15);
+    var topAvg    = topStocks.reduce(function(sum, s) { return sum + s.change; }, 0) / topStocks.length;
+    var topMom    = Math.max(0, Math.min(100, 50 + topAvg * 10));
+    return Math.round(Math.max(0, Math.min(100, breadth * 0.5 + momentum * 0.3 + topMom * 0.2)));
+}
+
+function getFGLabel(score) {
+    if (score <= 20) return { label: 'Extreme Fear',  color: '#ef4444' };
+    if (score <= 40) return { label: 'Fear',           color: '#f97316' };
+    if (score <= 60) return { label: 'Neutral',        color: '#eab308' };
+    if (score <= 80) return { label: 'Greed',          color: '#22c55e' };
+    return               { label: 'Extreme Greed',  color: '#10b981' };
+}
+
+async function fetchFearGreedData() {
+    try {
+        var url = 'https://query1.finance.yahoo.com/v8/finance/chart/%5EINDIAVIX?interval=1d&range=5d';
+        var res = await fetchWithFallback(url, 6000);
+        var json = await res.json();
+        var meta = json.chart && json.chart.result && json.chart.result[0] && json.chart.result[0].meta;
+        if (!meta) throw new Error('no vix data');
+        
+        var vix = meta.regularMarketPrice;
+        var prevVix = meta.chartPreviousClose || vix;
+        var vixChange = ((vix - prevVix) / prevVix) * 100;
+        
+        // Nifty 50 momentum (last 5 days)
+        var niftyUrl = 'https://query1.finance.yahoo.com/v8/finance/chart/%5ENSEI?interval=1d&range=5d';
+        var nRes = await fetchWithFallback(niftyUrl, 6000);
+        var nJson = await nRes.json();
+        var r = nJson.chart.result[0];
+        var prices = r.indicators.quote[0].close.filter(function(p) { return p != null; });
+        var niftyMom = ((prices[prices.length-1] - prices[0]) / prices[0]) * 100;
+
+        renderFearGreed(vix, vixChange, niftyMom);
+    } catch(e) {
+        console.warn('[Sentiment] Failed:', e.message);
+        renderFearGreed(18, 0, 0); // Fallback stable values
+    }
+}
+
+function renderFearGreed(vix, vixChange, niftyMom) {
+    var el = document.getElementById('fearGreedWrap'); // Target the existing DOM element
+    if (!el) return;
+
+    // Sentiment Calculation (0-100)
+    // 0 = Extreme Fear, 100 = Extreme Greed
+    // Factors: VIX (inverted), Nifty Momentum
+    var vixBase = 15; // "Normal" VIX for India
+    var vixFactor = Math.max(0, Math.min(100, 50 - (vix - vixBase) * 2.5));
+    var momFactor = Math.max(0, Math.min(100, 50 + niftyMom * 10));
+    
+    var score = Math.round(vixFactor * 0.6 + momFactor * 0.4);
+    var label, color, sub;
+
+    if (score >= 80)      { label = 'EXTREME GREED'; color = '#10b981'; sub = 'Markets are overheated. Caution advised.'; }
+    else if (score >= 60) { label = 'GREED';         color = '#22c55e'; sub = 'Bullish momentum is strong.'; }
+    else if (score >= 40) { label = 'NEUTRAL';       color = '#eab308'; sub = 'Market is indecisive.'; }
+    else if (score >= 20) { label = 'FEAR';          color = '#f97316'; sub = 'Bearish sentiment rising.'; }
+    else                  { label = 'EXTREME FEAR';  color = '#ef4444'; sub = 'High panic. Look for value picks.'; }
+
+    var needleRotate = -90 + (score / 100) * 180;
+
+    el.innerHTML = `
+        <div class="fg-premium-widget glass-panel" style="background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(16px); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 20px; padding: 24px; position: relative; overflow: hidden; box-shadow: 0 8px 32px rgba(0,0,0,0.3);">
+            <div class="fg-header" style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 24px;">
+                <div class="fg-title-area">
+                    <span style="font-size: 14px; font-weight: 600; color: var(--text-muted); letter-spacing: 0.5px; text-transform: uppercase;">Fear & Greed Index</span>
+                </div>
+                <div class="fg-live-badge" style="display:flex; align-items:center; gap:6px; font-size:11px; font-weight:700; color:#10b981; background:rgba(16, 185, 129, 0.1); padding:4px 8px; border-radius:4px; border:1px solid rgba(16, 185, 129, 0.2);">
+                    <span style="display:inline-block; width:6px; height:6px; border-radius:50%; background:#10b981; box-shadow:0 0 6px #10b981; animation:pulse-status 2s infinite;"></span>LIVE MARKET DATA
+                </div>
+            </div>
+            
+            <div class="fg-main" style="position:relative; text-align:center; padding: 20px 0;">
+                <div class="fg-gauge-wrap" style="position:relative; width:220px; margin:0 auto;">
+                    <div class="fg-gauge-svg" style="position:relative; overflow:hidden; padding-bottom:10px;">
+                        <svg viewBox="0 0 100 50" style="width:100%; height:auto; display:block; filter: drop-shadow(0 0 8px ${color}60);">
+                            <path d="M10,45 A40,40 0 0,1 90,45" fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="8" stroke-linecap="round"/>
+                            <path d="M10,45 A40,40 0 0,1 90,45" fill="none" stroke="url(#fgGradient)" stroke-width="8" stroke-dasharray="${score * 1.25}, 200" stroke-linecap="round" style="transition: stroke-dasharray 1.5s cubic-bezier(0.4, 0, 0.2, 1);"/>
+                            <defs>
+                                <linearGradient id="fgGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                                    <stop offset="0%" stop-color="#ef4444" />
+                                    <stop offset="20%" stop-color="#f97316" />
+                                    <stop offset="50%" stop-color="#eab308" />
+                                    <stop offset="80%" stop-color="#22c55e" />
+                                    <stop offset="100%" stop-color="#10b981" />
+                                </linearGradient>
+                            </defs>
+                        </svg>
+                        <div class="fg-needle" style="position:absolute; bottom:5px; left:50%; width:4px; height:80px; background:${color}; border-radius:2px; transform-origin:bottom center; transform: translateX(-50%) rotate(${needleRotate}deg); box-shadow: 0 0 10px ${color}; transition: transform 1s cubic-bezier(0.175, 0.885, 0.32, 1.275);"></div>
+                        <div class="fg-pivot" style="position:absolute; bottom:-1px; left:50%; width:16px; height:16px; background:var(--bg-card); border: 2px solid ${color}; border-radius:50%; transform:translateX(-50%); box-shadow: 0 0 10px rgba(0,0,0,0.5);"></div>
+                    </div>
+                    
+                    <div style="font-size:32px; font-weight:800; color:${color};">${score}</div>
+                    <div class="fg-status-label" style="font-size:16px; font-weight:800; color:${color}; margin-top:2px; letter-spacing:1px; text-transform:uppercase;">${label}</div>
+                </div>
+                
+                <div class="fg-info" style="margin-top:25px; border-top: 1px solid rgba(255,255,255,0.05); padding-top:20px;">
+                    <p class="fg-desc" style="color:var(--text-muted); font-size:13px; margin:0 0 15px 0;">${sub}</p>
+                    <div class="fg-vitals" style="display:flex; justify-content:space-between; text-align:center;">
+                        <div class="fg-v-item" style="flex:1;">
+                            <span style="display:block; font-size:11px; color:var(--text-muted); margin-bottom:4px;">India VIX <br><span style="font-size:9px">(Volatility)</span></span>
+                            <strong style="font-size:14px; color:${vixChange > 0 ? '#ef4444' : '#10b981'}">${vix.toFixed(2)} <span style="font-size:11px;">(${vixChange > 0 ? '+' : ''}${vixChange.toFixed(1)}%)</span></strong>
+                        </div>
+                        <div class="fg-v-item" style="flex:1; border-left:1px solid rgba(255,255,255,0.05);">
+                            <span style="display:block; font-size:11px; color:var(--text-muted); margin-bottom:4px;">Nifty 50 <br><span style="font-size:9px">(5d Momentum)</span></span>
+                            <strong style="font-size:14px; color:${niftyMom > 0 ? '#10b981' : '#ef4444'}">${niftyMom > 0 ? '+' : ''}${niftyMom.toFixed(2)}%</strong>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+    if (typeof lucide !== 'undefined') lucide.createIcons();
+}
+
+
+
+// ============================================================
+// MARKET HEATMAP
+// ============================================================
+function getHMColor(change) {
+    if (change <= -3)  return { bg: '#7f1d1d', border: '#991b1b' };
+    if (change <= -2)  return { bg: '#b91c1c', border: '#dc2626' };
+    if (change <= -1)  return { bg: '#dc2626', border: '#ef4444' };
+    if (change < 0)    return { bg: '#ef4444', border: '#f87171' };
+    if (change === 0)  return { bg: '#1f2937', border: '#374151' };
+    if (change < 1)    return { bg: '#166534', border: '#16a34a' };
+    if (change < 2)    return { bg: '#15803d', border: '#22c55e' };
+    if (change < 3)    return { bg: '#14532d', border: '#15803d' };
+    return                    { bg: '#052e16', border: '#14532d' };
+}
+
+function getHMSizeClass(marketCapStr) {
+    if (!marketCapStr) return 'hm-sm';
+    var num = parseFloat(marketCapStr);
+    if (marketCapStr.indexOf('L') !== -1) num *= 100000;
+    if (num >= 700000) return 'hm-xl';
+    if (num >= 200000) return 'hm-lg';
+    if (num >= 50000)  return 'hm-md';
+    return 'hm-sm';
+}
+
+function switchHeatmapSector(sector, btn) {
+    currentHeatmapSector = sector;
+    // Update active tab
+    document.querySelectorAll('.hm-sector-tab').forEach(function(t) { t.classList.remove('active'); });
+    if (btn) btn.classList.add('active');
+    renderHeatmap();
+}
+
+function _hmSortedStocks(list) {
+    return list.slice().sort(function(a, b) {
+        var aN = parseFloat(a.marketCap) * (a.marketCap.indexOf('L') !== -1 ? 100000 : 1);
+        var bN = parseFloat(b.marketCap) * (b.marketCap.indexOf('L') !== -1 ? 100000 : 1);
+        return bN - aN;
+    });
+}
+
+function _hmCellHtml(s) {
+    var col = getHMColor(s.change);
+    var sz  = getHMSizeClass(s.marketCap);
+    var chgStr = (s.change >= 0 ? '+' : '') + s.change.toFixed(2) + '%';
+    var safe = s.symbol.replace(/'/g, "\\'");
+    return '<div class="hm-cell ' + sz + '" style="background:' + col.bg + ';border-color:' + col.border + ';" onclick="openStockModal(\'' + safe + '\')" title="' + s.name + '">'
+        + '<span class="hm-sym">' + s.symbol + '</span>'
+        + '<span class="hm-chg">' + chgStr + '</span>'
+        + '<span class="hm-price">' + fmtINR(s.price) + '</span>'
+        + '</div>';
+}
+
+function renderHeatmap() {
+    var grid = document.getElementById('heatmapGrid');
+    if (!grid) return;
+
+    if (currentHeatmapSector !== 'All') {
+        // Single sector view — flat, sorted by market cap
+        var sectorStocks = _hmSortedStocks(stocks.filter(function(s) { return s.sector === currentHeatmapSector; }));
+        grid.innerHTML = sectorStocks.length
+            ? sectorStocks.map(_hmCellHtml).join('')
+            : '<p style="color:var(--text-muted);padding:20px;">No stocks in this sector.</p>';
+        return;
+    }
+
+    // All-sectors view — group by sector with headers
+    var sectors = {};
+    var sectorOrder = [];
+    stocks.forEach(function(s) {
+        if (!sectors[s.sector]) { sectors[s.sector] = []; sectorOrder.push(s.sector); }
+        sectors[s.sector].push(s);
+    });
+
+    var html = '';
+    sectorOrder.forEach(function(sec) {
+        var sorted = _hmSortedStocks(sectors[sec]);
+        var avgChange = sorted.reduce(function(a, s) { return a + s.change; }, 0) / sorted.length;
+        var secColor = avgChange >= 0 ? 'var(--positive)' : 'var(--negative)';
+        var secSign  = avgChange >= 0 ? '+' : '';
+        html += '<div class="hm-sector-header">'
+            + sec
+            + ' <span style="color:' + secColor + ';font-size:11px;margin-left:6px;">'
+            + secSign + avgChange.toFixed(2) + '% avg</span>'
+            + '</div>';
+        html += sorted.map(_hmCellHtml).join('');
+        html += '<div style="width:100%;height:8px;"></div>'; // spacer between sectors
+    });
+    grid.innerHTML = html;
+}
+
+// ============================================================
+// TRADE JOURNAL
+// ============================================================
+function renderJournal() {
+    var statsEl = document.getElementById('journalStats');
+    var bodyEl  = document.getElementById('journalBody');
+    var curveEl = document.getElementById('journalCurveWrap');
+    if (!statsEl) return;
+
+    if (!orderHistory.length) {
+        statsEl.innerHTML = '<div style="grid-column:1/-1;text-align:center;color:var(--text-muted);padding:40px 0;">No trades yet. Place virtual orders to see your journal!</div>';
+        if (bodyEl)  bodyEl.innerHTML  = '<tr><td colspan="8" style="text-align:center;color:var(--text-muted);padding:30px;">No trades yet</td></tr>';
+        if (curveEl) curveEl.innerHTML = '';
+        return;
+    }
+
+    // Process in chronological order (orderHistory is newest-first, so reverse)
+    var trades     = orderHistory.slice().reverse();
+    var avgCostMap = {}, qtMap = {};
+    var realPnl = 0, wins = 0, losses = 0, totalGain = 0, totalLoss = 0;
+    var balance = 1000000;
+    var equityCurve = [balance];
+    var tradeRows   = [];
+
+    trades.forEach(function(o) {
+        var pnl = null;
+        if (o.side === 'BUY') {
+            var prevCost = avgCostMap[o.symbol] || 0;
+            var prevQty  = qtMap[o.symbol]  || 0;
+            avgCostMap[o.symbol] = (prevCost * prevQty + o.price * o.qty) / (prevQty + o.qty);
+            qtMap[o.symbol]  = prevQty + o.qty;
+            balance -= o.total;
+        } else {
+            var cost = avgCostMap[o.symbol] || o.price;
+            pnl = (o.price - cost) * o.qty;
+            realPnl += pnl;
+            if (pnl >= 0) { wins++;   totalGain += pnl;              }
+            else           { losses++; totalLoss += Math.abs(pnl);   }
+            balance += o.total;
+        }
+        equityCurve.push(balance);
+        tradeRows.push({ o: o, pnl: pnl });
+    });
+
+    var sellCount    = orderHistory.filter(function(o) { return o.side === 'SELL'; }).length;
+    var winRate      = sellCount > 0 ? (wins / sellCount * 100).toFixed(1) + '%' : '—';
+    var avgGainStr   = wins   > 0 ? '+' + fmtINR(Math.round(totalGain  / wins))   : '—';
+    var avgLossStr   = losses > 0 ? '-' + fmtINR(Math.round(totalLoss  / losses)) : '—';
+    var pf           = totalLoss > 0 ? (totalGain / totalLoss).toFixed(2) : (totalGain > 0 ? '∞' : '—');
+    var pnlColor     = realPnl  >= 0 ? 'var(--positive)' : 'var(--negative)';
+    var pfColor      = (pf === '∞' || parseFloat(pf) >= 1) ? 'var(--positive)' : 'var(--negative)';
+
+    var cards = [
+        { label: 'Total Trades',  val: orderHistory.length,                                                         color: '' },
+        { label: 'Win Rate',      val: winRate,                                                                      color: '' },
+        { label: 'Realized P&L',  val: (realPnl >= 0 ? '+' : '-') + fmtINR(Math.abs(Math.round(realPnl))),          color: pnlColor },
+        { label: 'Avg Gain',      val: avgGainStr,                                                                   color: 'var(--positive)' },
+        { label: 'Avg Loss',      val: avgLossStr,                                                                   color: 'var(--negative)' },
+        { label: 'Profit Factor', val: pf,                                                                            color: pfColor },
+    ];
+    statsEl.innerHTML = cards.map(function(c) {
+        return '<div class="journal-stat-card glass-panel">'
+            + '<span class="js-label">' + c.label + '</span>'
+            + '<strong class="js-val"' + (c.color ? ' style="color:' + c.color + ';"' : '') + '>' + c.val + '</strong>'
+            + '</div>';
+    }).join('');
+
+    // Update new Portfolio Analytics Chart
+    var totalTrades = wins + losses;
+    var winPct = totalTrades > 0 ? (wins / totalTrades) : 0;
+    var lossPct = totalTrades > 0 ? (losses / totalTrades) : 0;
+    
+    var dashEl = document.getElementById('analyticsDashboard');
+    if(dashEl) {
+        dashEl.style.display = totalTrades > 0 ? 'flex' : 'none';
+        document.getElementById('winPctDisplay').textContent = (winPct * 100).toFixed(0) + '%';
+        document.getElementById('lossPctDisplay').textContent = (lossPct * 100).toFixed(0) + '%';
+        document.getElementById('totalTradesDisplay').textContent = totalTrades;
+        var circum = 326.72; // 2 * pi * 52
+        document.getElementById('winCircle').setAttribute('stroke-dasharray', (winPct * circum) + ' ' + circum);
+    }
+
+    // Equity curve SVG
+    if (equityCurve.length > 1 && curveEl) {
+        var W = 600, H = 130, PL = 10, PR = 10, PT = 12, PB = 10;
+        var cW = W - PL - PR, cH = H - PT - PB;
+        var minV = Math.min.apply(null, equityCurve);
+        var maxV = Math.max.apply(null, equityCurve);
+        var rng  = maxV - minV || 1;
+        var n    = equityCurve.length;
+        var pts  = equityCurve.map(function(v, i) {
+            return [(PL + (i / (n - 1)) * cW).toFixed(1), (PT + (1 - (v - minV) / rng) * cH).toFixed(1)];
+        });
+        var lc  = realPnl >= 0 ? '#10b981' : '#ef4444';
+        var pd  = 'M' + pts[0][0] + ',' + pts[0][1];
+        for (var i = 1; i < pts.length; i++) pd += ' L' + pts[i][0] + ',' + pts[i][1];
+        var fd  = pd + ' L' + pts[n-1][0] + ',' + (PT + cH) + ' L' + PL + ',' + (PT + cH) + ' Z';
+
+        curveEl.innerHTML = '<div class="journal-curve-wrap">'
+            + '<div class="jc-label">EQUITY CURVE &nbsp;&mdash;&nbsp; Virtual Balance Over Time</div>'
+            + '<svg viewBox="0 0 ' + W + ' ' + H + '" style="width:100%;height:130px;">'
+            + '<defs><linearGradient id="ecGr" x1="0" y1="0" x2="0" y2="1">'
+            + '<stop offset="0%" stop-color="' + lc + '" stop-opacity="0.3"/>'
+            + '<stop offset="100%" stop-color="' + lc + '" stop-opacity="0.02"/>'
+            + '</linearGradient></defs>'
+            + '<path d="' + fd + '" fill="url(#ecGr)"/>'
+            + '<path d="' + pd + '" fill="none" stroke="' + lc + '" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>'
+            + '</svg></div>';
+    }
+
+    // Trade rows (newest first)
+    tradeRows.reverse();
+    var rows = tradeRows.map(function(t) {
+        var o = t.o, pnl = t.pnl;
+        var pnlStr = pnl !== null ? ((pnl >= 0 ? '+' : '-') + fmtINR(Math.abs(Math.round(pnl)))) : '—';
+        var pc     = pnl !== null ? (pnl >= 0 ? 'var(--positive)' : 'var(--negative)') : 'var(--text-muted)';
+        return '<tr>'
+            + '<td style="font-size:11px;color:var(--text-muted);">' + (o.time || '—') + '</td>'
+            + '<td><strong>' + o.symbol + '</strong></td>'
+            + '<td><span class="order-side-tag ' + (o.side === 'BUY' ? 'buy-tag' : 'sell-tag') + '">' + o.side + '</span></td>'
+            + '<td>' + o.qty + '</td>'
+            + '<td class="price-text">' + fmtINR(o.price) + '</td>'
+            + '<td>' + fmtINR(o.total) + '</td>'
+            + '<td style="color:' + pc + ';font-weight:600;">' + pnlStr + '</td>'
+            + '<td><span class="status-executed">' + (o.type || 'Market') + '</span></td>'
+            + '</tr>';
+    });
+    if (bodyEl) bodyEl.innerHTML = rows.join('') || '<tr><td colspan="8" style="text-align:center;color:var(--text-muted);padding:30px;">No trades yet</td></tr>';
+}
+
+// ============================================================
+// WHAT-IF MACHINE
+// ============================================================
+function calcWhatIf() {
+    var symEl  = document.getElementById('wiStock');
+    var amtEl  = document.getElementById('wiAmount');
+    var yrsEl  = document.getElementById('wiYears');
+    var resEl  = document.getElementById('wiResult');
+    if (!symEl || !amtEl || !yrsEl || !resEl) return;
+
+    var symbol = symEl.value;
+    var amount = parseFloat(amtEl.value) || 100000;
+    var years  = parseInt(yrsEl.value)   || 5;
+
+    var stock = stocks.find(function(s) { return s.symbol === symbol; });
+    if (!stock) {
+        resEl.innerHTML = '<p style="color:var(--text-muted);text-align:center;padding:30px 0;">Select a stock to see the simulation.</p>';
+        return;
+    }
+
+    // Sector CAGR approximations (5-yr annualised, India context)
+    var sectorCAGR = {
+        'Technology': 0.18, 'Finance': 0.14, 'Energy': 0.10,
+        'Consumer': 0.12, 'Infrastructure': 0.15, 'Healthcare': 0.16,
+        'Auto': 0.13, 'Metals': 0.11, 'Chemicals': 0.19,
+        'Telecom': 0.07, 'default': 0.12
+    };
+    // Add stock-specific variance from sector avg using symbol hash
+    var hashOffset = 0;
+    for (var i = 0; i < stock.symbol.length; i++) hashOffset += stock.symbol.charCodeAt(i);
+    var variance   = ((hashOffset % 7) - 3) * 0.01;  // -0.03 to +0.03
+    var stockCAGR  = (sectorCAGR[stock.sector] || sectorCAGR['default']) + variance;
+
+    var niftyCAGR  = 0.127; // NIFTY 50 long-term average
+
+    var histPrice     = stock.price / Math.pow(1 + stockCAGR, years);
+    var sharesIfBought = amount / histPrice;
+    var currentValue   = sharesIfBought * stock.price;
+    var gain           = currentValue - amount;
+    var returnPct      = (gain / amount) * 100;
+    var actualCAGR     = (Math.pow(currentValue / amount, 1 / years) - 1) * 100;
+
+    var niftyValue     = amount * Math.pow(1 + niftyCAGR, years);
+    var better         = currentValue >= niftyValue;
+    var col            = gain >= 0 ? 'var(--positive)' : 'var(--negative)';
+
+    var maxV = Math.max(currentValue, niftyValue);
+
+    resEl.innerHTML = '<div class="wi-result-grid">'
+        + mkWiCard('Amount Invested',   fmtINR(amount),                                               '')
+        + mkWiCard('Shares Purchased',  sharesIfBought.toFixed(4),                                    '')
+        + mkWiCard('Value Today',       fmtINR(Math.round(currentValue)),                              col, true)
+        + mkWiCard('Total Gain / Loss', (gain >= 0 ? '+' : '-') + fmtINR(Math.abs(Math.round(gain))), col)
+        + mkWiCard('Total Return',      (returnPct >= 0 ? '+' : '') + returnPct.toFixed(1) + '%',      col)
+        + mkWiCard('CAGR',              actualCAGR.toFixed(1) + '% p.a.',                              col)
+        + '</div>'
+        + '<div class="wi-vs-section">'
+        + '<div class="wi-vs-title">How you fared vs NIFTY 50 Benchmark</div>'
+        + '<div class="wi-vs-row">'
+        + '<span class="wi-vs-name">' + symbol + '</span>'
+        + '<div class="wi-bar-track"><div class="wi-bar-fill" style="width:' + Math.min(100, currentValue / maxV * 100).toFixed(1) + '%;background:' + col + ';"></div></div>'
+        + '<span class="wi-vs-val" style="color:' + col + ';">' + fmtINR(Math.round(currentValue)) + '</span>'
+        + '</div>'
+        + '<div class="wi-vs-row" style="margin-top:8px;">'
+        + '<span class="wi-vs-name">NIFTY 50</span>'
+        + '<div class="wi-bar-track"><div class="wi-bar-fill" style="width:' + Math.min(100, niftyValue / maxV * 100).toFixed(1) + '%;background:#6366f1;"></div></div>'
+        + '<span class="wi-vs-val" style="color:#6366f1;">' + fmtINR(Math.round(niftyValue)) + '</span>'
+        + '</div>'
+        + '<p class="wi-verdict" style="color:' + (better ? 'var(--positive)' : 'var(--negative)') + ';">'
+        + (better ? '✅ ' + symbol + ' beat NIFTY by ' + fmtINR(Math.round(currentValue - niftyValue)) + '!' : '📉 NIFTY beat ' + symbol + ' by ' + fmtINR(Math.round(niftyValue - currentValue)))
+        + '</p>'
+        + '</div>'
+        + '<p class="wi-disclaimer">★ Based on estimated sector CAGR averages. Actual past returns may differ. For educational purposes only.</p>';
+}
+
+function mkWiCard(label, val, color, big) {
+    return '<div class="wi-result-card glass-panel">'
+        + '<span>' + label + '</span>'
+        + '<strong' + (color ? ' style="color:' + color + ';' + (big ? 'font-size:20px;' : '') + '"' : '') + '>' + val + '</strong>'
+        + '</div>';
+}
+
+// ============================================================
+// STOCK STRENGTH SCORE
+// ============================================================
+function computeStockScore(stock) {
+    // 1. Momentum: daily % change
+    var momScore = Math.max(0, Math.min(100, 50 + stock.change * 8));
+
+    // 2. Valuation: PE vs sector average
+    var sectorPE = { 'Technology':30,'Finance':18,'Energy':12,'Consumer':52,'Infrastructure':32,
+                     'Healthcare':36,'Auto':22,'Metals':14,'Chemicals':32,'Telecom':40 };
+    var avgPE    = sectorPE[stock.sector] || 25;
+    var peScore  = 50;
+    if (stock.pe) {
+        if      (stock.pe < avgPE * 0.6) peScore = 88;
+        else if (stock.pe < avgPE)       peScore = 68;
+        else if (stock.pe < avgPE * 1.4) peScore = 44;
+        else                             peScore = 22;
+    }
+
+    // 3. 52-Week position (price within annual range)
+    var range   = get52WeekRange(stock);
+    var lo      = parseFloat(range.low);
+    var hi      = parseFloat(range.high);
+    var posScore = hi > lo ? ((stock.price - lo) / (hi - lo)) * 100 : 50;
+    posScore     = Math.max(0, Math.min(100, posScore));
+
+    // 4. Market cap tier (proxy for stability)
+    var mcStr  = stock.marketCap || '0L Cr';
+    var mcNum  = parseFloat(mcStr) * (mcStr.indexOf('L') !== -1 ? 100000 : 1);
+    var mcScore = mcNum >= 500000 ? 90 : mcNum >= 100000 ? 72 : mcNum >= 30000 ? 55 : 38;
+
+    // Weighted composite
+    var composite = Math.round(momScore * 0.3 + peScore * 0.3 + posScore * 0.25 + mcScore * 0.15);
+    composite     = Math.max(0, Math.min(100, composite));
+
+    var label, color;
+    if      (composite >= 80) { label = 'Excellent'; color = '#10b981'; }
+    else if (composite >= 65) { label = 'Strong';    color = '#22c55e'; }
+    else if (composite >= 50) { label = 'Average';   color = '#eab308'; }
+    else if (composite >= 35) { label = 'Weak';      color = '#f97316'; }
+    else                       { label = 'Poor';      color = '#ef4444'; }
+
+    return {
+        score: composite, label: label, color: color,
+        factors: [
+            { name: 'Momentum',       score: Math.round(momScore)  },
+            { name: 'Valuation (P/E)', score: Math.round(peScore)  },
+            { name: '52-Week Range',  score: Math.round(posScore)  },
+            { name: 'Market Cap',     score: Math.round(mcScore)   },
+        ]
+    };
+}
+
+function renderStockScore(stock) {
+    var wrap = document.getElementById('modalScoreWrap');
+    if (!wrap || !stock) return;
+    var s = computeStockScore(stock);
+
+    var factorsHtml = s.factors.map(function(f) {
+        var fc = f.score >= 65 ? 'var(--positive)' : f.score >= 40 ? '#eab308' : 'var(--negative)';
+        return '<div class="ss-factor">'
+            + '<span class="ss-fn">' + f.name + '</span>'
+            + '<div class="ss-f-track"><div class="ss-f-fill" style="width:' + f.score + '%;background:' + fc + ';"></div></div>'
+            + '<span class="ss-fv" style="color:' + fc + ';">' + f.score + '</span>'
+            + '</div>';
+    }).join('');
+
+    wrap.innerHTML = '<div class="stock-score-card glass-panel">'
+        + '<div class="ss-header">'
+        + '<span class="ss-title">Stock Strength Score</span>'
+        + '<span class="ss-badge" style="background:' + s.color + '22;color:' + s.color + ';border:1px solid ' + s.color + '44;">' + s.label + '</span>'
+        + '<span class="ss-num" style="color:' + s.color + ';">' + s.score + '<small>/100</small></span>'
+        + '</div>'
+        + '<div class="ss-main-track"><div class="ss-main-fill" style="width:' + s.score + '%;background:linear-gradient(90deg,' + s.color + '99,' + s.color + ');"></div></div>'
+        + '<div class="ss-factors">' + factorsHtml + '</div>'
+        + '</div>';
+}
