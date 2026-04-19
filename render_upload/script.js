@@ -344,90 +344,23 @@ var ipoData = [
 ];
 
 // ============================================================
-// DATA: CRYPTO
-// ============================================================
-var cryptoAssets = [
-    { name: 'Bitcoin',      symbol: 'BTC-USD',  price: 0, change: 0, mcap: '', vol: '' },
-    { name: 'Ethereum',     symbol: 'ETH-USD',  price: 0, change: 0, mcap: '', vol: '' },
-    { name: 'Solana',       symbol: 'SOL-USD',  price: 0, change: 0, mcap: '', vol: '' },
-    { name: 'Binance Coin', symbol: 'BNB-USD',  price: 0, change: 0, mcap: '', vol: '' },
-    { name: 'Ripple',       symbol: 'XRP-USD',  price: 0, change: 0, mcap: '', vol: '' },
-    { name: 'Dogecoin',     symbol: 'DOGE-USD', price: 0, change: 0, mcap: '', vol: '' },
-    { name: 'Cardano',      symbol: 'ADA-USD',  price: 0, change: 0, mcap: '', vol: '' },
-    { name: 'Avalanche',    symbol: 'AVAX-USD', price: 0, change: 0, mcap: '', vol: '' }
-];
-
-async function fetchCryptoData() {
-    try {
-        var symbols = cryptoAssets.map(c => c.symbol).join(',');
-        var YF_BATCH = 'https://query2.finance.yahoo.com/v7/finance/quote?formatted=false&corsDomain=finance.yahoo.com&symbols=' + symbols;
-        
-        var res = await fetchWithFallback(YF_BATCH, 8000);
-        var json = await res.json();
-        var results = json.quoteResponse && json.quoteResponse.result;
-        
-        if (results && results.length) {
-            results.forEach(q => {
-                var coin = cryptoAssets.find(c => c.symbol === q.symbol);
-                if (coin) {
-                    coin.price = q.regularMarketPrice || 0;
-                    coin.change = q.regularMarketChangePercent || 0;
-                    coin.mcap = q.marketCap ? formatMarketCap(q.marketCap).replace('Cr', 'B').replace('L', 'T') : '-';
-                    coin.vol = q.regularMarketVolume ? formatMarketCap(q.regularMarketVolume).replace('Cr', 'B') : '-';
-                }
-            });
-            renderCrypto();
-        }
-    } catch(e) {
-        console.warn('Crypto fetch failed:', e);
-        document.getElementById('cryptoBody').innerHTML = '<tr><td colspan="6" style="text-align:center;padding:40px;color:var(--negative);">Failed to load live data. Retrying...</td></tr>';
-    }
-}
-
-function renderCrypto() {
-    var html = cryptoAssets.map(c => {
-        var pos = c.change >= 0;
-        return `<tr>
-            <td><strong>${c.name}</strong></td>
-            <td style="color:var(--text-muted);">${c.symbol.split('-')[0]}</td>
-            <td style="font-weight:600;color:var(--text-main);">$${c.price.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 4})}</td>
-            <td class="${pos ? 'positive' : 'negative'}-text" style="font-weight:600;">${pos ? '+' : ''}${c.change.toFixed(2)}%</td>
-            <td>$${c.mcap}</td>
-            <td>${c.vol}</td>
-        </tr>`;
-    }).join('');
-    document.getElementById('cryptoBody').innerHTML = html;
-}
-
-// ============================================================
 // ════════════════════════════════════════════════════════════
 // SECTION 2: GLOBAL STATE & PERSISTENCE
 // ════════════════════════════════════════════════════════════
+var portfolioHoldings = [];
+
 // ════════════════════════════════════════════════════════════
 // SECTION 3: LIVE API & PROXY CONFIGURATION
 // ════════════════════════════════════════════════════════════
 // Multiple CORS proxies — tried in order until one works.
-// On Render (or any non-localhost host) the first entry becomes our own
-// FastAPI backend at the same origin, so all data travels through our server.
-var PROXIES = (function() {
-    var host = window.location.hostname;
-    var isLocal = (host === '127.0.0.1' || host === 'localhost');
-    if (isLocal) {
-        return [
-            'http://127.0.0.1:5005/?url=',                // Local FastAPI backend
-            'https://corsproxy.io/?',                     // Fallback 1
-            'https://api.allorigins.win/raw?url=',        // Fallback 2
-            'https://api.codetabs.com/v1/proxy?quest=',  // Fallback 3
-        ];
-    } else {
-        // Deployed: use same-origin proxy (FastAPI serves both frontend + API)
-        return [
-            window.location.origin + '/?url=',            // Same-origin FastAPI proxy
-            'https://corsproxy.io/?',                     // Fallback 1
-            'https://api.allorigins.win/raw?url=',        // Fallback 2
-        ];
-    }
-})();
+// On Render (or any non-localhost host) the first entry becomes the Flask
+// /proxy route, so all data travels through our own backend (no crumb issues).
+var PROXIES = [
+    window.location.origin + '/api/proxy?url=',  // Replit server-side proxy (Primary)
+    'https://corsproxy.io/?',                     // Fallback 1
+    'https://api.allorigins.win/raw?url=',        // Fallback 2
+    'https://api.codetabs.com/v1/proxy?quest=',  // Fallback 3
+];
 
 
 // Yahoo Finance (fallback — used for search lookups and index chart data)
@@ -561,7 +494,7 @@ function drawPriceChart(containerId, timestamps, prices, isPositive, range) {
         var val  = minP + pRange * i / 4;
         var yPos = (PAD.top + (1 - i / 4) * cH).toFixed(1);
         var lbl  = val >= 1000 ? Math.round(val).toLocaleString('en-IN') : val.toFixed(val >= 100 ? 1 : 2);
-        yLabels += '<text x="' + (PAD.left - 5) + '" y="' + (parseFloat(yPos) + 4) + '" text-anchor="end" fill="#cbd5e1" font-size="10" font-family="Outfit,sans-serif">' + lbl + '</text>'
+        yLabels += '<text x="' + (PAD.left - 5) + '" y="' + (parseFloat(yPos) + 4) + '" text-anchor="end" fill="rgba(148,163,184,0.7)" font-size="10" font-family="Outfit,sans-serif">' + lbl + '</text>'
                 +  '<line x1="' + PAD.left + '" y1="' + yPos + '" x2="' + (W - PAD.right) + '" y2="' + yPos + '" stroke="rgba(255,255,255,0.04)" stroke-width="1"/>';
     }
 
@@ -574,7 +507,7 @@ function drawPriceChart(containerId, timestamps, prices, isPositive, range) {
         var lbl  = (range === '1D')
             ? d.toLocaleTimeString('en-IN', { hour:'2-digit', minute:'2-digit', hour12:false })
             : d.toLocaleDateString('en-IN', { day:'2-digit', month:'short' });
-        xLabels += '<text x="' + xPos + '" y="' + (H - 6) + '" text-anchor="middle" fill="#cbd5e1" font-size="10" font-family="Outfit,sans-serif">' + lbl + '</text>';
+        xLabels += '<text x="' + xPos + '" y="' + (H - 6) + '" text-anchor="middle" fill="rgba(148,163,184,0.7)" font-size="10" font-family="Outfit,sans-serif">' + lbl + '</text>';
     }
 
     var gId = 'cg' + Math.random().toString(36).slice(2, 8);
@@ -961,7 +894,7 @@ function loadState() {
         if (sb !== null) virtualBalance = parseFloat(sb);
 
         var sh = localStorage.getItem('portfolioHoldings');
-        if (sh !== null) portfolioHoldings = JSON.parse(sh);
+        if (sh !== null) { var _ph = JSON.parse(sh); portfolioHoldings = Array.isArray(_ph) ? _ph : []; }
 
         var so = localStorage.getItem('orderHistory');
         if (so !== null) orderHistory = JSON.parse(so);
@@ -1035,33 +968,17 @@ function updateWatchlistBadge() {
     b.style.display = watchlist.size > 0 ? 'inline-block' : 'none';
 }
 
-function generateMiniChart(isPositive, pointsCount) {
-    pointsCount = pointsCount || 20;
-    var pts = [];
-    for (var i = 0; i < pointsCount; i++) {
+function generateMiniChart(isPositive, barCount) {
+    barCount = barCount || 20;
+    var bars = '';
+    for (var i = 0; i < barCount; i++) {
         var base = isPositive
-            ? 20 + Math.random() * 40 + (i / pointsCount) * 40
-            : 60 + Math.random() * 40 - (i / pointsCount) * 40;
-        pts.push(Math.min(100, Math.max(10, base)));
+            ? 20 + Math.random() * 40 + (i / barCount) * 40
+            : 60 + Math.random() * 40 - (i / barCount) * 40;
+        var h = Math.min(100, Math.max(10, base));
+        bars += '<div class="chart-bar ' + (isPositive ? 'bar-pos' : 'bar-neg') + '" style="height:' + h + '%"></div>';
     }
-    var width = 100, height = 40;
-    var step = width / (pointsCount - 1);
-    var dPath = "M0," + (height - (pts[0]/100)*height).toFixed(1);
-    for (var j = 1; j < pointsCount; j++) {
-        dPath += " L" + (j * step).toFixed(1) + "," + (height - (pts[j]/100)*height).toFixed(1);
-    }
-    var fillPath = dPath + " L" + width + "," + height + " L0," + height + " Z";
-    var color = isPositive ? '#10b981' : '#ef4444';
-    var gradId = 'grad_' + Math.random().toString(36).substr(2, 5);
-    var svg = '<svg width="100%" height="100%" viewBox="0 0 100 40" preserveAspectRatio="none" style="display:block; overflow:visible;">'
-        + '<defs><linearGradient id="' + gradId + '" x1="0" y1="0" x2="0" y2="1">'
-        + '<stop offset="0%" stop-color="' + color + '" stop-opacity="0.4"/>'
-        + '<stop offset="100%" stop-color="' + color + '" stop-opacity="0.0"/>'
-        + '</linearGradient></defs>'
-        + '<path d="' + fillPath + '" fill="url(#' + gradId + ')" />'
-        + '<path d="' + dPath + '" fill="none" stroke="' + color + '" stroke-width="1.8" vector-effect="non-scaling-stroke" stroke-linecap="round" stroke-linejoin="round"/>'
-        + '</svg>';
-    return svg;
+    return bars;
 }
 
 // ============================================================
@@ -1367,7 +1284,6 @@ function renderPortfolio() {
         var dayPl    = current * s.change / 100;
         totalInvested += invested; totalCurrent += current; dayGain += dayPl;
         var pos = pl >= 0;
-        var plCol = 'color:var(--' + (pos ? 'positive' : 'negative') + ');font-weight:600;';
         return '<tr>'
             + '<td><div class="stock-symbol">'
             +   '<div class="stock-logo" style="background-color:' + s.color + '20;color:' + s.color + ';border:1px solid ' + s.color + '40;">' + s.logoText + '</div>'
@@ -1378,11 +1294,10 @@ function renderPortfolio() {
             + '<td data-price="' + s.symbol + '">' + fmtINR(s.price) + '</td>'
             + '<td>' + fmtINR(invested) + '</td>'
             + '<td>' + fmtINR(current) + '</td>'
-            + '<td style="' + plCol + '">' + (pos ? '+' : '-') + fmtINR(Math.abs(pl)) + '</td>'
-            + '<td style="' + plCol + '">' + (pos ? '+' : '') + plPct.toFixed(2) + '%</td>'
-            + '<td><button class="btn btn-small" style="color:var(--negative);border-color:var(--negative);font-size:11px;padding:3px 10px;" '
-            +   'onclick="openOrderModal(\'' + s.symbol + '\',\'sell\')">'
-            +   'Sell</button></td>'
+            + '<td style="color:var(--' + (pos ? 'positive' : 'negative') + ');font-weight:600;">'
+            +   (pos ? '+' : '') + fmtINR(Math.abs(pl)) + '</td>'
+            + '<td style="color:var(--' + (pos ? 'positive' : 'negative') + ');font-weight:600;">'
+            +   (pos ? '+' : '') + plPct.toFixed(2) + '%</td>'
             + '</tr>';
     }).join('');
 
@@ -1402,25 +1317,23 @@ function renderPortfolio() {
 
     var totalPL    = totalCurrent - totalInvested;
     var totalPLPct = totalInvested > 0 ? totalPL / totalInvested * 100 : 0;
-    var dayGainPct = totalCurrent > 0 ? dayGain / (totalCurrent - dayGain) * 100 : 0;
     var posTotal = totalPL >= 0, posDay = dayGain >= 0;
     document.getElementById('portfolioSummary').innerHTML =
-        mkPortStat('Total Invested',  fmtINR(totalInvested),  '', null)
-        + mkPortStat('Current Value', fmtINR(totalCurrent),   '', null)
-        + mkPortStat('Cash Balance',  fmtINR(virtualBalance), '', null)
+        mkPortStat('Current Value',   fmtINR(totalCurrent),  '', false)
+        + mkPortStat('Cash Balance',   fmtINR(virtualBalance), '', false)
         + mkPortStat('Total P&amp;L',
-            '<span style="color:var(--' + (posTotal ? 'positive' : 'negative') + ');">' + (posTotal ? '+' : '-') + fmtINR(Math.abs(totalPL)) + '</span>',
-            (posTotal ? '+' : '') + totalPLPct.toFixed(2) + '%', posTotal ? true : false)
+            '<span style="color:var(--' + (posTotal ? 'positive' : 'negative') + ');">' + (posTotal ? '+' : '') + fmtINR(Math.abs(totalPL)) + '</span>',
+            (posTotal ? '+' : '') + totalPLPct.toFixed(2) + '%', posTotal)
         + mkPortStat("Today's Gain",
-            '<span style="color:var(--' + (posDay ? 'positive' : 'negative') + ');">' + (posDay ? '+' : '-') + fmtINR(Math.abs(dayGain)) + '</span>',
-            (posDay ? '+' : '') + dayGainPct.toFixed(2) + '%', posDay ? true : false);
+            '<span style="color:var(--' + (posDay ? 'positive' : 'negative') + ');">' + (posDay ? '+' : '') + fmtINR(Math.abs(dayGain)) + '</span>',
+            '', posDay);
 
+    // Sector allocation donut
     drawHoldingsDonut('holdingsDonut');
 }
 
 function mkPortStat(label, value, sub, colored) {
-    var cls = colored === true ? ' port-positive' : colored === false ? ' port-negative' : '';
-    return '<div class="port-stat-card glass-panel' + cls + '">'
+    return '<div class="port-stat-card glass-panel' + (colored === true ? ' port-positive' : colored === false && sub ? ' port-negative' : '') + '">'
         + '<span>' + label + '</span><strong>' + value + '</strong>'
         + (sub ? '<small>' + sub + '</small>' : '')
         + '</div>';
@@ -1556,7 +1469,7 @@ function setView(view) {
     });
 
     // Sections outside .dashboard-content (full-page views)
-    var fullPageViews = ['orders', 'news', 'calculator', 'compare', 'settings', 'heatmap', 'journal', 'calendar', 'screener-pro'];
+    var fullPageViews = ['orders', 'news', 'calculator', 'compare', 'settings', 'heatmap', 'journal'];
     var isFullPage = fullPageViews.indexOf(view) !== -1;
 
     // Show/hide the main dashboard-content wrapper
@@ -1564,22 +1477,20 @@ function setView(view) {
     if (dashContent) dashContent.style.display = isFullPage ? 'none' : '';
 
     // Show/hide each full-page section
-    ['orders', 'news', 'calculator', 'compare', 'settings', 'heatmap', 'journal', 'calendar', 'screener-pro'].forEach(function(v) {
+    ['orders', 'news', 'calculator', 'compare', 'settings', 'heatmap', 'journal'].forEach(function(v) {
         var el = document.getElementById('section-' + v);
         if (el) el.style.display = (v === view) ? 'block' : 'none';
     });
 
     if (isFullPage) {
         window.scrollTo({ top: 0, behavior: 'smooth' });
-        if (view === 'orders')       { renderOrderHistory(); }
-        if (view === 'news')         { renderNews(); }
-        if (view === 'calculator')   { calcSIP(); calcLumpsum(); }
-        if (view === 'compare')      { renderCompare(); }
-        if (view === 'settings')     { renderSettings(); }
-        if (view === 'heatmap')      { renderHeatmap(); }
-        if (view === 'journal')      { renderJournal(); }
-        if (view === 'calendar')     { renderCalendar(); }
-        if (view === 'screener-pro') { applyScreenerPro(); }
+        if (view === 'orders')     { renderOrderHistory(); }
+        if (view === 'news')       { renderNews(); }
+        if (view === 'calculator') { calcSIP(); calcLumpsum(); }
+        if (view === 'compare')    { renderCompare(); }
+        if (view === 'settings')   { renderSettings(); }
+        if (view === 'heatmap')    { renderHeatmap(); }
+        if (view === 'journal')    { renderJournal(); }
         return;
     }
 
@@ -1590,8 +1501,6 @@ function setView(view) {
     var gainers   = document.getElementById('section-gainers');
     var ipo       = document.getElementById('section-ipo');
     var portfolio = document.getElementById('section-portfolio');
-    var cryptoSec = document.getElementById('section-crypto');
-    var allStocks = document.getElementById('section-allstocks');
 
     switch (view) {
         case 'dashboard':
@@ -1629,15 +1538,10 @@ function setView(view) {
             buildDOMCache();
             portfolio.scrollIntoView({ behavior:'smooth', block:'start' });
             break;
-        case 'crypto':
-            cryptoSec.style.display = 'block';
-            fetchCryptoData();
-            cryptoSec.scrollIntoView({ behavior:'smooth', block:'start' });
-            break;
         case 'watchlist':
             renderWatchlist();
             buildDOMCache();
-            document.getElementById('section-screener').scrollIntoView({ behavior:'smooth', block:'start' });
+            watchlistSection.scrollIntoView({ behavior:'smooth', block:'start' });
             break;
         case 'allstocks':
             renderAllStocks(0, 'All', 'marketcap');
@@ -2118,8 +2022,25 @@ function updatePricesInDOM() {
 }
 
 function startPriceSimulation() {
-    // Intentionally left blank as per requirement to strictly use LIVE data.
-    // Zero random price jitter will be added.
+    // Slowed from 3s → 10s to drastically cut CPU usage
+    setInterval(function() {
+        stocks.forEach(function(s) {
+            var d = (Math.random() - 0.48) * 0.18;
+            s.price  = parseFloat(Math.max(1, s.price * (1 + d / 100)).toFixed(2));
+            s.change = parseFloat((s.change + (Math.random() - 0.5) * 0.04).toFixed(2));
+        });
+        indices.forEach(function(idx) {
+            var d = (Math.random() - 0.48) * 0.12;
+            idx.value  = parseFloat(Math.max(1, idx.value * (1 + d / 100)).toFixed(2));
+            idx.change = parseFloat((idx.change + (Math.random() - 0.5) * 0.03).toFixed(2));
+        });
+        updatePricesInDOM();
+        updateTicker();
+        // Recalculate and re-render analytics so they match the "Accurate" simulated prices
+        renderGainersLosers();
+        renderSectorPerformance();
+        if (currentView === 'heatmap') renderHeatmap();
+    }, 10000);  // was 3000ms
 }
 
 
@@ -2262,57 +2183,31 @@ function fetchLiveNews() {
             if (idx > 40) return; // Expand to 40 articles
             var title = item.querySelector('title') ? item.querySelector('title').textContent : '';
             var rawDesc = item.querySelector('description') ? item.querySelector('description').textContent : '';
-            var link = item.querySelector('link') ? item.querySelector('link').textContent : '#';
             
             // Basic HTML stripping for cleaner description
             var desc = rawDesc.replace(/<[^>]*>/g, '').trim();
 
-            // Sentiment detection — avoid false positives like "buy or sell"
-            var tl = title.toLowerCase();
+            // Clean title and infer tag/sector
             var tag = 'Neutral';
-            var posWords = ['surge','surges','surged','rally','rallies','rallied','rise','rises','rose','gain','gains','gained','jump','jumps','jumped','soar','soars','record high','hits high','outperform','upgrades','upgrade'];
-            var negWords = ['fall','falls','fell','drop','drops','dropped','slump','slumps','slumped','crash','crashes','plunge','plunges','plunged','decline','declines','declined','loss','losses','down','slide','slides'];
-            for (var pi = 0; pi < posWords.length; pi++) { if (tl.indexOf(posWords[pi]) !== -1) { tag = 'Positive'; break; } }
-            for (var ni = 0; ni < negWords.length; ni++) { if (tl.indexOf(negWords[ni]) !== -1) { tag = 'Negative'; break; } }
-
-            // Extract source from title (Google News format: "Title - Source")
-            var source = '';
-            var dashIdx = title.lastIndexOf(' - ');
-            if (dashIdx !== -1) { source = title.substring(dashIdx + 3); title = title.substring(0, dashIdx); }
+            if (title.toLowerCase().indexOf('surge') !== -1 || title.toLowerCase().indexOf('rise') !== -1 || title.toLowerCase().indexOf('buy') !== -1) tag = 'Positive';
+            if (title.toLowerCase().indexOf('fall') !== -1 || title.toLowerCase().indexOf('drop') !== -1 || title.toLowerCase().indexOf('slump') !== -1) tag = 'Negative';
 
             var sector = 'Market';
-            if (tl.indexOf('sensex') !== -1 || tl.indexOf('nifty') !== -1 || tl.indexOf('indices') !== -1) sector = 'Indices';
-            if (tl.indexOf('bank') !== -1 || tl.indexOf('rbi') !== -1 || tl.indexOf('nbfc') !== -1) sector = 'Banking';
-            if (tl.indexOf('tech') !== -1 || tl.indexOf('it sector') !== -1 || tl.indexOf('software') !== -1) sector = 'Technology';
-            if (tl.indexOf('pharma') !== -1 || tl.indexOf('health') !== -1 || tl.indexOf('drug') !== -1) sector = 'Healthcare';
-            if (tl.indexOf('auto') !== -1 || tl.indexOf('ev ') !== -1 || tl.indexOf('motor') !== -1) sector = 'Auto';
-            if (tl.indexOf('metal') !== -1 || tl.indexOf('steel') !== -1 || tl.indexOf('alumin') !== -1) sector = 'Metals';
+            if (title.toLowerCase().indexOf('sensex') !== -1 || title.toLowerCase().indexOf('nifty') !== -1) sector = 'Indices';
+            if (title.toLowerCase().indexOf('bank') !== -1) sector = 'Banking';
+            if (title.toLowerCase().indexOf('tech') !== -1 || title.toLowerCase().indexOf('it ') !== -1) sector = 'Technology';
 
-            // Real timestamp from RSS pubDate
-            var pubDateEl = item.querySelector('pubDate');
+            // Simulating time relative to now for the UI
             var timeStr = 'Just Now';
-            if (pubDateEl) {
-                var pub = new Date(pubDateEl.textContent);
-                if (!isNaN(pub)) {
-                    var diffMin = Math.floor((Date.now() - pub.getTime()) / 60000);
-                    if      (diffMin < 2)    timeStr = 'Just Now';
-                    else if (diffMin < 60)   timeStr = diffMin + ' mins ago';
-                    else if (diffMin < 1440) timeStr = Math.floor(diffMin / 60) + ' hrs ago';
-                    else                     timeStr = Math.floor(diffMin / 1440) + 'd ago';
-                }
-            } else {
-                if (idx > 1)  timeStr = (idx * 5) + ' mins ago';
-                if (idx > 12) timeStr = Math.floor(idx / 12) + ' hrs ago';
-            }
+            if (idx > 1) timeStr = (idx * 5) + ' mins ago';
+            if (idx > 12) timeStr = Math.floor(idx/12) + ' hrs ago';
 
             newNews.push({
                 title: title,
                 time: timeStr,
                 tag: tag,
                 sector: sector,
-                source: source,
-                desc: desc,
-                link: link
+                desc: desc
             });
         });
 
@@ -2346,11 +2241,8 @@ function renderNews() {
             +   '<span class="news-time">' + n.time + '</span>'
             + '</div>'
             + '<p class="news-title">' + n.title + '</p>'
-            + '<p class="news-desc">' + desc + '</p>'
-            + '<div class="news-footer">'
-            +   (n.source ? '<span class="news-source">' + n.source + '</span>' : '')
-            +   '<a href="' + (n.link || '#') + '" target="_blank" class="news-read-btn">Read More \u2192</a>'
-            + '</div>'
+            + '<p class="news-desc" style="font-size:12px; color:var(--text-muted); margin: 8px 0; line-height:1.4;">' + desc + '</p>'
+            + '<div class="news-footer"><button class="btn" style="font-size:11px;padding:4px 10px;" onclick="showToast(\'Full article opening...\',\'info\')">Read More</button></div>'
             + '</div>';
     }).join('');
 }
@@ -2385,17 +2277,6 @@ function calcSIP() {
     var pct = Math.min(95, (invested / fv) * 100);
     document.getElementById('calcInvestedBar').style.width = pct + '%';
     document.getElementById('calcReturnsBar').style.width = (100 - pct) + '%';
-    
-    // Update Slider Fills
-    document.querySelectorAll('#calcSIPForm .calc-slider').forEach(function(slider) {
-        var min = parseFloat(slider.min) || 0;
-        var max = parseFloat(slider.max) || 100;
-        var val = parseFloat(slider.value);
-        var p = ((val - min) / (max - min)) * 100;
-        var color = slider.classList.contains('tax-slider') ? 'var(--gold)' : 
-                    slider.classList.contains('inf-slider') ? '#F472B6' : 'var(--accent-primary)';
-        slider.style.background = 'linear-gradient(to right, ' + color + ' ' + p + '%, rgba(255,255,255,0.08) ' + p + '%)';
-    });
 }
 
 function calcLumpsum() {
@@ -2418,17 +2299,6 @@ function calcLumpsum() {
     document.getElementById('calcLsGain').textContent      = ((realValue - amount) / amount * 100).toFixed(1) + '%';
     document.getElementById('calcLsAfterTax').textContent  = fmtINR(Math.round(afterTax));
     document.getElementById('calcLsRealValue').textContent = fmtINR(Math.round(realValue));
-    
-    // Update Slider Fills
-    document.querySelectorAll('#calcLumpsumForm .calc-slider').forEach(function(slider) {
-        var min = parseFloat(slider.min) || 0;
-        var max = parseFloat(slider.max) || 100;
-        var val = parseFloat(slider.value);
-        var p = ((val - min) / (max - min)) * 100;
-        var color = slider.classList.contains('tax-slider') ? 'var(--gold)' : 
-                    slider.classList.contains('inf-slider') ? '#F472B6' : 'var(--accent-primary)';
-        slider.style.background = 'linear-gradient(to right, ' + color + ' ' + p + '%, rgba(255,255,255,0.08) ' + p + '%)';
-    });
 }
 
 // ============================================================
@@ -2479,157 +2349,6 @@ function drawHoldingsDonut(containerId) {
 }
 
 // ============================================================
-// ECONOMIC CALENDAR
-// ============================================================
-var calendarEvents = [
-    // ─── RBI / Policy ───
-    { date:'2025-06-06', title:'RBI MPC Policy Decision', category:'rbi', impact:'high', desc:'Monetary Policy Committee rate decision. Markets will watch for repo rate guidance.' },
-    { date:'2025-08-08', title:'RBI MPC Policy Decision', category:'rbi', impact:'high', desc:'Bi-monthly MPC meet. Key for banking and rate-sensitive sectors.' },
-    { date:'2025-10-08', title:'RBI MPC Policy Decision', category:'rbi', impact:'high', desc:'October MPC — festive season outlook and inflation trajectory.' },
-    { date:'2025-12-05', title:'RBI MPC Policy Decision', category:'rbi', impact:'high', desc:'Year-end policy. Critical for FY26 interest rate cycle outlook.' },
-    { date:'2026-02-06', title:'RBI MPC Policy Decision', category:'rbi', impact:'high', desc:'First MPC of 2026. Post-Budget monetary policy stance.' },
-    { date:'2026-04-07', title:'RBI MPC Policy Decision', category:'rbi', impact:'high', desc:'April MPC. Pre-election season rate guidance.' },
-    { date:'2026-02-01', title:'Union Budget 2026–27', category:'global', impact:'high', desc:'Annual Union Budget presentation. Key for fiscal deficit, capital expenditure, and sector allocations.' },
-    { date:'2025-07-15', title:'US CPI Inflation Data', category:'global', impact:'medium', desc:'US Consumer Price Index release. Impacts global risk sentiment and FII flows into Indian markets.' },
-    { date:'2025-07-31', title:'US Federal Reserve Meeting', category:'global', impact:'high', desc:'FOMC rate decision. USD/INR and Nifty IT sector heavily influenced.' },
-    { date:'2025-09-17', title:'US Federal Reserve Meeting', category:'global', impact:'high', desc:'September FOMC — key for EM capital flows and Indian equity markets.' },
-    // ─── Major Earnings ───
-    { date:'2025-07-11', title:'TCS Q1 FY26 Results', category:'earnings', impact:'high', desc:'Tata Consultancy Services — first major IT result sets the tone for the sector.' },
-    { date:'2025-07-14', title:'Infosys Q1 FY26 Results', category:'earnings', impact:'high', desc:'Infosys revenue guidance update is a key market event for Nifty IT.' },
-    { date:'2025-07-19', title:'HDFC Bank Q1 FY26 Results', category:'earnings', impact:'high', desc:'Largest private bank results. Critical for Bank Nifty direction.' },
-    { date:'2025-07-22', title:'Reliance Industries Q1 FY26', category:'earnings', impact:'high', desc:'RIL earnings across O2C, Retail, Jio — largest weight in Nifty 50.' },
-    { date:'2025-07-25', title:'ICICI Bank Q1 FY26 Results', category:'earnings', impact:'medium', desc:'ICICI Bank earnings — asset quality and NIM trends in focus.' },
-    { date:'2025-10-10', title:'TCS Q2 FY26 Results', category:'earnings', impact:'high', desc:'TCS Q2 results and FY26 full-year guidance commentary.' },
-    { date:'2025-10-14', title:'Infosys Q2 FY26 Results', category:'earnings', impact:'high', desc:'Infosys mid-year guidance revision — key for IT sector momentum.' },
-    // ─── IPO / Listings ───
-    { date:'2025-07-08', title:'Upcoming Major IPO Window', category:'ipo', impact:'medium', desc:'IPO calendar Q1 FY26 — multiple SME and mainboard listings expected.' },
-    { date:'2025-09-15', title:'NSE SME IPO Season', category:'ipo', impact:'low', desc:'Typically active IPO window post monsoon; watch for Nifty SME listings.' },
-    { date:'2026-01-15', title:'Q3 IPO Season Begins', category:'ipo', impact:'medium', desc:'January–March historically sees highest number of mainboard IPOs.' },
-    // ─── Nifty / Index Events ───
-    { date:'2025-09-26', title:'Nifty 50 Semi-Annual Rebalancing', category:'global', impact:'medium', desc:'Nifty index reconstitution. Stocks added or removed see high volume and price movement.' },
-    { date:'2026-03-27', title:'Nifty 50 Semi-Annual Rebalancing', category:'global', impact:'medium', desc:'March rebalancing. FII buying/selling around index weight changes.' },
-    { date:'2025-07-25', title:'NSE F&O Expiry — July Series', category:'global', impact:'medium', desc:'July monthly derivatives expiry. Expect high volatility on expiry day.' },
-    { date:'2025-08-28', title:'NSE F&O Expiry — August Series', category:'global', impact:'medium', desc:'Monthly options and futures expiry. Max pain levels closely watched.' },
-];
-
-function renderCalendar() {
-    var container = document.getElementById('calendarGrid');
-    if (!container) return;
-    var filter = (document.getElementById('calendarFilter') || {}).value || 'all';
-    var now = new Date();
-
-    var filtered = calendarEvents.filter(function(e) {
-        return filter === 'all' || e.category === filter;
-    }).sort(function(a, b) { return new Date(a.date) - new Date(b.date); });
-
-    var upcoming = filtered.filter(function(e) { return new Date(e.date) >= now; });
-    var past     = filtered.filter(function(e) { return new Date(e.date) < now; });
-    var sorted   = upcoming.concat(past);
-
-    if (!sorted.length) {
-        container.innerHTML = '<p style="color:var(--text-muted);text-align:center;padding:40px 0;">No events found for this filter.</p>';
-        return;
-    }
-
-    var impactColors = { high: '#ef4444', medium: '#f59e0b', low: '#10b981' };
-    var catIcons = { rbi: '🏦', earnings: '📊', ipo: '🚀', global: '🌐' };
-    var html = '<div class="calendar-grid">';
-
-    sorted.forEach(function(ev) {
-        var evDate = new Date(ev.date);
-        var isPast = evDate < now;
-        var isToday = evDate.toDateString() === now.toDateString();
-        var daysUntil = Math.ceil((evDate - now) / 86400000);
-        var daysLabel = isPast ? 'Past' : (isToday ? 'Today' : 'in ' + daysUntil + 'd');
-        var monthNames = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-        html += '<div class="calendar-event-card' + (isPast ? ' cal-past' : '') + (isToday ? ' cal-today' : '') + '">'
-            + '<div class="cal-date-col">'
-            +   '<div class="cal-day">' + evDate.getDate() + '</div>'
-            +   '<div class="cal-month">' + monthNames[evDate.getMonth()] + ' ' + evDate.getFullYear() + '</div>'
-            +   '<div class="cal-days-pill" style="background:' + (isPast ? 'rgba(120,113,108,0.2)' : 'rgba(217,119,87,0.15)') + ';color:' + (isPast ? 'var(--text-muted)' : 'var(--accent-primary)') + ';">' + daysLabel + '</div>'
-            + '</div>'
-            + '<div class="cal-body">'
-            +   '<div class="cal-title-row">'
-            +     '<span class="cal-cat-icon">' + (catIcons[ev.category] || '📅') + '</span>'
-            +     '<h4 class="cal-title">' + ev.title + '</h4>'
-            +     '<span class="cal-impact-badge" style="background:' + (impactColors[ev.impact] || '#78716c') + '22;color:' + (impactColors[ev.impact] || '#78716c') + ';border:1px solid ' + (impactColors[ev.impact] || '#78716c') + '44;">' + ev.impact.toUpperCase() + '</span>'
-            +   '</div>'
-            +   '<p class="cal-desc">' + ev.desc + '</p>'
-            + '</div>'
-            + '</div>';
-    });
-    html += '</div>';
-    container.innerHTML = html;
-    if (typeof lucide !== 'undefined') lucide.createIcons();
-}
-
-// ============================================================
-// ADVANCED STOCK SCREENER PRO
-// ============================================================
-function applyScreenerPro() {
-    var sector    = (document.getElementById('spSector')    || {}).value || '';
-    var minPrice  = parseFloat((document.getElementById('spMinPrice')  || {}).value) || 0;
-    var maxPrice  = parseFloat((document.getElementById('spMaxPrice')  || {}).value) || Infinity;
-    var minPE     = parseFloat((document.getElementById('spMinPE')     || {}).value) || 0;
-    var maxPE     = parseFloat((document.getElementById('spMaxPE')     || {}).value) || Infinity;
-    var minChange = parseFloat((document.getElementById('spMinChange') || {}).value) || -Infinity;
-    var sortBy    = (document.getElementById('spSort') || {}).value || 'change-desc';
-
-    var results = stocks.filter(function(s) {
-        if (sector && s.sector !== sector) return false;
-        if (s.price < minPrice || s.price > maxPrice) return false;
-        if (s.pe !== null) {
-            if (s.pe < minPE || s.pe > maxPE) return false;
-        } else if (minPE > 0) {
-            return false;
-        }
-        if (s.change < minChange) return false;
-        return true;
-    });
-
-    results.sort(function(a, b) {
-        if (sortBy === 'change-desc') return b.change - a.change;
-        if (sortBy === 'change-asc')  return a.change - b.change;
-        if (sortBy === 'price-asc')   return a.price - b.price;
-        if (sortBy === 'price-desc')  return b.price - a.price;
-        if (sortBy === 'pe-asc') {
-            var pa = a.pe || 999999, pb = b.pe || 999999;
-            return pa - pb;
-        }
-        return 0;
-    });
-
-    var container = document.getElementById('screenerProResults');
-    if (!container) return;
-    if (!results.length) {
-        container.innerHTML = '<p style="color:var(--text-muted);text-align:center;padding:40px 0;">No stocks match your filters. Try relaxing the criteria.</p>';
-        return;
-    }
-
-    var rows = results.map(function(s) {
-        var chg = s.change;
-        var col = chg >= 0 ? 'var(--positive)' : 'var(--negative)';
-        var sign = chg >= 0 ? '+' : '';
-        return '<tr>'
-            + '<td><div style="display:flex;align-items:center;gap:10px;"><div class="stock-logo" style="background:' + (s.color||'#3b82f6') + ';width:32px;height:32px;font-size:12px;">' + s.logoText + '</div><div><div style="font-weight:700;font-size:13px;">' + s.symbol + '</div><div style="font-size:11px;color:var(--text-muted);">' + s.name.substring(0,35) + '</div></div></div></td>'
-            + '<td><span class="sector-tag">' + s.sector + '</span></td>'
-            + '<td style="font-weight:600;">₹' + fmtINR(s.price) + '</td>'
-            + '<td style="color:' + col + ';font-weight:600;">' + sign + chg.toFixed(2) + '%</td>'
-            + '<td style="color:var(--text-muted);">' + s.marketCap + '</td>'
-            + '<td style="color:var(--text-muted);">' + (s.pe ? s.pe.toFixed(1) : 'N/A') + '</td>'
-            + '<td><button class="btn btn-primary" style="padding:5px 14px;font-size:12px;" onclick="openOrderModal(\'' + s.symbol + '\',\'buy\')">Buy</button></td>'
-            + '</tr>';
-    }).join('');
-
-    container.innerHTML = '<p style="color:var(--text-muted);font-size:13px;margin-bottom:12px;">' + results.length + ' stocks match your criteria</p>'
-        + '<div class="table-container"><table class="stock-table">'
-        + '<thead><tr><th>Stock</th><th>Sector</th><th>Price</th><th>Change</th><th>Mkt Cap</th><th>P/E</th><th>Action</th></tr></thead>'
-        + '<tbody>' + rows + '</tbody>'
-        + '</table></div>';
-    if (typeof lucide !== 'undefined') lucide.createIcons();
-}
-
-// ============================================================
 // INIT
 // ============================================================
 document.addEventListener('DOMContentLoaded', function() {
@@ -2644,7 +2363,7 @@ document.addEventListener('DOMContentLoaded', function() {
     renderIPO();
     renderPortfolio();
     renderOrderHistory();
-    // Removed startPriceSimulation(); for strict live data
+    startPriceSimulation();
     updateWatchlistBadge();
     updateBalanceDisplay();
     updateMarketStatus();
@@ -2834,10 +2553,6 @@ document.addEventListener('DOMContentLoaded', function() {
     renderNews();
     calcSIP();
     calcLumpsum();
-
-    // Calendar filter
-    var calFilterEl = document.getElementById('calendarFilter');
-    if (calFilterEl) calFilterEl.addEventListener('change', renderCalendar);
 
     // Escape closes all modals
     document.addEventListener('keydown', function(e) {
@@ -3052,9 +2767,10 @@ async function fetchFearGreedData() {
         var prices = r.indicators.quote[0].close.filter(function(p) { return p != null; });
         var niftyMom = ((prices[prices.length-1] - prices[0]) / prices[0]) * 100;
 
+        console.log('[FearGreed] VIX:', vix.toFixed(2), 'change:', vixChange.toFixed(1)+'%', 'NiftyMom:', niftyMom.toFixed(2)+'%');
         renderFearGreed(vix, vixChange, niftyMom);
     } catch(e) {
-        console.warn('[Sentiment] Failed:', e.message);
+        console.warn('[FearGreed] Failed, using fallback:', e.message);
         renderFearGreed(18, 0, 0); // Fallback stable values
     }
 }
@@ -3082,7 +2798,7 @@ function renderFearGreed(vix, vixChange, niftyMom) {
     var needleRotate = -90 + (score / 100) * 180;
 
     el.innerHTML = `
-        <div class="fg-premium-widget glass-panel" style="background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(16px); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 20px; padding: 24px; position: relative; overflow: hidden; box-shadow: 0 8px 32px rgba(0,0,0,0.3);">
+        <div class="fg-premium-widget glass-panel" style="background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(16px); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 20px; padding: 24px; position: relative;">
             <div class="fg-header" style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 24px;">
                 <div class="fg-title-area">
                     <span style="font-size: 14px; font-weight: 600; color: var(--text-muted); letter-spacing: 0.5px; text-transform: uppercase;">Fear & Greed Index</span>
@@ -3092,39 +2808,37 @@ function renderFearGreed(vix, vixChange, niftyMom) {
                 </div>
             </div>
             
-            <div class="fg-main" style="position:relative; text-align:center; padding: 20px 0;">
-                <div class="fg-gauge-wrap" style="position:relative; width:220px; margin:0 auto;">
-                    <div class="fg-gauge-svg" style="position:relative; overflow:hidden; padding-bottom:10px;">
-                        <svg viewBox="0 0 100 50" style="width:100%; height:auto; display:block; filter: drop-shadow(0 0 8px ${color}60);">
-                            <path d="M10,45 A40,40 0 0,1 90,45" fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="8" stroke-linecap="round"/>
-                            <path d="M10,45 A40,40 0 0,1 90,45" fill="none" stroke="url(#fgGradient)" stroke-width="8" stroke-dasharray="${score * 1.25}, 200" stroke-linecap="round" style="transition: stroke-dasharray 1.5s cubic-bezier(0.4, 0, 0.2, 1);"/>
-                            <defs>
-                                <linearGradient id="fgGradient" x1="0%" y1="0%" x2="100%" y2="0%">
-                                    <stop offset="0%" stop-color="#ef4444" />
-                                    <stop offset="20%" stop-color="#f97316" />
-                                    <stop offset="50%" stop-color="#eab308" />
-                                    <stop offset="80%" stop-color="#22c55e" />
-                                    <stop offset="100%" stop-color="#10b981" />
-                                </linearGradient>
-                            </defs>
-                        </svg>
-                        <div class="fg-needle" style="position:absolute; bottom:5px; left:50%; width:4px; height:80px; background:${color}; border-radius:2px; transform-origin:bottom center; transform: translateX(-50%) rotate(${needleRotate}deg); box-shadow: 0 0 10px ${color}; transition: transform 1s cubic-bezier(0.175, 0.885, 0.32, 1.275);"></div>
-                        <div class="fg-pivot" style="position:absolute; bottom:-1px; left:50%; width:16px; height:16px; background:var(--bg-card); border: 2px solid ${color}; border-radius:50%; transform:translateX(-50%); box-shadow: 0 0 10px rgba(0,0,0,0.5);"></div>
-                    </div>
-                    
-                    <div style="font-size:32px; font-weight:800; color:${color};">${score}</div>
-                    <div class="fg-status-label" style="font-size:16px; font-weight:800; color:${color}; margin-top:2px; letter-spacing:1px; text-transform:uppercase;">${label}</div>
+            <div class="fg-main" style="position:relative; text-align:center; padding-top: 10px;">
+                <div class="fg-gauge-wrap" style="position:relative; width:220px; margin:0 auto; height:110px;">
+                    <svg viewBox="0 0 100 50" style="width:100%; height:100px; display:block;">
+                        <path d="M10,45 A40,40 0 0,1 90,45" fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="8" stroke-linecap="round"/>
+                        <path d="M10,45 A40,40 0 0,1 90,45" fill="none" stroke="url(#fgGrad)" stroke-width="8" stroke-dasharray="${score * 1.25}, 200" stroke-linecap="round" style="transition: stroke-dasharray 1.5s ease;"/>
+                        <defs>
+                            <linearGradient id="fgGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                                <stop offset="0%" stop-color="#ef4444" />
+                                <stop offset="25%" stop-color="#f97316" />
+                                <stop offset="50%" stop-color="#eab308" />
+                                <stop offset="75%" stop-color="#22c55e" />
+                                <stop offset="100%" stop-color="#10b981" />
+                            </linearGradient>
+                        </defs>
+                    </svg>
+                    <div class="fg-needle" style="position:absolute; bottom:5px; left:50%; width:4px; height:80px; background:${color}; border-radius:2px; transform-origin:bottom center; transform: translateX(-50%) rotate(${needleRotate}deg); box-shadow: 0 0 8px ${color}; transition: transform 1s ease;"></div>
+                    <div class="fg-pivot" style="position:absolute; bottom:-1px; left:50%; width:16px; height:16px; background:var(--bg-card); border: 2px solid ${color}; border-radius:50%; transform:translateX(-50%); box-shadow: 0 0 8px rgba(0,0,0,0.5);"></div>
                 </div>
                 
-                <div class="fg-info" style="margin-top:25px; border-top: 1px solid rgba(255,255,255,0.05); padding-top:20px;">
+                <div style="font-size:32px; font-weight:800; color:${color}; margin-top:5px; text-shadow: 0 0 12px ${color};">${score}</div>
+                <div class="fg-status-label" style="font-size:16px; font-weight:800; color:${color}; letter-spacing:1px; text-transform:uppercase;">${label}</div>
+                
+                <div class="fg-info" style="margin-top:20px; border-top: 1px solid rgba(255,255,255,0.05); padding-top:20px;">
                     <p class="fg-desc" style="color:var(--text-muted); font-size:13px; margin:0 0 15px 0;">${sub}</p>
                     <div class="fg-vitals" style="display:flex; justify-content:space-between; text-align:center;">
                         <div class="fg-v-item" style="flex:1;">
-                            <span style="display:block; font-size:11px; color:var(--text-muted); margin-bottom:4px;">India VIX <br><span style="font-size:9px">(Volatility)</span></span>
+                            <span style="display:block; font-size:11px; color:var(--text-muted); margin-bottom:4px;">India VIX <span style="font-size:9px">(Volatility)</span></span>
                             <strong style="font-size:14px; color:${vixChange > 0 ? '#ef4444' : '#10b981'}">${vix.toFixed(2)} <span style="font-size:11px;">(${vixChange > 0 ? '+' : ''}${vixChange.toFixed(1)}%)</span></strong>
                         </div>
                         <div class="fg-v-item" style="flex:1; border-left:1px solid rgba(255,255,255,0.05);">
-                            <span style="display:block; font-size:11px; color:var(--text-muted); margin-bottom:4px;">Nifty 50 <br><span style="font-size:9px">(5d Momentum)</span></span>
+                            <span style="display:block; font-size:11px; color:var(--text-muted); margin-bottom:4px;">Nifty 50 <span style="font-size:9px">(5d Momentum)</span></span>
                             <strong style="font-size:14px; color:${niftyMom > 0 ? '#10b981' : '#ef4444'}">${niftyMom > 0 ? '+' : ''}${niftyMom.toFixed(2)}%</strong>
                         </div>
                     </div>
@@ -3294,21 +3008,6 @@ function renderJournal() {
             + '<strong class="js-val"' + (c.color ? ' style="color:' + c.color + ';"' : '') + '>' + c.val + '</strong>'
             + '</div>';
     }).join('');
-
-    // Update new Portfolio Analytics Chart
-    var totalTrades = wins + losses;
-    var winPct = totalTrades > 0 ? (wins / totalTrades) : 0;
-    var lossPct = totalTrades > 0 ? (losses / totalTrades) : 0;
-    
-    var dashEl = document.getElementById('analyticsDashboard');
-    if(dashEl) {
-        dashEl.style.display = totalTrades > 0 ? 'flex' : 'none';
-        document.getElementById('winPctDisplay').textContent = (winPct * 100).toFixed(0) + '%';
-        document.getElementById('lossPctDisplay').textContent = (lossPct * 100).toFixed(0) + '%';
-        document.getElementById('totalTradesDisplay').textContent = totalTrades;
-        var circum = 326.72; // 2 * pi * 52
-        document.getElementById('winCircle').setAttribute('stroke-dasharray', (winPct * circum) + ' ' + circum);
-    }
 
     // Equity curve SVG
     if (equityCurve.length > 1 && curveEl) {

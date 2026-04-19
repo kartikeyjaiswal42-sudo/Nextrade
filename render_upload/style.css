@@ -2244,13 +2244,3 @@ body.light-mode .wi-vs-section {
     background: rgba(0, 0, 0, 0.03);
 }
 
-
-
-/* Calc Slider additions */
-.calc-slider { width: 100%; height: 4px; border-radius: 2px; background: rgba(255,255,255,0.08); appearance: none; -webkit-appearance: none; outline: none; cursor: pointer; }
-.calc-slider::-webkit-slider-thumb { -webkit-appearance: none; width: 16px; height: 16px; border-radius: 50%; background: var(--accent-primary); cursor: pointer; box-shadow: 0 0 8px rgba(217, 119, 87, 0.4), 0 0 2px rgba(217, 119, 87, 0.6); transition: transform 0.15s var(--ease-spring); }
-.calc-slider::-webkit-slider-thumb:hover { transform: scale(1.15); }
-.tax-slider::-webkit-slider-thumb { background: var(--gold); box-shadow: 0 0 8px rgba(251, 191, 36, 0.4); }
-.inf-slider::-webkit-slider-thumb { background: #F472B6; box-shadow: 0 0 8px rgba(244, 114, 182, 0.4); }
-.calc-tax-badge { display: inline-block; padding: 1px 6px; border-radius: 999px; font-size: 9.5px; font-weight: 700; background: rgba(251, 191, 36, 0.08); color: var(--gold); border: 1px solid rgba(251, 191, 36, 0.2); margin-left: 6px; vertical-align: middle; }
-.calc-inf-badge { display: inline-block; padding: 1px 6px; border-radius: 999px; font-size: 9.5px; font-weight: 700; background: rgba(244, 114, 182, 0.08); color: #F472B6; border: 1px solid rgba(244, 114, 182, 0.2); margin-left: 6px; vertical-align: middle; }

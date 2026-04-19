@@ -3,10 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="theme-color" content="#121010">
-    <meta name="description" content="NexTrade — Premium Indian stock market simulator with live data, portfolio analytics, and trading tools">
     <title>NexTrade | Indian Markets</title>
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📈</text></svg>">
     <link rel="stylesheet" href="style.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -43,9 +40,6 @@
             <a href="#" class="nav-item" data-view="ipo">
                 <i data-lucide="rocket"></i><span>IPO</span>
             </a>
-            <a href="#" class="nav-item" data-view="crypto">
-                <i data-lucide="bitcoin"></i><span>Crypto</span>
-            </a>
             <a href="#" class="nav-item" data-view="portfolio">
                 <i data-lucide="pie-chart"></i><span>Portfolio</span>
             </a>
@@ -70,12 +64,6 @@
             </a>
             <a href="#" class="nav-item" data-view="journal">
                 <i data-lucide="book-open"></i><span>Journal</span>
-            </a>
-            <a href="#" class="nav-item" data-view="calendar">
-                <i data-lucide="calendar"></i><span>Calendar</span>
-            </a>
-            <a href="#" class="nav-item" data-view="screener-pro">
-                <i data-lucide="sliders-horizontal"></i><span>Stock Screener</span>
             </a>
         </nav>
         <div class="sidebar-bottom">
@@ -137,18 +125,14 @@
                         <h3 class="gl-title positive-text"><i data-lucide="trending-up" style="width:15px;height:15px;"></i> Top Gainers</h3>
                         <table class="stock-table gl-table">
                             <thead><tr><th>Symbol</th><th>LTP (&#8377;)</th><th>Change</th></tr></thead>
-                            <tbody id="gainersBody">
-                                <tr><td colspan="3" style="text-align:center;padding:20px;color:var(--text-muted);"><i data-lucide="loader" class="spin"></i> Loading...</td></tr>
-                            </tbody>
+                            <tbody id="gainersBody"></tbody>
                         </table>
                     </div>
                     <div class="gl-panel glass-panel">
                         <h3 class="gl-title negative-text"><i data-lucide="trending-down" style="width:15px;height:15px;"></i> Top Losers</h3>
                         <table class="stock-table gl-table">
                             <thead><tr><th>Symbol</th><th>LTP (&#8377;)</th><th>Change</th></tr></thead>
-                            <tbody id="losersBody">
-                                <tr><td colspan="3" style="text-align:center;padding:20px;color:var(--text-muted);"><i data-lucide="loader" class="spin"></i> Loading...</td></tr>
-                            </tbody>
+                            <tbody id="losersBody"></tbody>
                         </table>
                     </div>
                     <div class="gl-panel glass-panel">
@@ -196,9 +180,7 @@
                                 <th>Action</th>
                             </tr>
                         </thead>
-                        <tbody id="screenerBody">
-                            <tr><td colspan="7" style="text-align:center;padding:40px;color:var(--text-muted);"><i data-lucide="loader" class="spin"></i> Fetching live market data...</td></tr>
-                        </tbody>
+                        <tbody id="screenerBody"></tbody>
                     </table>
                 </div>
             </section>
@@ -246,9 +228,7 @@
                                 <th>Action</th>
                             </tr>
                         </thead>
-                        <tbody id="allStocksBody">
-                            <tr><td colspan="8" style="text-align:center;padding:40px;color:var(--text-muted);"><i data-lucide="loader" class="spin"></i> Fetching live quotes...</td></tr>
-                        </tbody>
+                        <tbody id="allStocksBody"></tbody>
                     </table>
                 </div>
                 <div class="as-pagination">
@@ -321,34 +301,6 @@
                 <div class="ipo-grid" id="ipoGrid"></div>
             </section>
 
-            <!-- Global Crypto Markets -->
-            <section class="crypto-section glass-panel" id="section-crypto" style="display:none;">
-                <div class="screener-header">
-                    <div>
-                        <h2 class="section-title" style="margin-bottom:4px;">Crypto Markets <span class="section-tag">Live API</span></h2>
-                        <p class="section-sub">Real-time global cryptocurrency prices</p>
-                    </div>
-                    <button class="btn btn-primary" onclick="fetchCryptoData()"><i data-lucide="refresh-cw"></i> Refresh</button>
-                </div>
-                <div class="table-container">
-                    <table class="stock-table">
-                        <thead>
-                            <tr>
-                                <th>Coin</th>
-                                <th>Symbol</th>
-                                <th>Price ($)</th>
-                                <th>24h Change</th>
-                                <th>Market Cap</th>
-                                <th>Volume (24h)</th>
-                            </tr>
-                        </thead>
-                        <tbody id="cryptoBody">
-                            <tr><td colspan="6" style="text-align:center;padding:40px;color:var(--text-muted);">Fetching live crypto data...</td></tr>
-                        </tbody>
-                    </table>
-                </div>
-            </section>
-
             <!-- Portfolio -->
             <section class="portfolio-section glass-panel" id="section-portfolio">
                 <div class="screener-header">
@@ -367,7 +319,7 @@
                         <thead>
                             <tr>
                                 <th>Stock</th><th>Qty</th><th>Avg Cost</th><th>LTP</th>
-                                <th>Invested</th><th>Current Value</th><th>P&amp;L</th><th>Returns</th><th>Action</th>
+                                <th>Invested</th><th>Current Value</th><th>P&amp;L</th><th>Returns</th>
                             </tr>
                         </thead>
                         <tbody id="portfolioBody"></tbody>
@@ -659,34 +611,6 @@
                 </div>
                 <button class="btn btn-primary" onclick="renderJournal()"><i data-lucide="refresh-cw"></i> Refresh</button>
             </div>
-            
-            <!-- Portfolio Analytics Chart -->
-            <div class="analytics-top-row" id="analyticsDashboard" style="display: none;">
-                <div class="analytics-card">
-                    <div class="analytics-title">Win / Loss Ratio</div>
-                    <div style="display:flex; justify-content:space-between; width:100%; align-items:center;">
-                        <div style="text-align:center;">
-                            <div style="font-size:24px;font-weight:700;color:#10b981;" id="winPctDisplay">0%</div>
-                            <div style="font-size:10px;color:var(--text-muted);text-transform:uppercase;">Wins</div>
-                        </div>
-                        <div class="donut-svg-wrap">
-                            <svg viewBox="0 0 120 120" style="width:100%;height:100%;transform:rotate(-90deg); filter:drop-shadow(0 0 8px rgba(0,0,0,0.3));">
-                                <circle cx="60" cy="60" r="52" fill="none" stroke="#ef4444" stroke-width="12" />
-                                <circle id="winCircle" cx="60" cy="60" r="52" fill="none" stroke="#10b981" stroke-width="12" stroke-dasharray="0 326.72" style="transition: stroke-dasharray 1.5s ease;"/>
-                            </svg>
-                            <div class="donut-center-text">
-                                <div style="font-size:26px;font-weight:700;color:var(--text-light);" id="totalTradesDisplay">0</div>
-                                <div style="font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px;">Trades</div>
-                            </div>
-                        </div>
-                        <div style="text-align:center;">
-                            <div style="font-size:24px;font-weight:700;color:#ef4444;" id="lossPctDisplay">0%</div>
-                            <div style="font-size:10px;color:var(--text-muted);text-transform:uppercase;">Losses</div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
             <div id="journalStats" class="journal-stats-grid"></div>
             <div id="journalCurveWrap" style="margin-top:20px;"></div>
             <div class="table-container" style="margin-top:20px;">
@@ -699,84 +623,6 @@
                     </thead>
                     <tbody id="journalBody"></tbody>
                 </table>
-            </div>
-        </div>
-
-        <!-- ══ Economic Calendar Section ══ -->
-        <div id="section-calendar" class="glass-panel" style="margin:0 24px 24px;padding:24px;border-radius:16px;display:none;">
-            <div class="screener-header" style="margin-bottom:20px;">
-                <div>
-                    <h2 class="section-title" style="margin-bottom:4px;">Economic Calendar</h2>
-                    <p class="section-sub">Upcoming market events — RBI policy, earnings, IPO listings, global data releases</p>
-                </div>
-                <div style="display:flex;gap:10px;">
-                    <select class="filter-select" id="calendarFilter" style="width:auto;">
-                        <option value="all">All Events</option>
-                        <option value="rbi">RBI / Policy</option>
-                        <option value="earnings">Earnings</option>
-                        <option value="ipo">IPO</option>
-                        <option value="global">Global</option>
-                    </select>
-                </div>
-            </div>
-            <div id="calendarGrid"></div>
-        </div>
-
-        <!-- ══ Stock Screener Pro Section ══ -->
-        <div id="section-screener-pro" class="glass-panel" style="margin:0 24px 24px;padding:24px;border-radius:16px;display:none;">
-            <div class="screener-header" style="margin-bottom:20px;">
-                <div>
-                    <h2 class="section-title" style="margin-bottom:4px;">Advanced Stock Screener</h2>
-                    <p class="section-sub">Filter NSE stocks by fundamentals, technicals and sector</p>
-                </div>
-                <button class="btn btn-primary" onclick="applyScreenerPro()"><i data-lucide="search"></i> Screen Stocks</button>
-            </div>
-            <!-- Filters Row -->
-            <div class="screener-pro-filters glass-panel" style="padding:18px;border-radius:12px;margin-bottom:20px;">
-                <div class="screener-pro-filter-grid">
-                    <div class="sp-filter-group">
-                        <label class="form-label">Sector</label>
-                        <select class="filter-select" id="spSector">
-                            <option value="">All Sectors</option>
-                            <option>Technology</option><option>Finance</option><option>Energy</option>
-                            <option>Healthcare</option><option>Consumer</option><option>Auto</option>
-                            <option>Metals</option><option>Infrastructure</option><option>Telecom</option>
-                        </select>
-                    </div>
-                    <div class="sp-filter-group">
-                        <label class="form-label">Min Price (₹)</label>
-                        <input type="number" class="amount-input-field" id="spMinPrice" placeholder="0" style="font-size:14px;padding:8px 12px;">
-                    </div>
-                    <div class="sp-filter-group">
-                        <label class="form-label">Max Price (₹)</label>
-                        <input type="number" class="amount-input-field" id="spMaxPrice" placeholder="Any" style="font-size:14px;padding:8px 12px;">
-                    </div>
-                    <div class="sp-filter-group">
-                        <label class="form-label">Min P/E Ratio</label>
-                        <input type="number" class="amount-input-field" id="spMinPE" placeholder="0" style="font-size:14px;padding:8px 12px;">
-                    </div>
-                    <div class="sp-filter-group">
-                        <label class="form-label">Max P/E Ratio</label>
-                        <input type="number" class="amount-input-field" id="spMaxPE" placeholder="Any" style="font-size:14px;padding:8px 12px;">
-                    </div>
-                    <div class="sp-filter-group">
-                        <label class="form-label">Min Change %</label>
-                        <input type="number" class="amount-input-field" id="spMinChange" placeholder="-100" style="font-size:14px;padding:8px 12px;">
-                    </div>
-                    <div class="sp-filter-group">
-                        <label class="form-label">Sort By</label>
-                        <select class="filter-select" id="spSort">
-                            <option value="change-desc">Best Performers</option>
-                            <option value="change-asc">Worst Performers</option>
-                            <option value="price-asc">Price: Low → High</option>
-                            <option value="price-desc">Price: High → Low</option>
-                            <option value="pe-asc">P/E: Low → High</option>
-                        </select>
-                    </div>
-                </div>
-            </div>
-            <div id="screenerProResults">
-                <p style="color:var(--text-muted);text-align:center;padding:40px 0;">Set filters above and click <strong>Screen Stocks</strong> to find matching stocks.</p>
             </div>
         </div>
 
@@ -1183,5 +1029,5 @@
 </div>
 
 <script src="script.js"></script>
-</body>
+<script src="https://replit-cdn.com/replit-pill/replit-pill.global.js" data-referral-code="s6k9rwjp4yni" data-repl-id="930597f5-4693-462f-8585-cf0b728e4e4e"></script></body>
 </html>
