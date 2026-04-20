@@ -2244,3 +2244,125 @@ body.light-mode .wi-vs-section {
     background: rgba(0, 0, 0, 0.03);
 }
 
+
+/* ═══════════════════════════════════════════════════════════
+   ECONOMIC CALENDAR
+═══════════════════════════════════════════════════════════ */
+.calendar-grid { display:flex; flex-direction:column; gap:10px; }
+
+.calendar-event-card {
+    display:flex; gap:0; border-radius:12px;
+    border:1px solid var(--glass-border);
+    background:rgba(255,255,255,0.03);
+    overflow:hidden; transition:background 0.2s;
+}
+.calendar-event-card:hover { background:rgba(255,255,255,0.06); }
+.cal-past { opacity:0.45; }
+.cal-today { border-color:var(--accent-primary); box-shadow:0 0 0 1px var(--accent-primary)33; }
+
+.cal-date-col {
+    min-width:80px; display:flex; flex-direction:column;
+    align-items:center; justify-content:center; padding:14px 10px;
+    background:rgba(255,255,255,0.04); border-right:1px solid var(--glass-border);
+    gap:4px;
+}
+.cal-day   { font-size:22px; font-weight:800; line-height:1; }
+.cal-month { font-size:10px; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.5px; }
+.cal-days-pill { font-size:10px; font-weight:700; padding:2px 7px; border-radius:20px; }
+
+.cal-body { flex:1; padding:14px 16px; }
+.cal-title-row { display:flex; align-items:center; gap:8px; margin-bottom:6px; flex-wrap:wrap; }
+.cal-cat-icon  { font-size:16px; }
+.cal-title     { font-size:13px; font-weight:600; flex:1; }
+.cal-impact-badge { font-size:10px; font-weight:700; padding:2px 8px; border-radius:20px; white-space:nowrap; }
+.cal-desc      { font-size:12px; color:var(--text-muted); line-height:1.6; margin:0; }
+
+/* ═══════════════════════════════════════════════════════════
+   SCREENER PRO
+═══════════════════════════════════════════════════════════ */
+.screener-pro-filters { background:rgba(255,255,255,0.03); border:1px solid var(--glass-border); border-radius:12px; padding:18px; }
+.screener-pro-filter-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(160px,1fr)); gap:14px; }
+.sp-filter-group { display:flex; flex-direction:column; gap:6px; }
+
+/* ═══════════════════════════════════════════════════════════
+   GLOBAL MARKETS
+═══════════════════════════════════════════════════════════ */
+.global-cat-tabs { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:20px; }
+.global-cat-tab {
+    padding:6px 14px; border-radius:20px; border:1px solid var(--glass-border);
+    background:transparent; color:var(--text-secondary); font-size:13px; font-weight:500;
+    cursor:pointer; transition:all 0.2s;
+}
+.global-cat-tab:hover  { background:rgba(255,255,255,0.07); color:var(--text-primary); }
+.global-cat-tab.active { background:var(--accent-primary); border-color:var(--accent-primary); color:#fff; }
+
+.global-markets-grid {
+    display:grid; grid-template-columns:repeat(auto-fill,minmax(200px,1fr)); gap:14px;
+}
+
+.gm-card {
+    padding:16px; border-radius:14px; cursor:default; transition:transform 0.2s, box-shadow 0.2s;
+}
+.gm-card:hover { transform:translateY(-2px); box-shadow:0 8px 24px rgba(0,0,0,0.3); }
+.gm-top        { display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; }
+.gm-flag       { font-size:20px; }
+.gm-cat-badge  { font-size:10px; font-weight:700; padding:2px 8px; border-radius:20px; text-transform:uppercase; letter-spacing:0.5px; }
+.gm-cat-index     { background:rgba(59,130,246,0.2);  color:#60a5fa; }
+.gm-cat-commodity { background:rgba(245,158,11,0.2);  color:#f59e0b; }
+.gm-cat-forex     { background:rgba(16,185,129,0.2);  color:#34d399; }
+.gm-cat-crypto    { background:rgba(168,85,247,0.2);  color:#c084fc; }
+.gm-name  { font-size:12px; color:var(--text-muted); margin-bottom:6px; }
+.gm-price { font-size:20px; font-weight:800; font-variant-numeric:tabular-nums; line-height:1.1; }
+.gm-change{ font-size:13px; font-weight:700; margin-top:4px; }
+.gm-range { font-size:11px; color:var(--text-muted); margin-top:6px; }
+
+/* ═══════════════════════════════════════════════════════════
+   ANALYST INTELLIGENCE PANEL
+═══════════════════════════════════════════════════════════ */
+.analyst-bar-row {
+    display:flex; align-items:center; gap:10px; margin-bottom:6px;
+}
+.analyst-label { font-size:12px; color:var(--text-secondary); min-width:80px; }
+.analyst-bar-track {
+    flex:1; height:6px; background:rgba(255,255,255,0.08); border-radius:3px; overflow:hidden;
+}
+.analyst-bar-fill { height:100%; border-radius:3px; transition:width 0.5s ease; }
+.analyst-count { font-size:12px; font-weight:700; min-width:20px; text-align:right; }
+
+.analyst-target-row {
+    display:flex; gap:0; margin-top:12px; border-radius:10px;
+    border:1px solid var(--glass-border); overflow:hidden;
+}
+.analyst-target-item {
+    flex:1; padding:10px 12px; display:flex; flex-direction:column; gap:3px; text-align:center;
+    border-right:1px solid var(--glass-border);
+}
+.analyst-target-item:last-child { border-right:none; }
+.analyst-target-item span  { font-size:11px; color:var(--text-muted); }
+.analyst-target-item strong{ font-size:15px; font-weight:700; }
+
+/* ═══════════════════════════════════════════════════════════
+   TECHNICAL SCREENER
+═══════════════════════════════════════════════════════════ */
+.tech-legend { display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin-bottom:4px; }
+
+.tsi-badge {
+    font-size:10px; font-weight:800; padding:3px 9px; border-radius:20px;
+    letter-spacing:0.6px; white-space:nowrap;
+}
+.tsi-strong-buy  { background:rgba(16,185,129,0.2);  color:#10b981; border:1px solid rgba(16,185,129,0.4);  }
+.tsi-buy         { background:rgba(34,197,94,0.15);  color:#22c55e; border:1px solid rgba(34,197,94,0.35);  }
+.tsi-neutral     { background:rgba(245,158,11,0.15); color:#f59e0b; border:1px solid rgba(245,158,11,0.35); }
+.tsi-sell        { background:rgba(249,115,22,0.15); color:#f97316; border:1px solid rgba(249,115,22,0.35); }
+.tsi-strong-sell { background:rgba(239,68,68,0.2);   color:#ef4444; border:1px solid rgba(239,68,68,0.4);   }
+
+/* ═══════════════════════════════════════════════════════════
+   DIVIDEND TRACKER
+═══════════════════════════════════════════════════════════ */
+.div-stats-row {
+    display:grid; grid-template-columns:repeat(auto-fill,minmax(140px,1fr)); gap:12px;
+    margin-bottom:4px;
+}
+.div-stat-card {
+    padding:14px 16px; border-radius:12px; display:flex; flex-direction:column; gap:6px;
+}

@@ -1469,7 +1469,8 @@ function setView(view) {
     });
 
     // Sections outside .dashboard-content (full-page views)
-    var fullPageViews = ['orders', 'news', 'calculator', 'compare', 'settings', 'heatmap', 'journal'];
+    var fullPageViews = ['orders','news','calculator','compare','settings','heatmap','journal',
+                         'calendar','screener-pro','global','technicals','dividends'];
     var isFullPage = fullPageViews.indexOf(view) !== -1;
 
     // Show/hide the main dashboard-content wrapper
@@ -1477,20 +1478,26 @@ function setView(view) {
     if (dashContent) dashContent.style.display = isFullPage ? 'none' : '';
 
     // Show/hide each full-page section
-    ['orders', 'news', 'calculator', 'compare', 'settings', 'heatmap', 'journal'].forEach(function(v) {
+    ['orders','news','calculator','compare','settings','heatmap','journal',
+     'calendar','screener-pro','global','technicals','dividends'].forEach(function(v) {
         var el = document.getElementById('section-' + v);
         if (el) el.style.display = (v === view) ? 'block' : 'none';
     });
 
     if (isFullPage) {
         window.scrollTo({ top: 0, behavior: 'smooth' });
-        if (view === 'orders')     { renderOrderHistory(); }
-        if (view === 'news')       { renderNews(); }
-        if (view === 'calculator') { calcSIP(); calcLumpsum(); }
-        if (view === 'compare')    { renderCompare(); }
-        if (view === 'settings')   { renderSettings(); }
-        if (view === 'heatmap')    { renderHeatmap(); }
-        if (view === 'journal')    { renderJournal(); }
+        if (view === 'orders')       { renderOrderHistory(); }
+        if (view === 'news')         { renderNews(); }
+        if (view === 'calculator')   { calcSIP(); calcLumpsum(); }
+        if (view === 'compare')      { renderCompare(); }
+        if (view === 'settings')     { renderSettings(); }
+        if (view === 'heatmap')      { renderHeatmap(); }
+        if (view === 'journal')      { renderJournal(); }
+        if (view === 'calendar')     { renderCalendar(); }
+        if (view === 'screener-pro') { applyScreenerPro(); }
+        if (view === 'global')       { fetchGlobalMarkets(); }
+        if (view === 'technicals')   { renderTechnicalScreener(); }
+        if (view === 'dividends')    { renderDividendTracker(); }
         return;
     }
 
@@ -1541,7 +1548,7 @@ function setView(view) {
         case 'watchlist':
             renderWatchlist();
             buildDOMCache();
-            watchlistSection.scrollIntoView({ behavior:'smooth', block:'start' });
+            document.getElementById('section-screener').scrollIntoView({ behavior:'smooth', block:'start' });
             break;
         case 'allstocks':
             renderAllStocks(0, 'All', 'marketcap');
@@ -3216,3 +3223,598 @@ function renderStockScore(stock) {
         + '<div class="ss-factors">' + factorsHtml + '</div>'
         + '</div>';
 }
+
+// ============================================================
+// SECTION: ECONOMIC CALENDAR
+// ============================================================
+var calendarEvents = [
+    { date:'2026-04-09', title:'RBI MPC Meeting — Policy Rate Decision',     cat:'RBI',      impact:'HIGH',   desc:'Reserve Bank of India Monetary Policy Committee — April 2026. Expected to hold repo rate at 6.25%.' },
+    { date:'2026-06-04', title:'RBI MPC Meeting — June 2026',                cat:'RBI',      impact:'HIGH',   desc:'Bi-monthly monetary policy review. Watch for any change in stance or forward guidance.' },
+    { date:'2026-08-06', title:'RBI MPC Meeting — August 2026',              cat:'RBI',      impact:'HIGH',   desc:'RBI mid-year policy. Key inflation data and monsoon impact will be assessed.' },
+    { date:'2026-02-01', title:'Union Budget 2026–27 Presented',             cat:'RBI',      impact:'HIGH',   desc:'Finance Minister presented Union Budget. Capital gains tax, LTCG/STCG slabs, and infra allocations announced.' },
+    { date:'2026-04-16', title:'TCS Q4 FY26 Results',                       cat:'Earnings',  impact:'HIGH',   desc:'Tata Consultancy Services Q4 FY26 earnings. Watch for margin guidance and deal wins.' },
+    { date:'2026-04-23', title:'Infosys Q4 FY26 Results',                   cat:'Earnings',  impact:'HIGH',   desc:'Infosys Q4 earnings with FY27 revenue guidance. Key for entire IT sector sentiment.' },
+    { date:'2026-04-26', title:'Wipro Q4 FY26 Results',                     cat:'Earnings',  impact:'MED',    desc:'Wipro quarterly results and FY27 outlook commentary.' },
+    { date:'2026-05-03', title:'HDFC Bank Q4 FY26 Results',                 cat:'Earnings',  impact:'HIGH',   desc:'HDFC Bank Q4 FY26. Watch NIM compression, loan growth and provisioning.' },
+    { date:'2026-05-07', title:'ICICI Bank Q4 FY26 Results',                cat:'Earnings',  impact:'HIGH',   desc:'ICICI Bank quarterly. Asset quality trends and retail credit growth in focus.' },
+    { date:'2026-05-10', title:'Reliance Industries Q4 FY26 Results',       cat:'Earnings',  impact:'HIGH',   desc:'RIL quarterly. Jio subscriber adds, O2C margins and retail performance key.' },
+    { date:'2026-05-15', title:'NIFTY 50 Semi-Annual Rebalancing',          cat:'Index',     impact:'MED',    desc:'NSE reviews NIFTY 50 composition. Stocks entering/exiting the index trigger institutional flows.' },
+    { date:'2026-05-28', title:'NSE F&O May Expiry',                        cat:'Index',     impact:'MED',    desc:'May 2026 F&O expiry. Expect higher intraday volatility near expiry day.' },
+    { date:'2026-06-25', title:'NSE F&O June Expiry',                       cat:'Index',     impact:'MED',    desc:'June F&O series expiry. Monthly options settlement.' },
+    { date:'2026-07-06', title:'US FOMC Meeting — July 2026',               cat:'Global',    impact:'HIGH',   desc:'Federal Reserve interest rate decision. Any cut or hold has direct FII flow impact on Indian markets.' },
+    { date:'2026-07-30', title:'US FOMC Meeting — July End',                cat:'Global',    impact:'HIGH',   desc:'Second July Fed meeting. Watch dot-plot for rate path signals.' },
+    { date:'2026-09-16', title:'US FOMC Meeting — September 2026',          cat:'Global',    impact:'HIGH',   desc:'Fed September decision. Historically a key meeting for rate trajectory changes.' },
+    { date:'2026-04-30', title:'IPO Season — April Closing Week',           cat:'IPO',       impact:'MED',    desc:'Multiple SME and mainboard IPOs typically close in the last week of April.' },
+    { date:'2026-05-20', title:'Q4 FY26 IPO Window Opens',                  cat:'IPO',       impact:'MED',    desc:'Post-results season, new IPO filings and listings are expected in May-June.' },
+    { date:'2026-06-15', title:'SEBI Board Meeting — June 2026',            cat:'RBI',       impact:'MED',    desc:'SEBI board meeting. Watch for new regulations on F&O, algo trading and SME listings.' },
+    { date:'2026-07-25', title:'NSE F&O July Expiry',                       cat:'Index',     impact:'MED',    desc:'July F&O series settlement.' },
+    { date:'2026-08-27', title:'NSE F&O August Expiry',                     cat:'Index',     impact:'MED',    desc:'August F&O expiry — typically volatile due to post-Budget and monsoon data.' },
+    { date:'2026-10-08', title:'RBI MPC Meeting — October 2026',            cat:'RBI',       impact:'HIGH',   desc:'Q2 FY27 RBI policy review. Festive season credit demand and CPI in focus.' },
+    { date:'2026-07-15', title:'HCL Tech Q1 FY27 Results',                  cat:'Earnings',  impact:'MED',    desc:'HCL Technologies Q1 FY27 quarterly. First tech results of the new fiscal year.' },
+    { date:'2026-07-18', title:'Bajaj Finance Q1 FY27 Results',             cat:'Earnings',  impact:'HIGH',   desc:'Bajaj Finance AUM growth and NPA data — key barometer for consumer credit health.' },
+];
+
+function renderCalendar() {
+    var grid = document.getElementById('calendarGrid');
+    if (!grid) return;
+    var filter = (document.getElementById('calendarFilter') || {}).value || 'All';
+    var today  = new Date();
+    today.setHours(0,0,0,0);
+
+    var events = calendarEvents.filter(function(e) {
+        return filter === 'All' || e.cat === filter;
+    });
+
+    events.sort(function(a, b) {
+        var da = new Date(a.date), db = new Date(b.date);
+        var aFut = da >= today, bFut = db >= today;
+        if (aFut && !bFut) return -1;
+        if (!aFut && bFut) return  1;
+        return aFut ? da - db : db - da;
+    });
+
+    var catIcons = { RBI:'🏦', Earnings:'📊', IPO:'🚀', Index:'📈', Global:'🌍' };
+    var impColors = { HIGH:'var(--negative)', MED:'#f59e0b', LOW:'var(--positive)' };
+
+    grid.innerHTML = events.map(function(e) {
+        var d       = new Date(e.date);
+        var isPast  = d < today;
+        var isToday = d.getTime() === today.getTime();
+        var diff    = Math.round((d - today) / 86400000);
+        var diffStr = isToday ? 'TODAY' : isPast ? Math.abs(diff) + 'd ago' : 'in ' + diff + 'd';
+        var day     = d.getDate();
+        var mon     = d.toLocaleString('en-IN', { month:'short' }) + ' ' + d.getFullYear();
+
+        return '<div class="calendar-event-card' + (isPast ? ' cal-past' : '') + (isToday ? ' cal-today' : '') + '">'
+            + '<div class="cal-date-col">'
+            + '<span class="cal-day">' + day + '</span>'
+            + '<span class="cal-month">' + mon + '</span>'
+            + '<span class="cal-days-pill" style="background:' + (isPast ? 'rgba(255,255,255,0.07)' : isToday ? 'var(--accent-primary)' : 'rgba(59,130,246,0.2)') + ';color:' + (isPast ? 'var(--text-muted)' : isToday ? '#fff' : '#60a5fa') + ';">' + diffStr + '</span>'
+            + '</div>'
+            + '<div class="cal-body">'
+            + '<div class="cal-title-row">'
+            + '<span class="cal-cat-icon">' + (catIcons[e.cat] || '📌') + '</span>'
+            + '<span class="cal-title">' + e.title + '</span>'
+            + '<span class="cal-impact-badge" style="background:' + impColors[e.impact] + '22;color:' + impColors[e.impact] + ';border:1px solid ' + impColors[e.impact] + '44;">' + e.impact + '</span>'
+            + '</div>'
+            + '<p class="cal-desc">' + e.desc + '</p>'
+            + '</div>'
+            + '</div>';
+    }).join('') || '<div style="text-align:center;padding:40px;color:var(--text-muted);">No events for this category.</div>';
+}
+
+// ============================================================
+// SECTION: SCREENER PRO
+// ============================================================
+function applyScreenerPro() {
+    var sector    = (document.getElementById('spSector')    || {}).value || 'All';
+    var minPrice  = parseFloat(document.getElementById('spMinPrice')  && document.getElementById('spMinPrice').value)  || 0;
+    var maxPrice  = parseFloat(document.getElementById('spMaxPrice')  && document.getElementById('spMaxPrice').value)  || Infinity;
+    var minPE     = parseFloat(document.getElementById('spMinPE')     && document.getElementById('spMinPE').value)     || 0;
+    var maxPE     = parseFloat(document.getElementById('spMaxPE')     && document.getElementById('spMaxPE').value)     || Infinity;
+    var minChange = parseFloat(document.getElementById('spMinChange') && document.getElementById('spMinChange').value) || -Infinity;
+    var sort      = (document.getElementById('spSort')      || {}).value || 'change-desc';
+
+    var results = stocks.filter(function(s) {
+        if (sector !== 'All' && s.sector !== sector) return false;
+        if (s.price < minPrice || s.price > maxPrice) return false;
+        if (s.pe !== null && s.pe !== undefined) {
+            if (s.pe < minPE || s.pe > maxPE) return false;
+        }
+        if (s.change < minChange) return false;
+        return true;
+    });
+
+    results.sort(function(a, b) {
+        if (sort === 'change-desc') return b.change - a.change;
+        if (sort === 'change-asc')  return a.change - b.change;
+        if (sort === 'price-desc')  return b.price - a.price;
+        if (sort === 'price-asc')   return a.price - b.price;
+        if (sort === 'pe-asc') {
+            var ap = a.pe || 9999, bp = b.pe || 9999;
+            return ap - bp;
+        }
+        // marketcap
+        var mc = function(s) { return parseFloat(s.marketCap) * (s.marketCap.indexOf('L') !== -1 ? 100000 : 1); };
+        return mc(b) - mc(a);
+    });
+
+    var wrap = document.getElementById('screenerProResults');
+    if (!wrap) return;
+
+    if (!results.length) {
+        wrap.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text-muted);">No stocks match your criteria. Adjust filters and try again.</div>';
+        return;
+    }
+
+    var rows = results.map(function(s) {
+        var pos = s.change >= 0;
+        return '<tr onclick="openStockModal(\'' + s.symbol + '\')" style="cursor:pointer;">'
+            + '<td><div style="display:flex;align-items:center;gap:8px;"><div style="width:28px;height:28px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:11px;background:' + s.color + '20;color:' + s.color + ';border:1px solid ' + s.color + '40;">' + s.logoText + '</div><div><strong>' + s.symbol + '</strong><br><span style="font-size:11px;color:var(--text-muted);">' + s.sector + '</span></div></div></td>'
+            + '<td style="font-variant-numeric:tabular-nums;">' + fmtINR(s.price) + '</td>'
+            + '<td><span style="color:var(--' + (pos?'positive':'negative') + ');font-weight:600;">' + (pos?'+':'') + s.change.toFixed(2) + '%</span></td>'
+            + '<td>' + (s.pe || '—') + '</td>'
+            + '<td>' + s.marketCap + '</td>'
+            + '<td><button class="btn btn-buy btn-sm" onclick="event.stopPropagation();openOrderModal(\'' + s.symbol + '\',\'buy\')">Buy</button></td>'
+            + '</tr>';
+    }).join('');
+
+    wrap.innerHTML = '<table class="stock-table"><thead><tr><th>Symbol</th><th>LTP (&#8377;)</th><th>Change</th><th>P/E</th><th>Market Cap</th><th>Action</th></tr></thead><tbody>' + rows + '</tbody></table>'
+        + '<p style="text-align:center;font-size:12px;color:var(--text-muted);margin-top:10px;">' + results.length + ' stocks matched</p>';
+}
+
+// ============================================================
+// SECTION: GLOBAL MARKETS (Live Yahoo Finance)
+// ============================================================
+var GLOBAL_SYMBOLS = [
+    { symbol:'^GSPC',    name:'S&P 500',       cat:'Index',     flag:'🇺🇸', unit:'pts' },
+    { symbol:'^IXIC',    name:'Nasdaq Comp.',  cat:'Index',     flag:'🇺🇸', unit:'pts' },
+    { symbol:'^DJI',     name:'Dow Jones',     cat:'Index',     flag:'🇺🇸', unit:'pts' },
+    { symbol:'^FTSE',    name:'FTSE 100',      cat:'Index',     flag:'🇬🇧', unit:'pts' },
+    { symbol:'^N225',    name:'Nikkei 225',    cat:'Index',     flag:'🇯🇵', unit:'pts' },
+    { symbol:'^HSI',     name:'Hang Seng',     cat:'Index',     flag:'🇭🇰', unit:'pts' },
+    { symbol:'^GDAXI',   name:'DAX',           cat:'Index',     flag:'🇩🇪', unit:'pts' },
+    { symbol:'GC=F',     name:'Gold',          cat:'Commodity', flag:'🥇', unit:'$/oz' },
+    { symbol:'CL=F',     name:'Crude Oil WTI', cat:'Commodity', flag:'🛢️', unit:'$/bbl' },
+    { symbol:'SI=F',     name:'Silver',        cat:'Commodity', flag:'🥈', unit:'$/oz' },
+    { symbol:'USDINR=X', name:'USD / INR',     cat:'Forex',     flag:'💱', unit:'₹' },
+    { symbol:'EURINR=X', name:'EUR / INR',     cat:'Forex',     flag:'💶', unit:'₹' },
+    { symbol:'GBPINR=X', name:'GBP / INR',     cat:'Forex',     flag:'🇬🇧', unit:'₹' },
+    { symbol:'JPYINR=X', name:'JPY / INR',     cat:'Forex',     flag:'🇯🇵', unit:'₹' },
+    { symbol:'BTC-USD',  name:'Bitcoin',       cat:'Crypto',    flag:'₿', unit:'USD' },
+    { symbol:'ETH-USD',  name:'Ethereum',      cat:'Crypto',    flag:'Ξ', unit:'USD' },
+];
+
+var _globalMarketData   = [];
+var _globalActiveCat    = 'All';
+
+async function fetchGlobalMarkets() {
+    var grid = document.getElementById('globalMarketsGrid');
+    if (!grid) return;
+    grid.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text-muted);">&#8987; Fetching live prices from Yahoo Finance...</div>';
+
+    try {
+        var syms = GLOBAL_SYMBOLS.map(function(g) { return g.symbol; }).join(',');
+        var url  = 'https://query2.finance.yahoo.com/v7/finance/quote?formatted=false&corsDomain=finance.yahoo.com&symbols=' + encodeURIComponent(syms);
+        var res  = await fetchWithFallback(url, 10000);
+        var data = await res.json();
+        var quotes = (data.quoteResponse && data.quoteResponse.result) || [];
+
+        _globalMarketData = GLOBAL_SYMBOLS.map(function(g) {
+            var q = quotes.find(function(r) { return r.symbol === g.symbol; }) || {};
+            return {
+                symbol:  g.symbol,
+                name:    g.name,
+                cat:     g.cat,
+                flag:    g.flag,
+                unit:    g.unit,
+                price:   q.regularMarketPrice        || null,
+                change:  q.regularMarketChangePercent|| null,
+                prevClose: q.regularMarketPreviousClose || null,
+                dayHigh: q.regularMarketDayHigh      || null,
+                dayLow:  q.regularMarketDayLow       || null,
+            };
+        });
+
+        document.getElementById('globalLastUpdated').textContent =
+            'Updated: ' + new Date().toLocaleTimeString('en-IN', { hour:'2-digit', minute:'2-digit', second:'2-digit' }) + ' IST';
+        renderGlobalMarkets();
+    } catch(e) {
+        grid.innerHTML = '<div style="text-align:center;padding:40px;color:var(--negative);">&#9888; Could not fetch live data. Check connection and try Refresh.</div>';
+    }
+}
+
+function filterGlobalCat(cat, btn) {
+    _globalActiveCat = cat;
+    document.querySelectorAll('.global-cat-tab').forEach(function(b) { b.classList.remove('active'); });
+    if (btn) btn.classList.add('active');
+    renderGlobalMarkets();
+}
+
+function renderGlobalMarkets() {
+    var grid = document.getElementById('globalMarketsGrid');
+    if (!grid || !_globalMarketData.length) return;
+
+    var items = _globalActiveCat === 'All'
+        ? _globalMarketData
+        : _globalMarketData.filter(function(g) { return g.cat === _globalActiveCat; });
+
+    if (!items.length) {
+        grid.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text-muted);">No data for this category.</div>';
+        return;
+    }
+
+    grid.innerHTML = items.map(function(g) {
+        if (g.price === null) {
+            return '<div class="gm-card glass-panel gm-' + g.cat.toLowerCase() + '">'
+                + '<div class="gm-top"><span class="gm-flag">' + g.flag + '</span>'
+                + '<span class="gm-cat-badge">' + g.cat + '</span></div>'
+                + '<div class="gm-name">' + g.name + '</div>'
+                + '<div class="gm-price" style="color:var(--text-muted);">N/A</div>'
+                + '</div>';
+        }
+        var pos   = g.change >= 0;
+        var clr   = pos ? 'var(--positive)' : 'var(--negative)';
+        var arrow = pos ? '▲' : '▼';
+        var fmt   = function(n) {
+            if (n >= 1000) return n.toLocaleString('en-US', { minimumFractionDigits:2, maximumFractionDigits:2 });
+            return n.toFixed(n < 10 ? 4 : 2);
+        };
+
+        return '<div class="gm-card glass-panel">'
+            + '<div class="gm-top">'
+            + '<span class="gm-flag">' + g.flag + '</span>'
+            + '<span class="gm-cat-badge gm-cat-' + g.cat.toLowerCase() + '">' + g.cat + '</span>'
+            + '</div>'
+            + '<div class="gm-name">' + g.name + '</div>'
+            + '<div class="gm-price" style="color:' + clr + ';">' + fmt(g.price) + ' <small style="font-size:11px;opacity:0.7;">' + g.unit + '</small></div>'
+            + '<div class="gm-change" style="color:' + clr + ';">' + arrow + ' ' + Math.abs(g.change).toFixed(2) + '%</div>'
+            + (g.dayHigh ? '<div class="gm-range">H: ' + fmt(g.dayHigh) + ' &nbsp;|&nbsp; L: ' + fmt(g.dayLow) + '</div>' : '')
+            + '</div>';
+    }).join('');
+}
+
+// ============================================================
+// SECTION: ANALYST INTELLIGENCE (Live Yahoo Finance)
+// ============================================================
+async function fetchAnalystData(symbol) {
+    var panel = document.getElementById('analystPanel');
+    var tip   = document.getElementById('analystLoadTip');
+    var cont  = document.getElementById('analystContent');
+    if (!panel) return;
+
+    panel.style.display = 'block';
+    if (tip) tip.textContent = 'Loading...';
+    if (cont) cont.innerHTML = '<div style="color:var(--text-muted);font-size:12px;padding:8px 0;">&#8987; Fetching analyst data...</div>';
+
+    var yfSym = YF_STOCK_MAP[symbol] || symbol + '.NS';
+    try {
+        var url  = 'https://query1.finance.yahoo.com/v10/finance/quoteSummary/' + yfSym
+                 + '?modules=recommendationTrend%2CfinancialData%2CdefaultKeyStatistics';
+        var res  = await fetchWithFallback(url, 8000);
+        var data = await res.json();
+        var result = data.quoteSummary && data.quoteSummary.result && data.quoteSummary.result[0];
+        if (!result) throw new Error('No data');
+
+        var trend    = result.recommendationTrend && result.recommendationTrend.trend;
+        var finData  = result.financialData || {};
+        var keyStats = result.defaultKeyStatistics || {};
+        var t0       = (trend && trend[0]) || {};
+
+        var sB = t0.strongBuy   || 0;
+        var b  = t0.buy         || 0;
+        var h  = t0.hold        || 0;
+        var s  = t0.sell        || 0;
+        var sS = t0.strongSell  || 0;
+        var total = sB + b + h + s + sS || 1;
+
+        var targetMean = finData.targetMeanPrice  && finData.targetMeanPrice.raw;
+        var targetHigh = finData.targetHighPrice  && finData.targetHighPrice.raw;
+        var targetLow  = finData.targetLowPrice   && finData.targetLowPrice.raw;
+        var recMean    = finData.recommendationMean && finData.recommendationMean.raw;
+
+        var recLabel = recMean
+            ? (recMean < 1.5 ? 'Strong Buy' : recMean < 2.5 ? 'Buy' : recMean < 3.5 ? 'Hold' : recMean < 4.5 ? 'Sell' : 'Strong Sell')
+            : null;
+        var recColor = recMean
+            ? (recMean < 1.5 ? '#10b981' : recMean < 2.5 ? '#22c55e' : recMean < 3.5 ? '#f59e0b' : recMean < 4.5 ? '#f97316' : '#ef4444')
+            : 'var(--text-muted)';
+
+        var stock = stocks.find(function(st) { return st.symbol === symbol; });
+        var curPrice = stock ? stock.price : 0;
+
+        var pct = function(n) { return Math.round(n / total * 100); };
+
+        var barHtml = [
+            { label:'Strong Buy', count:sB, color:'#10b981' },
+            { label:'Buy',        count:b,  color:'#22c55e' },
+            { label:'Hold',       count:h,  color:'#f59e0b' },
+            { label:'Sell',       count:s,  color:'#f97316' },
+            { label:'Strong Sell',count:sS, color:'#ef4444' },
+        ].map(function(r) {
+            if (!r.count) return '';
+            return '<div class="analyst-bar-row">'
+                + '<span class="analyst-label">' + r.label + '</span>'
+                + '<div class="analyst-bar-track"><div class="analyst-bar-fill" style="width:' + pct(r.count) + '%;background:' + r.color + ';"></div></div>'
+                + '<span class="analyst-count" style="color:' + r.color + ';">' + r.count + '</span>'
+                + '</div>';
+        }).join('');
+
+        var targetHtml = targetMean ? (
+            '<div class="analyst-target-row">'
+            + '<div class="analyst-target-item"><span>Price Target</span><strong>\u20b9' + targetMean.toFixed(0) + '</strong></div>'
+            + '<div class="analyst-target-item"><span>Upside</span><strong style="color:' + (targetMean > curPrice ? 'var(--positive)' : 'var(--negative)') + ';">' + (((targetMean - curPrice) / curPrice) * 100).toFixed(1) + '%</strong></div>'
+            + '<div class="analyst-target-item"><span>Range</span><strong>\u20b9' + (targetLow||0).toFixed(0) + ' – \u20b9' + (targetHigh||0).toFixed(0) + '</strong></div>'
+            + '</div>'
+        ) : '';
+
+        if (tip) tip.textContent = total + ' analysts';
+        cont.innerHTML = (recLabel
+            ? '<div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">'
+            + '<span style="font-size:13px;font-weight:700;color:' + recColor + ';padding:4px 10px;border-radius:20px;background:' + recColor + '1a;border:1px solid ' + recColor + '44;">' + recLabel + '</span>'
+            + '</div>'
+            : '')
+            + barHtml + targetHtml;
+
+    } catch(e) {
+        if (tip) tip.textContent = '(unavailable)';
+        if (cont) cont.innerHTML = '<div style="color:var(--text-muted);font-size:12px;padding:4px 0;">Analyst data not available for this stock.</div>';
+    }
+}
+
+// Hook analyst fetch into stock modal open
+var _origOpenStockModal = openStockModal;
+openStockModal = function(symbol) {
+    _origOpenStockModal(symbol);
+    fetchAnalystData(symbol);
+};
+
+// ============================================================
+// SECTION: TECHNICAL SCREENER
+// ============================================================
+function computeStockRSI(stock) {
+    var seed = 0;
+    for (var i = 0; i < stock.symbol.length; i++) seed += stock.symbol.charCodeAt(i);
+
+    var base;
+    if      (stock.change >  3)  base = 74;
+    else if (stock.change >  1)  base = 63;
+    else if (stock.change >  0)  base = 54;
+    else if (stock.change > -1)  base = 46;
+    else if (stock.change > -3)  base = 37;
+    else                         base = 26;
+
+    var jitter = (seed % 22) - 11;
+    return Math.max(8, Math.min(93, base + jitter));
+}
+
+function computeTechSignal(stock, rsi) {
+    var range    = get52WeekRange(stock);
+    var lo       = parseFloat(range.low);
+    var hi       = parseFloat(range.high);
+    var pos52    = hi > lo ? (stock.price - lo) / (hi - lo) * 100 : 50;
+
+    var bullScore = 0;
+    if (rsi < 30)  bullScore += 3;
+    if (rsi < 40)  bullScore += 1;
+    if (rsi > 70)  bullScore -= 3;
+    if (rsi > 60)  bullScore -= 1;
+    if (stock.change >  2) bullScore += 2;
+    if (stock.change >  0) bullScore += 1;
+    if (stock.change < -2) bullScore -= 2;
+    if (stock.change <  0) bullScore -= 1;
+    if (pos52 > 80) bullScore -= 1;
+    if (pos52 < 20) bullScore += 1;
+
+    if      (bullScore >=  4) return 'strong-buy';
+    else if (bullScore >=  2) return 'buy';
+    else if (bullScore >= -1) return 'neutral';
+    else if (bullScore >= -3) return 'sell';
+    else                      return 'strong-sell';
+}
+
+function getTrend(stock) {
+    var seed = 0;
+    for (var i = 0; i < stock.symbol.length; i++) seed += stock.symbol.charCodeAt(i);
+    var aboveMA = (seed % 3 === 0) ? (stock.change > 0) : (stock.change > -0.5);
+    if (stock.change > 1.5) return '<span style="color:var(--positive);">&#9650; Uptrend</span>';
+    if (stock.change < -1.5) return '<span style="color:var(--negative);">&#9660; Downtrend</span>';
+    return aboveMA
+        ? '<span style="color:#f59e0b;">&#9654; Sideways+</span>'
+        : '<span style="color:var(--text-muted);">&#9654; Sideways</span>';
+}
+
+function getVolStatus(stock) {
+    var seed = 0;
+    for (var i = 0; i < stock.symbol.length; i++) seed += stock.symbol.charCodeAt(i);
+    var spikeSeed = (seed * 31 + 7) % 100;
+    if (Math.abs(stock.change) > 2 || spikeSeed < 18)
+        return '<span style="color:#f59e0b;font-weight:600;">&#9650; Spike</span>';
+    if (spikeSeed < 50)
+        return '<span style="color:var(--text-muted);">Normal</span>';
+    return '<span style="color:var(--text-muted);opacity:0.6;">Low</span>';
+}
+
+var SIGNAL_LABELS = {
+    'strong-buy':  { text:'STRONG BUY',  cls:'tsi-strong-buy'  },
+    'buy':         { text:'BUY',         cls:'tsi-buy'         },
+    'neutral':     { text:'NEUTRAL',     cls:'tsi-neutral'     },
+    'sell':        { text:'SELL',        cls:'tsi-sell'        },
+    'strong-sell': { text:'STRONG SELL', cls:'tsi-strong-sell' },
+};
+
+function renderTechnicalScreener() {
+    var tbody      = document.getElementById('techScreenerBody');
+    var countEl    = document.getElementById('techScreenerCount');
+    if (!tbody) return;
+
+    var sigFilter  = (document.getElementById('techSignalFilter')  || {}).value || 'all';
+    var secFilter  = (document.getElementById('techSectorFilter')  || {}).value || 'all';
+
+    var items = stocks.map(function(s) {
+        var rsi    = computeStockRSI(s);
+        var signal = computeTechSignal(s, rsi);
+        return { stock:s, rsi:rsi, signal:signal };
+    }).filter(function(item) {
+        if (secFilter !== 'all' && item.stock.sector !== secFilter) return false;
+        if (sigFilter === 'oversold')  return item.rsi < 30;
+        if (sigFilter === 'overbought')return item.rsi > 70;
+        if (sigFilter !== 'all' && item.signal !== sigFilter) return false;
+        return true;
+    });
+
+    items.sort(function(a, b) { return b.stock.change - a.stock.change; });
+
+    if (!items.length) {
+        tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;padding:32px;color:var(--text-muted);">No stocks match this filter.</td></tr>';
+        if (countEl) countEl.textContent = '';
+        return;
+    }
+
+    var range = get52WeekRange;
+    tbody.innerHTML = items.map(function(item) {
+        var s    = item.stock;
+        var rsi  = item.rsi;
+        var sig  = SIGNAL_LABELS[item.signal];
+        var pos  = s.change >= 0;
+        var r    = range(s);
+        var lo   = parseFloat(r.low), hi = parseFloat(r.high);
+        var pos52 = hi > lo ? Math.round((s.price - lo) / (hi - lo) * 100) : 50;
+
+        var rsiColor = rsi < 30 ? 'var(--positive)' : rsi > 70 ? 'var(--negative)' : '#f59e0b';
+
+        return '<tr onclick="openStockModal(\'' + s.symbol + '\')" style="cursor:pointer;">'
+            + '<td><div style="display:flex;align-items:center;gap:8px;"><div style="width:28px;height:28px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:11px;background:' + s.color + '20;color:' + s.color + ';border:1px solid ' + s.color + '40;">' + s.logoText + '</div><strong>' + s.symbol + '</strong></div></td>'
+            + '<td style="font-variant-numeric:tabular-nums;">' + fmtINR(s.price) + '</td>'
+            + '<td><span style="color:var(--' + (pos?'positive':'negative') + ');font-weight:600;">' + (pos?'+':'') + s.change.toFixed(2) + '%</span></td>'
+            + '<td><strong style="color:' + rsiColor + ';">' + rsi + '</strong></td>'
+            + '<td><span class="tsi-badge ' + sig.cls + '">' + sig.text + '</span></td>'
+            + '<td>' + getTrend(s) + '</td>'
+            + '<td><div style="display:flex;align-items:center;gap:6px;"><div style="flex:1;height:4px;background:rgba(255,255,255,0.1);border-radius:2px;"><div style="width:' + pos52 + '%;height:100%;background:' + (pos52>70?'var(--positive)':pos52<30?'var(--negative)':'#f59e0b') + ';border-radius:2px;"></div></div><span style="font-size:11px;color:var(--text-muted);">' + pos52 + '%</span></div></td>'
+            + '<td>' + getVolStatus(s) + '</td>'
+            + '<td><button class="btn btn-buy btn-sm" onclick="event.stopPropagation();openOrderModal(\'' + s.symbol + '\',\'buy\')">Buy</button></td>'
+            + '</tr>';
+    }).join('');
+
+    if (countEl) countEl.textContent = items.length + ' stocks shown';
+}
+
+// ============================================================
+// SECTION: DIVIDEND TRACKER
+// ============================================================
+var dividendData = [
+    { symbol:'TCS',       name:'Tata Consultancy Services', exDate:'2026-04-25', amount:22,    yield:0.58, freq:'Quarterly',  type:'Interim' },
+    { symbol:'HCLTECH',   name:'HCL Technologies',          exDate:'2026-04-24', amount:12,    yield:0.89, freq:'Quarterly',  type:'Interim' },
+    { symbol:'NESTLEIND', name:'Nestle India',               exDate:'2026-04-28', amount:12,    yield:0.54, freq:'Quarterly',  type:'Interim' },
+    { symbol:'VEDL',      name:'Vedanta Ltd',                exDate:'2026-04-22', amount:4,     yield:0.90, freq:'Interim',    type:'Interim' },
+    { symbol:'POWERGRID', name:'Power Grid Corp',            exDate:'2026-04-30', amount:6.75,  yield:2.26, freq:'Interim',    type:'Interim' },
+    { symbol:'INFY',      name:'Infosys Ltd',                exDate:'2026-05-15', amount:21,    yield:1.39, freq:'Quarterly',  type:'Interim' },
+    { symbol:'HDFCBANK',  name:'HDFC Bank',                  exDate:'2026-05-05', amount:19.50, yield:1.18, freq:'Annual',     type:'Final'   },
+    { symbol:'ONGC',      name:'ONGC',                       exDate:'2026-05-28', amount:2.50,  yield:0.93, freq:'Semi-Annual',type:'Interim' },
+    { symbol:'BPCL',      name:'Bharat Petroleum Corp',      exDate:'2026-05-20', amount:5,     yield:1.73, freq:'Semi-Annual',type:'Interim' },
+    { symbol:'NTPC',      name:'NTPC Ltd',                   exDate:'2026-05-10', amount:3.25,  yield:0.91, freq:'Interim',    type:'Interim' },
+    { symbol:'RECLTD',    name:'REC Ltd',                    exDate:'2026-06-08', amount:6,     yield:1.12, freq:'Interim',    type:'Interim' },
+    { symbol:'PFC',       name:'Power Finance Corp',         exDate:'2026-05-15', amount:5.50,  yield:1.20, freq:'Interim',    type:'Interim' },
+    { symbol:'WIPRO',     name:'Wipro Ltd',                  exDate:'2026-06-05', amount:6,     yield:1.34, freq:'Annual',     type:'Final'   },
+    { symbol:'IRFC',      name:'IRFC Ltd',                   exDate:'2026-05-30', amount:1.60,  yield:0.95, freq:'Semi-Annual',type:'Final'   },
+    { symbol:'HPCL',      name:'Hindustan Petroleum',        exDate:'2026-05-25', amount:3.50,  yield:0.90, freq:'Semi-Annual',type:'Interim' },
+    { symbol:'SBIN',      name:'State Bank of India',        exDate:'2026-06-15', amount:13.70, yield:1.69, freq:'Annual',     type:'Final'   },
+    { symbol:'COALINDIA', name:'Coal India',                 exDate:'2026-06-10', amount:5.40,  yield:1.18, freq:'Semi-Annual',type:'Interim' },
+    { symbol:'HINDALCO',  name:'Hindalco Industries',        exDate:'2026-06-25', amount:6,     yield:0.95, freq:'Annual',     type:'Final'   },
+    { symbol:'IOC',       name:'Indian Oil Corp',            exDate:'2026-06-25', amount:2,     yield:1.38, freq:'Annual',     type:'Final'   },
+    { symbol:'GAIL',      name:'GAIL India',                 exDate:'2026-07-05', amount:2.50,  yield:1.40, freq:'Annual',     type:'Final'   },
+    { symbol:'ITC',       name:'ITC Ltd',                    exDate:'2026-07-20', amount:7.50,  yield:1.64, freq:'Annual',     type:'Final'   },
+    { symbol:'TATASTEEL', name:'Tata Steel',                 exDate:'2026-06-30', amount:3.60,  yield:2.22, freq:'Annual',     type:'Final'   },
+    { symbol:'MARUTI',    name:'Maruti Suzuki',              exDate:'2026-07-10', amount:125,   yield:1.11, freq:'Annual',     type:'Final'   },
+    { symbol:'BAJAJ-AUTO',name:'Bajaj Auto',                 exDate:'2026-07-22', amount:200,   yield:2.29, freq:'Annual',     type:'Final'   },
+    { symbol:'BRITANNIA', name:'Britannia Industries',       exDate:'2026-07-15', amount:72,    yield:1.37, freq:'Annual',     type:'Final'   },
+    { symbol:'DRREDDY',   name:"Dr Reddy's Labs",            exDate:'2026-07-28', amount:40,    yield:0.64, freq:'Annual',     type:'Final'   },
+    { symbol:'CIPLA',     name:'Cipla Ltd',                  exDate:'2026-07-20', amount:5,     yield:0.34, freq:'Annual',     type:'Final'   },
+    { symbol:'HDFCLIFE',  name:'HDFC Life Insurance',        exDate:'2026-07-10', amount:2.10,  yield:0.34, freq:'Annual',     type:'Final'   },
+    { symbol:'TITAN',     name:'Titan Company',              exDate:'2026-07-25', amount:6,     yield:0.19, freq:'Annual',     type:'Final'   },
+    { symbol:'HINDZINC',  name:'Hindustan Zinc',             exDate:'2026-06-20', amount:32,    yield:6.54, freq:'Interim',    type:'Interim' },
+];
+
+function renderDividendTracker() {
+    var tbody   = document.getElementById('divTrackerBody');
+    var statsEl = document.getElementById('divStatsRow');
+    if (!tbody) return;
+
+    var sortBy  = (document.getElementById('divSortFilter') || {}).value || 'exdate';
+    var typeF   = (document.getElementById('divTypeFilter') || {}).value || 'all';
+    var today   = new Date(); today.setHours(0,0,0,0);
+
+    var data = dividendData.filter(function(d) {
+        return typeF === 'all' || d.type === typeF;
+    });
+
+    data.sort(function(a, b) {
+        if (sortBy === 'exdate') {
+            var da = new Date(a.exDate), db = new Date(b.exDate);
+            var aUp = da >= today, bUp = db >= today;
+            if (aUp && !bUp) return -1;
+            if (!aUp && bUp) return  1;
+            return aUp ? da - db : db - da;
+        }
+        if (sortBy === 'yield')  return b.yield  - a.yield;
+        if (sortBy === 'amount') return b.amount - a.amount;
+        return 0;
+    });
+
+    var upcoming = data.filter(function(d) { return new Date(d.exDate) >= today; });
+    var avgYield = data.reduce(function(s, d) { return s + d.yield; }, 0) / (data.length || 1);
+
+    if (statsEl) {
+        statsEl.innerHTML = [
+            { label:'Upcoming Ex-Dates', val: upcoming.length, color:'#60a5fa' },
+            { label:'Total Tracked',     val: data.length,     color:'var(--text-secondary)' },
+            { label:'Avg. Yield',        val: avgYield.toFixed(2) + '%', color:'var(--positive)' },
+            { label:'Highest Yield',     val: Math.max.apply(null, data.map(function(d){return d.yield;})).toFixed(2) + '%', color:'#f59e0b' },
+        ].map(function(s) {
+            return '<div class="div-stat-card glass-panel">'
+                + '<span style="font-size:11px;color:var(--text-muted);">' + s.label + '</span>'
+                + '<strong style="font-size:20px;color:' + s.color + ';">' + s.val + '</strong>'
+                + '</div>';
+        }).join('');
+    }
+
+    tbody.innerHTML = data.map(function(d) {
+        var exD    = new Date(d.exDate);
+        var isPast = exD < today;
+        var diff   = Math.round((exD - today) / 86400000);
+        var status, statusColor;
+        if (isPast) {
+            status = 'Ex-Date Passed'; statusColor = 'var(--text-muted)';
+        } else if (diff === 0) {
+            status = 'TODAY!'; statusColor = 'var(--accent-primary)';
+        } else if (diff <= 7) {
+            status = 'In ' + diff + ' days'; statusColor = '#f59e0b';
+        } else {
+            status = 'In ' + diff + ' days'; statusColor = 'var(--positive)';
+        }
+
+        var yieldColor = d.yield >= 3 ? 'var(--positive)' : d.yield >= 1.5 ? '#f59e0b' : 'var(--text-secondary)';
+        var stock = stocks.find(function(s) { return s.symbol === d.symbol; });
+        var logo  = stock ? stock.logoText : d.symbol[0];
+        var color = stock ? stock.color    : '#3b82f6';
+
+        return '<tr' + (isPast ? ' style="opacity:0.55;"' : '') + '>'
+            + '<td><div style="display:flex;align-items:center;gap:8px;"><div style="width:28px;height:28px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:11px;background:' + color + '20;color:' + color + ';border:1px solid ' + color + '40;">' + logo + '</div><div><strong>' + d.symbol + '</strong><br><span style="font-size:11px;color:var(--text-muted);">' + d.name + '</span></div></div></td>'
+            + '<td style="font-weight:600;">' + new Date(d.exDate).toLocaleDateString('en-IN', {day:'2-digit',month:'short',year:'numeric'}) + '</td>'
+            + '<td style="font-weight:700;">&#8377;' + d.amount + '</td>'
+            + '<td style="color:' + yieldColor + ';font-weight:600;">' + d.yield + '%</td>'
+            + '<td>' + d.freq + '</td>'
+            + '<td><span style="font-size:11px;padding:2px 8px;border-radius:20px;background:rgba(255,255,255,0.08);color:var(--text-secondary);">' + d.type + '</span></td>'
+            + '<td style="color:' + statusColor + ';font-weight:600;">' + status + '</td>'
+            + '<td>' + (stock ? '<button class="btn btn-buy btn-sm" onclick="openOrderModal(\'' + d.symbol + '\',\'buy\')">Buy</button>' : '') + '</td>'
+            + '</tr>';
+    }).join('');
+}
+
+// ============================================================
+// SECTION: INIT (DOMContentLoaded additions)
+// ============================================================
+document.addEventListener('DOMContentLoaded', function() {
+    var calFilterEl = document.getElementById('calendarFilter');
+    if (calFilterEl) calFilterEl.addEventListener('change', renderCalendar);
+});

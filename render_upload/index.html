@@ -65,6 +65,21 @@
             <a href="#" class="nav-item" data-view="journal">
                 <i data-lucide="book-open"></i><span>Journal</span>
             </a>
+            <a href="#" class="nav-item" data-view="calendar">
+                <i data-lucide="calendar"></i><span>Calendar</span>
+            </a>
+            <a href="#" class="nav-item" data-view="screener-pro">
+                <i data-lucide="sliders-horizontal"></i><span>Screener Pro</span>
+            </a>
+            <a href="#" class="nav-item" data-view="global">
+                <i data-lucide="globe"></i><span>Global Markets</span>
+            </a>
+            <a href="#" class="nav-item" data-view="technicals">
+                <i data-lucide="bar-chart"></i><span>Technicals</span>
+            </a>
+            <a href="#" class="nav-item" data-view="dividends">
+                <i data-lucide="percent"></i><span>Dividends</span>
+            </a>
         </nav>
         <div class="sidebar-bottom">
             <div class="market-status">
@@ -748,6 +763,155 @@
             </div>
         </div>
 
+        <!-- ══ Economic Calendar ══ -->
+        <div id="section-calendar" class="glass-panel" style="margin:0 24px 24px;padding:24px;border-radius:16px;display:none;">
+            <div class="screener-header" style="margin-bottom:20px;">
+                <div>
+                    <h2 class="section-title" style="margin-bottom:4px;">Economic Calendar</h2>
+                    <p class="section-sub">RBI MPC, earnings, IPO &amp; global macro events sorted by date</p>
+                </div>
+                <select id="calendarFilter" class="filter-select">
+                    <option value="All">All Events</option>
+                    <option value="RBI">RBI / SEBI</option>
+                    <option value="Earnings">Earnings</option>
+                    <option value="IPO">IPO</option>
+                    <option value="Index">Index Events</option>
+                    <option value="Global">Global (Fed / ECB)</option>
+                </select>
+            </div>
+            <div id="calendarGrid" class="calendar-grid"></div>
+        </div>
+
+        <!-- ══ Screener Pro ══ -->
+        <div id="section-screener-pro" class="glass-panel" style="margin:0 24px 24px;padding:24px;border-radius:16px;display:none;">
+            <div class="screener-header" style="margin-bottom:20px;">
+                <div>
+                    <h2 class="section-title" style="margin-bottom:4px;">Advanced Screener Pro</h2>
+                    <p class="section-sub">Filter stocks by multiple criteria simultaneously</p>
+                </div>
+                <button class="btn btn-primary" onclick="applyScreenerPro()"><i data-lucide="sliders-horizontal"></i> Apply Filters</button>
+            </div>
+            <div class="screener-pro-filters">
+                <div class="screener-pro-filter-grid">
+                    <div class="sp-filter-group"><label class="form-label">Sector</label>
+                        <select id="spSector" class="filter-select"><option value="All">All Sectors</option><option>Technology</option><option>Finance</option><option>Energy</option><option>Consumer</option><option>Infrastructure</option><option>Healthcare</option><option>Auto</option><option>Metals</option><option>Chemicals</option><option>Telecom</option></select></div>
+                    <div class="sp-filter-group"><label class="form-label">Min Price (&#8377;)</label><input type="number" id="spMinPrice" class="filter-select" placeholder="0" style="font-size:13px;"></div>
+                    <div class="sp-filter-group"><label class="form-label">Max Price (&#8377;)</label><input type="number" id="spMaxPrice" class="filter-select" placeholder="∞" style="font-size:13px;"></div>
+                    <div class="sp-filter-group"><label class="form-label">Min P/E</label><input type="number" id="spMinPE" class="filter-select" placeholder="0" style="font-size:13px;"></div>
+                    <div class="sp-filter-group"><label class="form-label">Max P/E</label><input type="number" id="spMaxPE" class="filter-select" placeholder="∞" style="font-size:13px;"></div>
+                    <div class="sp-filter-group"><label class="form-label">Min Day Change (%)</label><input type="number" id="spMinChange" class="filter-select" placeholder="-99" step="0.1" style="font-size:13px;"></div>
+                    <div class="sp-filter-group"><label class="form-label">Sort By</label>
+                        <select id="spSort" class="filter-select"><option value="change-desc">Change % (High-Low)</option><option value="change-asc">Change % (Low-High)</option><option value="price-desc">Price (High-Low)</option><option value="price-asc">Price (Low-High)</option><option value="pe-asc">P/E (Low-High)</option><option value="marketcap">Market Cap</option></select></div>
+                </div>
+            </div>
+            <div id="screenerProResults" class="table-container" style="margin-top:20px;"></div>
+        </div>
+
+        <!-- ══ Global Markets ══ -->
+        <div id="section-global" class="glass-panel" style="margin:0 24px 24px;padding:24px;border-radius:16px;display:none;">
+            <div class="screener-header" style="margin-bottom:20px;">
+                <div>
+                    <h2 class="section-title" style="margin-bottom:4px;">Global Markets</h2>
+                    <p class="section-sub">Live prices — international indices, commodities, forex &amp; crypto via Yahoo Finance</p>
+                </div>
+                <button class="btn btn-primary" onclick="fetchGlobalMarkets()"><i data-lucide="refresh-cw"></i> Refresh</button>
+            </div>
+            <div class="global-cat-tabs" id="globalCatTabs">
+                <button class="global-cat-tab active" data-cat="All" onclick="filterGlobalCat('All',this)">&#127760; All</button>
+                <button class="global-cat-tab" data-cat="Index" onclick="filterGlobalCat('Index',this)">&#128200; Indices</button>
+                <button class="global-cat-tab" data-cat="Commodity" onclick="filterGlobalCat('Commodity',this)">&#128738; Commodities</button>
+                <button class="global-cat-tab" data-cat="Forex" onclick="filterGlobalCat('Forex',this)">&#128178; Forex</button>
+                <button class="global-cat-tab" data-cat="Crypto" onclick="filterGlobalCat('Crypto',this)">&#8383; Crypto</button>
+            </div>
+            <div id="globalMarketsGrid" class="global-markets-grid">
+                <div style="text-align:center;padding:40px;color:var(--text-muted);">&#8987; Fetching live global market data...</div>
+            </div>
+            <p id="globalLastUpdated" style="text-align:center;font-size:12px;color:var(--text-muted);margin-top:16px;"></p>
+        </div>
+
+        <!-- ══ Technical Screener ══ -->
+        <div id="section-technicals" class="glass-panel" style="margin:0 24px 24px;padding:24px;border-radius:16px;display:none;">
+            <div class="screener-header" style="margin-bottom:16px;">
+                <div>
+                    <h2 class="section-title" style="margin-bottom:4px;">Technical Screener</h2>
+                    <p class="section-sub">RSI signals, momentum leaders &amp; trend analysis — auto-computed from live prices</p>
+                </div>
+                <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                    <select id="techSignalFilter" class="filter-select" onchange="renderTechnicalScreener()">
+                        <option value="all">All Signals</option>
+                        <option value="strong-buy">Strong Buy</option>
+                        <option value="buy">Buy</option>
+                        <option value="neutral">Neutral</option>
+                        <option value="sell">Sell</option>
+                        <option value="strong-sell">Strong Sell</option>
+                        <option value="oversold">RSI Oversold (&lt;30)</option>
+                        <option value="overbought">RSI Overbought (&gt;70)</option>
+                    </select>
+                    <select id="techSectorFilter" class="filter-select" onchange="renderTechnicalScreener()">
+                        <option value="all">All Sectors</option>
+                        <option value="Technology">Technology</option>
+                        <option value="Finance">Finance</option>
+                        <option value="Energy">Energy</option>
+                        <option value="Consumer">Consumer</option>
+                        <option value="Healthcare">Healthcare</option>
+                        <option value="Auto">Auto</option>
+                        <option value="Metals">Metals</option>
+                        <option value="Infrastructure">Infrastructure</option>
+                    </select>
+                </div>
+            </div>
+            <div class="tech-legend">
+                <span class="tsi-badge tsi-strong-buy">STRONG BUY</span>
+                <span class="tsi-badge tsi-buy">BUY</span>
+                <span class="tsi-badge tsi-neutral">NEUTRAL</span>
+                <span class="tsi-badge tsi-sell">SELL</span>
+                <span class="tsi-badge tsi-strong-sell">STRONG SELL</span>
+                <span style="font-size:11px;color:var(--text-muted);margin-left:8px;">RSI&lt;30=Oversold &nbsp;|&nbsp; RSI&gt;70=Overbought</span>
+            </div>
+            <div class="table-container" style="margin-top:16px;">
+                <table class="stock-table">
+                    <thead><tr>
+                        <th>Symbol</th><th>LTP (&#8377;)</th><th>Day Change</th>
+                        <th>RSI (14)</th><th>Signal</th><th>Trend</th><th>52W Pos.</th><th>Vol.</th><th>Action</th>
+                    </tr></thead>
+                    <tbody id="techScreenerBody"></tbody>
+                </table>
+            </div>
+            <p id="techScreenerCount" style="text-align:center;font-size:12px;color:var(--text-muted);margin-top:12px;"></p>
+        </div>
+
+        <!-- ══ Dividend Tracker ══ -->
+        <div id="section-dividends" class="glass-panel" style="margin:0 24px 24px;padding:24px;border-radius:16px;display:none;">
+            <div class="screener-header" style="margin-bottom:20px;">
+                <div>
+                    <h2 class="section-title" style="margin-bottom:4px;">Dividend Tracker</h2>
+                    <p class="section-sub">Upcoming ex-dividend dates, yields &amp; payout history for NSE stocks</p>
+                </div>
+                <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                    <select id="divSortFilter" class="filter-select" onchange="renderDividendTracker()">
+                        <option value="exdate">Sort: Ex-Date</option>
+                        <option value="yield">Sort: Yield &#9660;</option>
+                        <option value="amount">Sort: Amount &#9660;</option>
+                    </select>
+                    <select id="divTypeFilter" class="filter-select" onchange="renderDividendTracker()">
+                        <option value="all">All Types</option>
+                        <option value="Final">Final Dividend</option>
+                        <option value="Interim">Interim Dividend</option>
+                    </select>
+                </div>
+            </div>
+            <div id="divStatsRow" class="div-stats-row"></div>
+            <div class="table-container" style="margin-top:16px;">
+                <table class="stock-table">
+                    <thead><tr>
+                        <th>Company</th><th>Ex-Date</th><th>Dividend (&#8377;/share)</th>
+                        <th>Yield</th><th>Frequency</th><th>Type</th><th>Status</th><th>Action</th>
+                    </tr></thead>
+                    <tbody id="divTrackerBody"></tbody>
+                </table>
+            </div>
+        </div>
+
     </main>
 </div>
 
@@ -810,6 +974,15 @@
 
             <!-- Stock Strength Score -->
             <div id="modalScoreWrap" style="margin-top:16px;"></div>
+
+            <!-- Analyst Coverage (live from Yahoo Finance) -->
+            <div id="analystPanel" style="display:none;margin-top:16px;">
+                <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
+                    <span style="font-size:13px;font-weight:600;color:var(--text-secondary);"><i data-lucide="users" style="width:14px;height:14px;display:inline;vertical-align:middle;margin-right:4px;"></i>Analyst Coverage</span>
+                    <span id="analystLoadTip" style="font-size:11px;color:var(--text-muted);"></span>
+                </div>
+                <div id="analystContent"></div>
+            </div>
 
             <!-- Price Chart -->
             <div class="modal-chart-section">
