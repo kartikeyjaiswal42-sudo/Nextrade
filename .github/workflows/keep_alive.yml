@@ -2,13 +2,39 @@ name: Keep Render App Awake
 
 on:
   schedule:
-    # Runs every 14 minutes
-    - cron: '*/14 * * * *'
-  workflow_dispatch: # Allows manual triggering from GitHub
+    # Runs every 10 minutes (more reliable than 14 — stays well under Render's 15-min sleep)
+    - cron: '*/10 * * * *'
+  workflow_dispatch: # Allows manual trigger from GitHub Actions UI
 
 jobs:
   ping:
     runs-on: ubuntu-latest
+    timeout-minutes: 2
+
     steps:
-      - name: Ping Render deployment
-        run: curl -s https://nextrade-3bqk.onrender.com/api/health > /dev/null
+      - name: Ping Render health endpoint
+        run: |
+          echo "Pinging https://nextrade-3bqk.onrender.com/api/health ..."
+          RESPONSE=$(curl --silent --max-time 60 --retry 3 --retry-delay 5 \
+            --write-out "\nHTTP_STATUS:%{http_code}" \
+            https://nextrade-3bqk.onrender.com/api/health)
+          
+          HTTP_STATUS=$(echo "$RESPONSE" | grep "HTTP_STATUS" | cut -d: -f2)
+          BODY=$(echo "$RESPONSE" | grep -v "HTTP_STATUS")
+          
+          echo "Response body: $BODY"
+          echo "HTTP status: $HTTP_STATUS"
+          
+          if [ "$HTTP_STATUS" -eq 200 ]; then
+            echo "✅ Render is awake and healthy!"
+          else
+            echo "❌ Render returned HTTP $HTTP_STATUS — something may be wrong."
+            exit 1
+          fi
+
+      - name: Also ping root page
+        run: |
+          STATUS=$(curl --silent --max-time 60 --retry 2 --retry-delay 5 \
+            --write-out "%{http_code}" --output /dev/null \
+            https://nextrade-3bqk.onrender.com/)
+          echo "Root page HTTP status: $STATUS"
