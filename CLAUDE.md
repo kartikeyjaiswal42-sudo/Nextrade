@@ -6,6 +6,7 @@
 - **Name**: NexTrade — Indian Stock Market Simulator (brokerage-grade)
 - **Purpose**: Live-data NSE/BSE dashboard with virtual trading, portfolio management, and investment calculators.
 - **Stack**: Vanilla HTML + JS + CSS frontend · FastAPI Python backend · No frameworks (no React, no Tailwind)
+- **Last updated by**: Claude Code (April 20 2026) — added Calendar, Screener Pro, Global Markets, Technicals, Dividends
 - **Runtime**: Python 3.11+, Node not required
 
 ---
@@ -14,9 +15,9 @@
 ```
 New project/
 ├── CLAUDE.md                ← YOU ARE HERE (AI context file)
-├── index.html               ← Entire frontend UI (1033 lines, single-page app)
-├── script.js                ← All JS logic (3218 lines)
-├── style.css                ← All CSS (2246 lines, CSS custom properties design system)
+├── index.html               ← Entire frontend UI (1206 lines, single-page app)
+├── script.js                ← All JS logic (3820 lines)
+├── style.css                ← All CSS (2368 lines, CSS custom properties design system)
 │
 ├── main.py                  ← FastAPI app entry point (serves static files + API)
 ├── config.py                ← Pydantic Settings (port, CORS, rate limits, proxy whitelist)
@@ -142,7 +143,7 @@ var isLiveData = false;       // true when live prices loaded successfully
 Single-page app. Views toggled by `setView(viewName)`.
 
 Active sections (sidebar nav-items):
-`dashboard` | `screener` | `allstocks` | `gainers` | `mutualfunds` | `ipo` | `portfolio` | `watchlist` | `orders` | `news` | `calculator` | `compare` | `heatmap` | `journal` | `settings`
+`dashboard` | `screener` | `allstocks` | `gainers` | `mutualfunds` | `ipo` | `portfolio` | `watchlist` | `orders` | `news` | `calculator` | `compare` | `heatmap` | `journal` | `calendar` | `screener-pro` | `global` | `technicals` | `dividends` | `settings`
 
 ### Key Functions Reference
 | Function | Lines | Purpose |
@@ -172,6 +173,18 @@ Active sections (sidebar nav-items):
 | `saveState()` | 916 | Persist portfolio/watchlist to localStorage |
 | `setView(view)` | 1462 | Navigate between sections |
 | `showToast(msg, type)` | 1014 | Toast notification system |
+| `renderCalendar()` | 3257 | Economic Calendar: RBI policy, earnings, IPO events |
+| `applyScreenerPro()` | 3309 | Advanced Screener Pro (sector, price range, PE, change filters) |
+| `fetchGlobalMarkets()` | 3391 | Fetches global indices (US, EU, Asia) via Yahoo Finance |
+| `filterGlobalCat(cat, btn)` | 3427 | Filters global markets by region tab |
+| `renderGlobalMarkets()` | 3434 | Renders global index cards with live change colors |
+| `fetchAnalystData(symbol)` | 3480 | Fetches analyst buy/sell/hold recommendations |
+| `computeStockRSI(stock)` | 3575 | Estimates RSI from 52W range + day change |
+| `computeTechSignal(stock, rsi)` | 3591 | Returns Buy / Sell / Hold technical signal |
+| `getTrend(stock)` | 3616 | Returns trend label (Strong Uptrend, Downtrend, etc.) |
+| `getVolStatus(stock)` | 3627 | Returns volume status label (High/Normal/Low) |
+| `renderTechnicalScreener()` | 3646 | Tech screener table: RSI, signal, trend, support/resistance |
+| `renderDividendTracker()` | 3738 | Dividend tracker: yield, ex-date, payout per stock |
 
 ---
 
@@ -235,6 +248,11 @@ Active sections (sidebar nav-items):
 | Price Chart (historical) | ✅ Live (YF chart API) |
 | Dark/Light theme toggle | ✅ |
 | Accent colour picker | ✅ |
+| 📅 Economic Calendar | ✅ Static events (RBI, earnings, IPO) |
+| 🔬 Advanced Screener Pro | ✅ Filter by sector/price/PE/change |
+| 🌍 Global Markets | ✅ Live (US, EU, Asia indices via Yahoo) |
+| 📊 Technical Screener | ✅ RSI, Buy/Sell signal, trend, S/R levels |
+| 💰 Dividend Tracker | ✅ Yield, ex-date, payout per stock |
 | **User Login / Auth System** | ❌ Not built yet |
 | **Real Demat account (broker API)** | ❌ Not built yet |
 | **Database persistence** | ❌ Not built yet (all localStorage) |
@@ -284,7 +302,7 @@ cp index.html style.css script.js main.py config.py proxy_router.py market_data.
 ## Known Gotchas
 - `proxy.py` is the **old local-only** simple proxy (port 5005). On Render, `proxy_router.py` inside FastAPI handles proxying. Do NOT confuse them.
 - `render_upload/` must be kept in sync with root files manually (or via the cp command above).
-- The Replit version has NO Crypto section and NO Calendar/Stock Screener Pro sections. These were removed intentionally to match the Replit design baseline.
+- The Replit version does NOT have Calendar, Screener Pro, Global Markets, Technicals, or Dividends. These 5 sections were added by Claude Code independently on top of the Replit baseline.
 - Yahoo Finance crumb expires; `market_data.py` auto-refreshes it with TTL 3600s.
 - Default virtual balance is ₹10,00,000 (10 lakh), stored in `localStorage['virtualBalance']`.
 - `replit_sync/` folder is NOT deployed — it's just a local snapshot reference.
