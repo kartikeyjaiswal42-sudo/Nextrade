@@ -2500,3 +2500,87 @@ body.light-mode .wi-vs-section {
     .fii-summary { grid-template-columns: 1fr 1fr; }
     .earn-table th:nth-child(5), .earn-table td:nth-child(5) { display: none; }
 }
+
+/* ── Price Flash Animations ── */
+@keyframes flash-up {
+    0%   { background: rgba(16, 185, 129, 0.35); border-radius: 3px; }
+    100% { background: transparent; }
+}
+@keyframes flash-down {
+    0%   { background: rgba(239, 68, 68, 0.35); border-radius: 3px; }
+    100% { background: transparent; }
+}
+.price-flash-up   { animation: flash-up   0.9s ease-out forwards; }
+.price-flash-down { animation: flash-down 0.9s ease-out forwards; }
+
+/* ── View Fade-In ── */
+@keyframes view-fade-in {
+    from { opacity: 0; transform: translateY(10px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+.view-fade-in { animation: view-fade-in 0.28s cubic-bezier(0.22,1,0.36,1) both; }
+
+/* ── IST Clock ── */
+.nt-clock-wrap {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+    padding: 4px 10px;
+    position: relative;
+}
+.nt-clock-wrap::before {
+    content: '';
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    background: var(--text-muted);
+    flex-shrink: 0;
+    transition: background 0.4s;
+}
+.nt-clock-wrap.market-open::before { background: var(--positive); box-shadow: 0 0 6px var(--positive); animation: pulse-dot 1.5s ease-in-out infinite; }
+@keyframes pulse-dot {
+    0%, 100% { opacity: 1; }
+    50%       { opacity: 0.4; }
+}
+.nt-clock-label { font-size: 10px; font-weight: 700; color: var(--text-muted); letter-spacing: 0.5px; }
+.nt-clock-time  { font-size: 12px; font-weight: 600; color: var(--text-main); font-variant-numeric: tabular-nums; letter-spacing: 0.5px; }
+
+/* ── Refresh Ring ── */
+.refresh-ring-wrap {
+    position: relative;
+    width: 28px; height: 28px;
+    flex-shrink: 0;
+    cursor: default;
+}
+.refresh-ring {
+    width: 28px; height: 28px;
+    transform: rotate(-90deg);
+}
+.refresh-ring-track {
+    fill: none;
+    stroke: rgba(255,255,255,0.08);
+    stroke-width: 3;
+}
+.refresh-ring-fill {
+    fill: none;
+    stroke: var(--accent-primary);
+    stroke-width: 3;
+    stroke-linecap: round;
+    transition: stroke-dashoffset 1s linear;
+}
+.refresh-ring-icon {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    width: 11px; height: 11px;
+    color: var(--text-muted);
+}
+@keyframes spin-once { from { transform: translate(-50%,-50%) rotate(0deg); } to { transform: translate(-50%,-50%) rotate(360deg); } }
+.spin-once { animation: spin-once 0.7s ease-in-out; }
+
+@media (max-width: 768px) {
+    .nt-clock-wrap { display: none; }
+    .refresh-ring-wrap { display: none; }
+}

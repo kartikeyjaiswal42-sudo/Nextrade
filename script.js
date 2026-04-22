@@ -611,6 +611,8 @@ function applyFinish(source, count) {
     renderDashboardCards();
     updatePricesInDOM();
     updateTicker();
+    updateTabTitle();
+    checkBigMovers();
     if (currentView === 'gainers')   { renderGainersLosers(); renderSectorPerformance(); }
     if (currentView === 'portfolio') renderPortfolio();
     console.log('[NexTrade] ' + source + ': updated ' + count + ' stocks at ' + new Date().toLocaleTimeString('en-IN'));
@@ -1461,12 +1463,16 @@ function renderAllStocks(page, sectorFilter, sortBy) {
 // ============================================================
 function setView(view) {
     currentView = view;
-    // Invalidate DOM cache — the new view may render different price/change elements
     _priceCache  = null;
     _changeCache = null;
     document.querySelectorAll('.nav-item[data-view]').forEach(function(item) {
         item.classList.toggle('active', item.dataset.view === view);
     });
+    // Fade-in the incoming section
+    setTimeout(function() {
+        var target = document.getElementById('section-' + view) || document.querySelector('.dashboard-content');
+        if (target) { target.classList.remove('view-fade-in'); void target.offsetWidth; target.classList.add('view-fade-in'); }
+    }, 10);
 
     // Sections outside .dashboard-content (full-page views)
     var fullPageViews = ['orders','news','calculator','compare','settings','heatmap','journal',
@@ -2008,7 +2014,15 @@ function updatePricesInDOM() {
         var changeEls = _changeCache[sym] || [];
 
         priceEls.forEach(function(el) {
-            el.textContent = fmtINR(stock.price);
+            var newTxt = fmtINR(stock.price);
+            if (el.textContent !== newTxt) {
+                el.textContent = newTxt;
+                var cls = stock.change >= 0 ? 'price-flash-up' : 'price-flash-down';
+                el.classList.remove('price-flash-up', 'price-flash-down');
+                void el.offsetWidth;
+                el.classList.add(cls);
+                setTimeout(function() { el.classList.remove(cls); }, 900);
+            }
         });
 
         changeEls.forEach(function(el) {
@@ -2389,6 +2403,12 @@ document.addEventListener('DOMContentLoaded', function() {
     // Live data: immediate + every 90s
     fetchRealTimeData();
     setInterval(fetchRealTimeData, 90000);
+
+    // IST clock
+    startISTClock();
+
+    // Refresh ring countdown (90s cycle)
+    startRefreshRing(90);
 
     // Nav items
     document.querySelectorAll('.nav-item[data-view]').forEach(function(item) {
@@ -4082,4 +4102,68 @@ function renderEarningsCalendar() {
     _activeEarningsTab = 'upcoming';
     document.querySelectorAll('#earningsTabs .feature-tab').forEach(function(t, i) { t.classList.toggle('active', i === 0); });
     renderEarningsContent();
+}
+
+// ============================================================
+// DYNAMIC FEATURES: Clock, Refresh Ring, Tab Title, Big Movers
+// ============================================================
+
+function startISTClock() {
+    function tick() {
+        var now = new Date();
+        var ist = new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Kolkata' }));
+        var h = String(ist.getHours()).padStart(2, '0');
+        var m = String(ist.getMinutes()).padStart(2, '0');
+        var s = String(ist.getSeconds()).padStart(2, '0');
+        var el = document.getElementById('ntClock');
+        if (el) el.textContent = h + ':' + m + ':' + s;
+        // Market open 09:15–15:30 IST weekdays
+        var day = ist.getDay();
+        var mins = ist.getHours() * 60 + ist.getMinutes();
+        var isOpen = day >= 1 && day <= 5 && mins >= 555 && mins < 930;
+        var dot = document.querySelector('.nt-clock-wrap');
+        if (dot) dot.classList.toggle('market-open', isOpen);
+    }
+    tick();
+    setInterval(tick, 1000);
+}
+
+function startRefreshRing(totalSeconds) {
+    var fill = document.getElementById('refreshRingFill');
+    var icon = document.getElementById('refreshIcon');
+    if (!fill) return;
+    var circumference = 2 * Math.PI * 13; // r=13
+    fill.style.strokeDasharray = circumference;
+    fill.style.strokeDashoffset = '0';
+    var elapsed = 0;
+    setInterval(function() {
+        elapsed = (elapsed + 1) % totalSeconds;
+        var progress = elapsed / totalSeconds;
+        fill.style.strokeDashoffset = circumference * (1 - progress);
+        // spin the icon when refreshing (elapsed near 0 means just refreshed)
+        if (elapsed === 0 && icon) {
+            icon.classList.add('spin-once');
+            setTimeout(function() { icon.classList.remove('spin-once'); }, 700);
+        }
+    }, 1000);
+}
+
+function updateTabTitle() {
+    var nifty = indices.find(function(i) { return i.symbol === '^NSEI'; }) || indices[0];
+    if (!nifty || !nifty.value) return;
+    var sign = nifty.change >= 0 ? '▲' : '▼';
+    document.title = sign + ' ' + nifty.value.toLocaleString('en-IN', { maximumFractionDigits: 2 }) + ' NIFTY | NexTrade';
+}
+
+var _lastBigMoverCheck = {};
+function checkBigMovers() {
+    stocks.forEach(function(s) {
+        if (!s.changePct || Math.abs(s.changePct) < 3) return;
+        var key = s.symbol + '_' + Math.round(s.changePct);
+        if (_lastBigMoverCheck[key]) return;
+        _lastBigMoverCheck[key] = true;
+        var dir = s.changePct > 0 ? '🚀' : '🔻';
+        var sign = s.changePct > 0 ? '+' : '';
+        showToast(dir + ' ' + s.name + ' ' + sign + s.changePct.toFixed(2) + '% today', s.changePct > 0 ? 'success' : 'error');
+    });
 }
