@@ -80,6 +80,12 @@
             <a href="#" class="nav-item" data-view="dividends">
                 <i data-lucide="percent"></i><span>Dividends</span>
             </a>
+            <a href="#" class="nav-item" data-view="market-pulse">
+                <i data-lucide="activity"></i><span>Market Pulse</span>
+            </a>
+            <a href="#" class="nav-item" data-view="earnings">
+                <i data-lucide="trending-up"></i><span>Earnings</span>
+            </a>
         </nav>
         <div class="sidebar-bottom">
             <div class="market-status">
@@ -910,6 +916,40 @@
                     <tbody id="divTrackerBody"></tbody>
                 </table>
             </div>
+        </div>
+
+        <!-- ══ Market Pulse ══ -->
+        <div id="section-market-pulse" class="glass-panel" style="margin:0 24px 24px;padding:24px;border-radius:16px;display:none;">
+            <div class="screener-header" style="margin-bottom:20px;">
+                <div>
+                    <h2 class="section-title" style="margin-bottom:4px;">Market Pulse</h2>
+                    <p style="color:var(--text-muted);font-size:13px;">Live market breadth, sector flows &amp; sentiment</p>
+                </div>
+            </div>
+            <div class="feature-tabs" id="pulseTabs">
+                <button class="feature-tab active" onclick="switchPulseTab('breadth',this)">📊 Breadth</button>
+                <button class="feature-tab" onclick="switchPulseTab('sectors',this)">🏭 Sector Flow</button>
+                <button class="feature-tab" onclick="switchPulseTab('sentiment',this)">🧭 Sentiment</button>
+                <button class="feature-tab" onclick="switchPulseTab('fii',this)">🏦 FII / DII</button>
+            </div>
+            <div id="pulse-content"></div>
+        </div>
+
+        <!-- ══ Earnings Calendar ══ -->
+        <div id="section-earnings" class="glass-panel" style="margin:0 24px 24px;padding:24px;border-radius:16px;display:none;">
+            <div class="screener-header" style="margin-bottom:20px;">
+                <div>
+                    <h2 class="section-title" style="margin-bottom:4px;">Earnings Calendar</h2>
+                    <p style="color:var(--text-muted);font-size:13px;">Q4 FY26 results — upcoming &amp; reported</p>
+                </div>
+            </div>
+            <div class="feature-tabs" id="earningsTabs">
+                <button class="feature-tab active" onclick="switchEarningsTab('upcoming',this)">⏳ Upcoming</button>
+                <button class="feature-tab" onclick="switchEarningsTab('thisweek',this)">📅 This Week</button>
+                <button class="feature-tab" onclick="switchEarningsTab('reported',this)">✅ Reported</button>
+                <button class="feature-tab" onclick="switchEarningsTab('all',this)">📋 All</button>
+            </div>
+            <div id="earnings-content"></div>
         </div>
 
     </main>

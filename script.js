@@ -1470,7 +1470,8 @@ function setView(view) {
 
     // Sections outside .dashboard-content (full-page views)
     var fullPageViews = ['orders','news','calculator','compare','settings','heatmap','journal',
-                         'calendar','screener-pro','global','technicals','dividends'];
+                         'calendar','screener-pro','global','technicals','dividends',
+                         'market-pulse','earnings'];
     var isFullPage = fullPageViews.indexOf(view) !== -1;
 
     // Show/hide the main dashboard-content wrapper
@@ -1479,7 +1480,8 @@ function setView(view) {
 
     // Show/hide each full-page section
     ['orders','news','calculator','compare','settings','heatmap','journal',
-     'calendar','screener-pro','global','technicals','dividends'].forEach(function(v) {
+     'calendar','screener-pro','global','technicals','dividends',
+     'market-pulse','earnings'].forEach(function(v) {
         var el = document.getElementById('section-' + v);
         if (el) el.style.display = (v === view) ? 'block' : 'none';
     });
@@ -1498,6 +1500,8 @@ function setView(view) {
         if (view === 'global')       { fetchGlobalMarkets(); }
         if (view === 'technicals')   { renderTechnicalScreener(); }
         if (view === 'dividends')    { renderDividendTracker(); }
+        if (view === 'market-pulse') { renderMarketPulse(); }
+        if (view === 'earnings')     { renderEarningsCalendar(); }
         return;
     }
 
@@ -3818,3 +3822,264 @@ document.addEventListener('DOMContentLoaded', function() {
     var calFilterEl = document.getElementById('calendarFilter');
     if (calFilterEl) calFilterEl.addEventListener('change', renderCalendar);
 });
+
+// ============================================================
+// SECTION: MARKET PULSE
+// ============================================================
+var _pulseSectors = [
+    { name:'IT',      stocks:['TCS','INFY','WIPRO','HCLTECH','TECHM'] },
+    { name:'Banking', stocks:['HDFCBANK','ICICIBANK','SBIN','KOTAKBANK','AXISBANK'] },
+    { name:'Auto',    stocks:['MARUTI','TATAMOTORS','M&M','BAJAJ-AUTO','HEROMOTOCO'] },
+    { name:'FMCG',    stocks:['HINDUNILVR','ITC','NESTLEIND','BRITANNIA','DABUR'] },
+    { name:'Pharma',  stocks:['SUNPHARMA','DRREDDY','CIPLA','DIVISLAB','AUROPHARMA'] },
+    { name:'Energy',  stocks:['RELIANCE','ONGC','BPCL','IOC','NTPC'] },
+    { name:'Metals',  stocks:['TATASTEEL','HINDALCO','JSWSTEEL','COALINDIA','VEDL'] },
+    { name:'Realty',  stocks:['DLF','GODREJPROP','PRESTIGE','OBEROIRLTY','BRIGADE'] }
+];
+
+var _activePulseTab = 'breadth';
+
+function computePulseBreadth() {
+    var adv = 0, dec = 0, unch = 0;
+    stocks.forEach(function(s) {
+        if (s.changePct > 0.3) adv++;
+        else if (s.changePct < -0.3) dec++;
+        else unch++;
+    });
+    return { adv: adv, dec: dec, unch: unch, total: stocks.length };
+}
+
+function computeSectorFlow() {
+    return _pulseSectors.map(function(sector) {
+        var ss = stocks.filter(function(s) { return sector.stocks.indexOf(s.symbol) !== -1; });
+        if (!ss.length) return { name: sector.name, avgChange: 0 };
+        var avg = ss.reduce(function(sum, s) { return sum + (s.changePct || 0); }, 0) / ss.length;
+        return { name: sector.name, avgChange: parseFloat(avg.toFixed(2)) };
+    }).sort(function(a, b) { return b.avgChange - a.avgChange; });
+}
+
+function switchPulseTab(tab, btn) {
+    _activePulseTab = tab;
+    document.querySelectorAll('#pulseTabs .feature-tab').forEach(function(b) { b.classList.remove('active'); });
+    if (btn) btn.classList.add('active');
+    renderPulseContent();
+}
+
+function renderPulseContent() {
+    var el = document.getElementById('pulse-content');
+    if (!el) return;
+    if (_activePulseTab === 'breadth')   el.innerHTML = buildPulseBreadthHTML();
+    else if (_activePulseTab === 'sectors')   el.innerHTML = buildPulseSectorHTML();
+    else if (_activePulseTab === 'sentiment') el.innerHTML = buildPulseSentimentHTML();
+    else if (_activePulseTab === 'fii')       el.innerHTML = buildPulseFIIHTML();
+}
+
+function buildPulseBreadthHTML() {
+    var b = computePulseBreadth();
+    var advPct = Math.round(b.adv / b.total * 100);
+    var decPct = Math.round(b.dec / b.total * 100);
+    var unchPct = 100 - advPct - decPct;
+    var adRatio = b.dec > 0 ? (b.adv / b.dec).toFixed(2) : '∞';
+    var nearHigh = 0, nearLow = 0, midRange = 0;
+    stocks.forEach(function(s) {
+        if (!s.high52 || !s.low52 || !s.price) return;
+        var range = s.high52 - s.low52;
+        if (range <= 0) return;
+        var pos = (s.price - s.low52) / range;
+        if (pos >= 0.8) nearHigh++;
+        else if (pos <= 0.2) nearLow++;
+        else midRange++;
+    });
+    return '<div class="pulse-breadth-grid">' +
+        '<div class="pulse-stat-card pulse-adv"><div class="pulse-stat-num">' + b.adv + '</div><div class="pulse-stat-label">Advancing</div><div class="pulse-stat-pct">' + advPct + '%</div></div>' +
+        '<div class="pulse-stat-card pulse-unch"><div class="pulse-stat-num">' + b.unch + '</div><div class="pulse-stat-label">Unchanged</div><div class="pulse-stat-pct">' + unchPct + '%</div></div>' +
+        '<div class="pulse-stat-card pulse-dec"><div class="pulse-stat-num">' + b.dec + '</div><div class="pulse-stat-label">Declining</div><div class="pulse-stat-pct">' + decPct + '%</div></div>' +
+        '</div>' +
+        '<div class="pulse-bar-section">' +
+        '<div class="pulse-bar-label"><span>Market Breadth Bar</span><span class="pulse-bar-ratio">A/D Ratio: ' + adRatio + '</span></div>' +
+        '<div class="pulse-breadth-bar">' +
+        '<div class="pulse-bar-adv" style="width:' + advPct + '%"></div>' +
+        '<div class="pulse-bar-unch" style="width:' + unchPct + '%"></div>' +
+        '<div class="pulse-bar-dec" style="width:' + decPct + '%"></div>' +
+        '</div></div>' +
+        '<div class="pulse-bar-section" style="margin-top:24px;">' +
+        '<div class="pulse-bar-label"><span>52-Week Position</span></div>' +
+        '<div class="pulse-highs-grid">' +
+        '<div class="pulse-52w-card pulse-adv"><span class="p52-num">' + nearHigh + '</span><span class="p52-lbl">Near 52W High</span></div>' +
+        '<div class="pulse-52w-card pulse-unch"><span class="p52-num">' + midRange + '</span><span class="p52-lbl">Mid Range</span></div>' +
+        '<div class="pulse-52w-card pulse-dec"><span class="p52-num">' + nearLow + '</span><span class="p52-lbl">Near 52W Low</span></div>' +
+        '</div></div>';
+}
+
+function buildPulseSectorHTML() {
+    var flows = computeSectorFlow();
+    var rows = flows.map(function(s) {
+        var cls = s.avgChange >= 0 ? 'positive' : 'negative';
+        var barW = Math.min(Math.abs(s.avgChange) * 20, 100);
+        var sign = s.avgChange >= 0 ? '+' : '';
+        return '<div class="sector-flow-row">' +
+            '<div class="sf-name">' + s.name + '</div>' +
+            '<div class="sf-bar-wrap"><div class="sf-bar ' + cls + '" style="width:' + barW + '%"></div></div>' +
+            '<div class="sf-pct ' + cls + '">' + sign + s.avgChange + '%</div>' +
+            '</div>';
+    }).join('');
+    return '<div class="sector-flow-container">' +
+        '<div class="pulse-section-title">Average % Change by Sector (Today)</div>' +
+        '<div class="sector-flow-list">' + rows + '</div></div>';
+}
+
+function buildPulseSentimentHTML() {
+    var nifty = indices.find(function(i) { return i.symbol === '^NSEI'; }) || indices[0];
+    var fgScore = 50;
+    if (nifty && nifty.changePct) {
+        fgScore = Math.max(5, Math.min(95, 50 + Math.round(nifty.changePct * 8)));
+    }
+    var fgLabel = fgScore < 20 ? 'Extreme Fear' : fgScore < 40 ? 'Fear' : fgScore < 60 ? 'Neutral' : fgScore < 80 ? 'Greed' : 'Extreme Greed';
+    var fgColor = fgScore < 40 ? 'var(--negative)' : fgScore < 60 ? 'var(--text-muted)' : 'var(--positive)';
+    var b = computePulseBreadth();
+    var breadthScore = Math.round(b.adv / b.total * 100);
+    var indicators = [
+        { name:'Market Breadth', value: breadthScore + '% advancing', bullish: breadthScore > 50 },
+        { name:'NIFTY Momentum', value: (nifty && nifty.changePct ? (nifty.changePct > 0 ? '+' : '') + nifty.changePct.toFixed(2) + '%' : 'N/A'), bullish: !!(nifty && nifty.changePct > 0) },
+        { name:'A/D Ratio', value: b.dec > 0 ? (b.adv / b.dec).toFixed(2) + ':1' : '∞', bullish: b.adv > b.dec },
+        { name:'Overall Sentiment', value: fgLabel, bullish: fgScore >= 50 }
+    ];
+    var indHTML = indicators.map(function(ind) {
+        return '<div class="sentiment-indicator-row">' +
+            '<span class="si-name">' + ind.name + '</span>' +
+            '<span class="si-value">' + ind.value + '</span>' +
+            '<span class="si-badge ' + (ind.bullish ? 'si-bull' : 'si-bear') + '">' + (ind.bullish ? 'Bullish' : 'Bearish') + '</span>' +
+            '</div>';
+    }).join('');
+    return '<div class="sentiment-wrap">' +
+        '<div class="fg-circle-wrap"><div class="fg-circle" style="--fg-score:' + fgScore + ';">' +
+        '<div class="fg-score-num" style="color:' + fgColor + '">' + fgScore + '</div>' +
+        '<div class="fg-score-lbl">' + fgLabel + '</div>' +
+        '</div></div>' +
+        '<div class="sentiment-indicators">' + indHTML + '</div></div>';
+}
+
+function buildPulseFIIHTML() {
+    var fiiData = [
+        { date:'Apr 18', fii:1243.5,  dii:-456.2  },
+        { date:'Apr 17', fii:-892.1,  dii:1124.8  },
+        { date:'Apr 16', fii:2104.6,  dii:-987.3  },
+        { date:'Apr 15', fii:-1567.2, dii:2341.5  },
+        { date:'Apr 14', fii:3421.8,  dii:-1102.4 },
+        { date:'Apr 11', fii:-2234.5, dii:1876.3  },
+        { date:'Apr 10', fii:876.2,   dii:-234.1  },
+        { date:'Apr 09', fii:1543.7,  dii:432.8   },
+        { date:'Apr 08', fii:-345.6,  dii:987.4   },
+        { date:'Apr 07', fii:2876.3,  dii:-1432.6 }
+    ];
+    var fiiNet = fiiData.reduce(function(s, d) { return s + d.fii; }, 0);
+    var diiNet = fiiData.reduce(function(s, d) { return s + d.dii; }, 0);
+    var rows = fiiData.map(function(d) {
+        return '<tr>' +
+            '<td>' + d.date + '</td>' +
+            '<td class="' + (d.fii >= 0 ? 'positive' : 'negative') + '">' + (d.fii >= 0 ? '+' : '') + d.fii.toFixed(1) + ' Cr</td>' +
+            '<td class="' + (d.dii >= 0 ? 'positive' : 'negative') + '">' + (d.dii >= 0 ? '+' : '') + d.dii.toFixed(1) + ' Cr</td>' +
+            '</tr>';
+    }).join('');
+    return '<div class="fii-wrap">' +
+        '<div class="fii-summary">' +
+        '<div class="fii-sum-card"><div class="fii-sum-label">FII Net (10D)</div><div class="fii-sum-val ' + (fiiNet >= 0 ? 'positive' : 'negative') + '">' + (fiiNet >= 0 ? '+' : '') + fiiNet.toFixed(1) + ' Cr</div></div>' +
+        '<div class="fii-sum-card"><div class="fii-sum-label">DII Net (10D)</div><div class="fii-sum-val ' + (diiNet >= 0 ? 'positive' : 'negative') + '">' + (diiNet >= 0 ? '+' : '') + diiNet.toFixed(1) + ' Cr</div></div>' +
+        '<div class="fii-sum-card"><div class="fii-sum-label">Source</div><div class="fii-sum-val" style="font-size:12px;color:var(--text-muted)">NSE India<br>(Representative)</div></div>' +
+        '</div>' +
+        '<table class="fii-table"><thead><tr><th>Date</th><th>FII Flow</th><th>DII Flow</th></tr></thead><tbody>' + rows + '</tbody></table>' +
+        '</div>';
+}
+
+function renderMarketPulse() {
+    _activePulseTab = 'breadth';
+    document.querySelectorAll('#pulseTabs .feature-tab').forEach(function(t, i) { t.classList.toggle('active', i === 0); });
+    renderPulseContent();
+}
+
+// ============================================================
+// SECTION: EARNINGS CALENDAR
+// ============================================================
+var _earningsData = [
+    { name:'TCS',          symbol:'TCS',        sector:'IT',       date:'2026-04-18', eps_est:25.4, rev:'61,500 Cr', status:'reported', eps_actual:26.2, surprise:3.1  },
+    { name:'Infosys',      symbol:'INFY',       sector:'IT',       date:'2026-04-17', eps_est:17.8, rev:'37,200 Cr', status:'reported', eps_actual:18.1, surprise:1.7  },
+    { name:'HDFC Bank',    symbol:'HDFCBANK',   sector:'Banking',  date:'2026-04-19', eps_est:82.5, rev:'85,000 Cr', status:'reported', eps_actual:84.3, surprise:2.2  },
+    { name:'HCL Tech',     symbol:'HCLTECH',    sector:'IT',       date:'2026-04-16', eps_est:17.2, rev:'28,000 Cr', status:'reported', eps_actual:17.6, surprise:2.3  },
+    { name:'Wipro',        symbol:'WIPRO',      sector:'IT',       date:'2026-04-24', eps_est:6.2,  rev:'22,500 Cr', status:'upcoming', eps_actual:null, surprise:null },
+    { name:'ICICI Bank',   symbol:'ICICIBANK',  sector:'Banking',  date:'2026-04-26', eps_est:19.8, rev:'19,800 Cr', status:'upcoming', eps_actual:null, surprise:null },
+    { name:'Kotak Bank',   symbol:'KOTAKBANK',  sector:'Banking',  date:'2026-04-26', eps_est:21.4, rev:'15,000 Cr', status:'upcoming', eps_actual:null, surprise:null },
+    { name:'Nestle India', symbol:'NESTLEIND',  sector:'FMCG',     date:'2026-04-25', eps_est:28.5, rev:'5,200 Cr',  status:'upcoming', eps_actual:null, surprise:null },
+    { name:'Axis Bank',    symbol:'AXISBANK',   sector:'Banking',  date:'2026-04-24', eps_est:13.5, rev:'15,800 Cr', status:'upcoming', eps_actual:null, surprise:null },
+    { name:'Reliance',     symbol:'RELIANCE',   sector:'Energy',   date:'2026-04-28', eps_est:74.2, rev:'2,22,000 Cr',status:'upcoming',eps_actual:null, surprise:null },
+    { name:'Bajaj Finance',symbol:'BAJFINANCE', sector:'NBFC',     date:'2026-04-29', eps_est:38.5, rev:'16,200 Cr', status:'upcoming', eps_actual:null, surprise:null },
+    { name:'Maruti Suzuki',symbol:'MARUTI',     sector:'Auto',     date:'2026-05-02', eps_est:115.4,rev:'38,500 Cr', status:'upcoming', eps_actual:null, surprise:null },
+    { name:'Titan Company',symbol:'TITAN',      sector:'Consumer', date:'2026-05-08', eps_est:12.1, rev:'12,800 Cr', status:'upcoming', eps_actual:null, surprise:null },
+    { name:'L&T',          symbol:'LT',         sector:'Infra',    date:'2026-05-09', eps_est:42.3, rev:'67,000 Cr', status:'upcoming', eps_actual:null, surprise:null },
+    { name:'Sun Pharma',   symbol:'SUNPHARMA',  sector:'Pharma',   date:'2026-05-14', eps_est:8.9,  rev:'13,200 Cr', status:'upcoming', eps_actual:null, surprise:null },
+    { name:"Dr. Reddy's",  symbol:'DRREDDY',    sector:'Pharma',   date:'2026-05-15', eps_est:65.2, rev:'8,900 Cr',  status:'upcoming', eps_actual:null, surprise:null }
+];
+
+var _activeEarningsTab = 'upcoming';
+
+function switchEarningsTab(tab, btn) {
+    _activeEarningsTab = tab;
+    document.querySelectorAll('#earningsTabs .feature-tab').forEach(function(b) { b.classList.remove('active'); });
+    if (btn) btn.classList.add('active');
+    renderEarningsContent();
+}
+
+function renderEarningsContent() {
+    var el = document.getElementById('earnings-content');
+    if (!el) return;
+    var today = new Date('2026-04-21');
+    var filtered = _earningsData.slice();
+    if (_activeEarningsTab === 'upcoming') {
+        filtered = filtered.filter(function(e) { return e.status === 'upcoming'; });
+        filtered.sort(function(a, b) { return new Date(a.date) - new Date(b.date); });
+    } else if (_activeEarningsTab === 'thisweek') {
+        var weekEnd = new Date(today); weekEnd.setDate(weekEnd.getDate() + 7);
+        filtered = filtered.filter(function(e) {
+            var d = new Date(e.date);
+            return d >= today && d <= weekEnd;
+        });
+        filtered.sort(function(a, b) { return new Date(a.date) - new Date(b.date); });
+    } else if (_activeEarningsTab === 'reported') {
+        filtered = filtered.filter(function(e) { return e.status === 'reported'; });
+        filtered.sort(function(a, b) { return new Date(b.date) - new Date(a.date); });
+    } else {
+        filtered.sort(function(a, b) { return new Date(a.date) - new Date(b.date); });
+    }
+    if (!filtered.length) {
+        el.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text-muted)">No earnings in this period</div>';
+        return;
+    }
+    var rows = filtered.map(function(e) {
+        var daysDiff = Math.round((new Date(e.date) - today) / 86400000);
+        var badge = e.status === 'reported'
+            ? '<span class="earn-badge earn-reported">Reported</span>'
+            : daysDiff <= 0 ? '<span class="earn-badge earn-today">Today</span>'
+            : daysDiff === 1 ? '<span class="earn-badge earn-soon">Tomorrow</span>'
+            : daysDiff <= 7 ? '<span class="earn-badge earn-soon">' + daysDiff + 'd away</span>'
+            : '<span class="earn-badge earn-upcoming">' + e.date + '</span>';
+        var epsHTML = e.status === 'reported' && e.eps_actual !== null
+            ? '<span class="positive">₹' + e.eps_actual + '</span>'
+            : '<span style="color:var(--text-muted)">₹' + e.eps_est + ' est</span>';
+        var surpriseHTML = e.status === 'reported' && e.surprise !== null
+            ? '<span class="' + (e.surprise >= 0 ? 'positive' : 'negative') + '">' + (e.surprise >= 0 ? '+' : '') + e.surprise + '%</span>'
+            : '<span style="color:var(--text-muted)">—</span>';
+        return '<tr style="cursor:pointer;" onclick="openStockModal(\'' + e.symbol + '\')">' +
+            '<td><strong>' + e.name + '</strong><br><span style="font-size:11px;color:var(--text-muted)">' + e.sector + '</span></td>' +
+            '<td>' + badge + '</td>' +
+            '<td>' + epsHTML + '</td>' +
+            '<td>' + surpriseHTML + '</td>' +
+            '<td style="color:var(--text-muted);font-size:12px;">' + e.rev + '</td>' +
+            '</tr>';
+    }).join('');
+    el.innerHTML = '<table class="earn-table"><thead><tr><th>Company</th><th>Status</th><th>EPS</th><th>Surprise</th><th>Revenue Est.</th></tr></thead><tbody>' + rows + '</tbody></table>';
+}
+
+function renderEarningsCalendar() {
+    _activeEarningsTab = 'upcoming';
+    document.querySelectorAll('#earningsTabs .feature-tab').forEach(function(t, i) { t.classList.toggle('active', i === 0); });
+    renderEarningsContent();
+}

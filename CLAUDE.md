@@ -6,7 +6,7 @@
 - **Name**: NexTrade — Indian Stock Market Simulator (brokerage-grade)
 - **Purpose**: Live-data NSE/BSE dashboard with virtual trading, portfolio management, and investment calculators.
 - **Stack**: Vanilla HTML + JS + CSS frontend · FastAPI Python backend · No frameworks (no React, no Tailwind)
-- **Last updated by**: Claude Code (April 20 2026) — added Calendar, Screener Pro, Global Markets, Technicals, Dividends
+- **Last updated by**: Claude Code (April 21 2026) — added Market Pulse (breadth/sectors/sentiment/FII), Earnings Calendar (tabs)
 - **Runtime**: Python 3.11+, Node not required
 
 ---
@@ -143,7 +143,7 @@ var isLiveData = false;       // true when live prices loaded successfully
 Single-page app. Views toggled by `setView(viewName)`.
 
 Active sections (sidebar nav-items):
-`dashboard` | `screener` | `allstocks` | `gainers` | `mutualfunds` | `ipo` | `portfolio` | `watchlist` | `orders` | `news` | `calculator` | `compare` | `heatmap` | `journal` | `calendar` | `screener-pro` | `global` | `technicals` | `dividends` | `settings`
+`dashboard` | `screener` | `allstocks` | `gainers` | `mutualfunds` | `ipo` | `portfolio` | `watchlist` | `orders` | `news` | `calculator` | `compare` | `heatmap` | `journal` | `calendar` | `screener-pro` | `global` | `technicals` | `dividends` | `market-pulse` | `earnings` | `settings`
 
 ### Key Functions Reference
 | Function | Lines | Purpose |

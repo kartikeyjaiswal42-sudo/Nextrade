@@ -2366,3 +2366,137 @@ body.light-mode .wi-vs-section {
 .div-stat-card {
     padding:14px 16px; border-radius:12px; display:flex; flex-direction:column; gap:6px;
 }
+
+/* ── Feature Tabs (shared) ── */
+.feature-tabs {
+    display: flex;
+    gap: 4px;
+    background: rgba(255,255,255,0.04);
+    border-radius: var(--radius-md);
+    padding: 4px;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+}
+.feature-tab {
+    padding: 8px 18px;
+    border: none;
+    background: transparent;
+    color: var(--text-muted);
+    border-radius: calc(var(--radius-md) - 2px);
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 500;
+    transition: var(--transition);
+    font-family: var(--font-family);
+}
+.feature-tab:hover { color: var(--text-main); background: rgba(255,255,255,0.06); }
+.feature-tab.active { background: var(--accent-primary); color: #fff; font-weight: 600; }
+
+/* ── Market Pulse: Breadth ── */
+.pulse-breadth-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    margin-bottom: 24px;
+}
+.pulse-stat-card {
+    background: var(--bg-panel);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    padding: 20px;
+    text-align: center;
+}
+.pulse-stat-num { font-size: 32px; font-weight: 700; font-family: var(--font-heading); }
+.pulse-stat-label { font-size: 13px; color: var(--text-muted); margin: 4px 0; }
+.pulse-stat-pct { font-size: 14px; font-weight: 600; }
+.pulse-adv .pulse-stat-num, .pulse-adv .pulse-stat-pct, .pulse-adv .p52-num { color: var(--positive); }
+.pulse-dec .pulse-stat-num, .pulse-dec .pulse-stat-pct, .pulse-dec .p52-num { color: var(--negative); }
+.pulse-unch .pulse-stat-num, .pulse-unch .pulse-stat-pct, .pulse-unch .p52-num { color: var(--text-muted); }
+.pulse-bar-section { margin-bottom: 16px; }
+.pulse-bar-label { display: flex; justify-content: space-between; font-size: 13px; color: var(--text-muted); margin-bottom: 8px; }
+.pulse-bar-ratio { font-weight: 600; color: var(--text-main); }
+.pulse-breadth-bar { display: flex; height: 18px; border-radius: 9px; overflow: hidden; gap: 2px; }
+.pulse-bar-adv { background: var(--positive); transition: width 0.5s ease; }
+.pulse-bar-unch { background: rgba(255,255,255,0.12); transition: width 0.5s ease; }
+.pulse-bar-dec { background: var(--negative); transition: width 0.5s ease; flex: 1; }
+.pulse-highs-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 12px; margin-top: 12px; }
+.pulse-52w-card {
+    background: var(--bg-panel);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    padding: 14px;
+    text-align: center;
+    display: flex; flex-direction: column; gap: 4px;
+}
+.p52-num { font-size: 24px; font-weight: 700; }
+.p52-lbl { font-size: 12px; color: var(--text-muted); }
+
+/* ── Market Pulse: Sector Flow ── */
+.sector-flow-container { padding: 4px 0; }
+.pulse-section-title { font-size: 14px; font-weight: 600; color: var(--text-muted); margin-bottom: 16px; text-transform: uppercase; letter-spacing: 0.5px; }
+.sector-flow-list { display: flex; flex-direction: column; gap: 12px; }
+.sector-flow-row { display: grid; grid-template-columns: 90px 1fr 68px; align-items: center; gap: 12px; }
+.sf-name { font-size: 13px; font-weight: 600; color: var(--text-main); }
+.sf-bar-wrap { background: rgba(255,255,255,0.06); border-radius: 4px; height: 8px; overflow: hidden; }
+.sf-bar { height: 100%; border-radius: 4px; transition: width 0.5s ease; min-width: 2px; }
+.sf-bar.positive { background: var(--positive); }
+.sf-bar.negative { background: var(--negative); }
+.sf-pct { font-size: 13px; font-weight: 600; text-align: right; }
+
+/* ── Market Pulse: Sentiment ── */
+.sentiment-wrap { display: grid; grid-template-columns: 180px 1fr; gap: 24px; align-items: start; }
+.fg-circle-wrap { display: flex; justify-content: center; padding: 16px 0; }
+.fg-circle {
+    width: 140px; height: 140px; border-radius: 50%;
+    background: conic-gradient(var(--positive) 0% calc(var(--fg-score, 50) * 1%), rgba(255,255,255,0.08) calc(var(--fg-score, 50) * 1%) 100%);
+    display: flex; flex-direction: column; justify-content: center; align-items: center; position: relative;
+}
+.fg-circle::before {
+    content: ''; position: absolute;
+    width: 110px; height: 110px;
+    background: var(--bg-dark); border-radius: 50%;
+}
+.fg-score-num { position: relative; z-index: 1; font-size: 28px; font-weight: 800; font-family: var(--font-heading); }
+.fg-score-lbl { position: relative; z-index: 1; font-size: 11px; color: var(--text-muted); text-align: center; margin-top: 2px; }
+.sentiment-indicators { display: flex; flex-direction: column; gap: 10px; }
+.sentiment-indicator-row {
+    display: grid; grid-template-columns: 1fr auto auto; gap: 12px; align-items: center;
+    padding: 12px 16px;
+    background: var(--bg-panel); border: 1px solid var(--border-color); border-radius: var(--radius-md);
+}
+.si-name { font-size: 13px; color: var(--text-main); }
+.si-value { font-size: 13px; font-weight: 600; color: var(--text-main); }
+.si-badge { font-size: 11px; font-weight: 600; padding: 3px 8px; border-radius: 99px; }
+.si-bull { background: rgba(16,185,129,0.15); color: var(--positive); }
+.si-bear { background: rgba(239,68,68,0.15); color: var(--negative); }
+
+/* ── Market Pulse: FII/DII ── */
+.fii-wrap { display: flex; flex-direction: column; gap: 20px; }
+.fii-summary { display: grid; grid-template-columns: repeat(3,1fr); gap: 16px; }
+.fii-sum-card { background: var(--bg-panel); border: 1px solid var(--border-color); border-radius: var(--radius-lg); padding: 16px 20px; }
+.fii-sum-label { font-size: 12px; color: var(--text-muted); margin-bottom: 6px; }
+.fii-sum-val { font-size: 18px; font-weight: 700; }
+.fii-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.fii-table th { text-align: left; padding: 10px 12px; color: var(--text-muted); border-bottom: 1px solid var(--border-color); font-weight: 600; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; }
+.fii-table td { padding: 10px 12px; border-bottom: 1px solid rgba(255,255,255,0.04); }
+.fii-table tbody tr:hover { background: rgba(255,255,255,0.03); }
+
+/* ── Earnings Calendar ── */
+.earn-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.earn-table th { text-align: left; padding: 10px 12px; color: var(--text-muted); border-bottom: 1px solid var(--border-color); font-weight: 600; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; }
+.earn-table td { padding: 12px; border-bottom: 1px solid rgba(255,255,255,0.04); vertical-align: middle; }
+.earn-table tbody tr:hover { background: rgba(255,255,255,0.03); }
+.earn-badge { font-size: 11px; font-weight: 600; padding: 3px 8px; border-radius: 99px; white-space: nowrap; }
+.earn-reported { background: rgba(255,255,255,0.08); color: var(--text-muted); }
+.earn-today    { background: rgba(250,204,21,0.15); color: #facc15; }
+.earn-soon     { background: rgba(16,185,129,0.15); color: var(--positive); }
+.earn-upcoming { background: rgba(99,102,241,0.15); color: #818cf8; font-size: 10px; }
+
+@media (max-width: 768px) {
+    .pulse-breadth-grid { gap: 8px; }
+    .sentiment-wrap { grid-template-columns: 1fr; }
+    .fg-circle-wrap { display: none; }
+    .sector-flow-row { grid-template-columns: 70px 1fr 56px; }
+    .fii-summary { grid-template-columns: 1fr 1fr; }
+    .earn-table th:nth-child(5), .earn-table td:nth-child(5) { display: none; }
+}
