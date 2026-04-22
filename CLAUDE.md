@@ -15,9 +15,9 @@
 ```
 New project/
 ├── CLAUDE.md                ← YOU ARE HERE (AI context file)
-├── index.html               ← Entire frontend UI (1206 lines, single-page app)
-├── script.js                ← All JS logic (3820 lines)
-├── style.css                ← All CSS (2368 lines, CSS custom properties design system)
+├── index.html               ← Entire frontend UI (1246 lines, single-page app)
+├── script.js                ← All JS logic (4085 lines)
+├── style.css                ← All CSS (2502 lines, CSS custom properties design system)
 │
 ├── main.py                  ← FastAPI app entry point (serves static files + API)
 ├── config.py                ← Pydantic Settings (port, CORS, rate limits, proxy whitelist)
@@ -116,6 +116,12 @@ var mutualFunds = [{ name, nav, return1y, return3y, aum, risk, rating, category,
 
 // IPO Data (static, hardcoded)
 var ipoData = [{ name, symbol, priceRange, lotSize, openDate, closeDate, listDate, status, gmp, issue }]
+
+// Market Pulse sector definitions (8 sectors × 5 stocks each)
+var _pulseSectors = [{ name, stocks:['SYMBOL',...] }]
+
+// Earnings data (16 stocks, Q4 FY26)
+var _earningsData = [{ name, symbol, sector, date, eps_est, rev, status:'upcoming'|'reported', eps_actual, surprise }]
 ```
 
 ### Global Runtime State
@@ -185,6 +191,16 @@ Active sections (sidebar nav-items):
 | `getVolStatus(stock)` | 3627 | Returns volume status label (High/Normal/Low) |
 | `renderTechnicalScreener()` | 3646 | Tech screener table: RSI, signal, trend, support/resistance |
 | `renderDividendTracker()` | 3738 | Dividend tracker: yield, ex-date, payout per stock |
+| `renderMarketPulse()` | ~3840 | Market Pulse entry point; resets to breadth tab |
+| `switchPulseTab(tab, btn)` | ~3860 | Switches active pulse tab; re-renders pulse content |
+| `renderPulseContent()` | ~3867 | Dispatcher: routes to breadth/sector/sentiment/FII builder |
+| `buildPulseBreadthHTML()` | ~3873 | A/D counts, breadth bar, 52W position grid |
+| `buildPulseSectorHTML()` | ~3900 | Sector avg-change bar chart from live `stocks` data |
+| `buildPulseSentimentHTML()` | ~3913 | Fear & Greed donut + 4 indicator cards |
+| `buildPulseFIIHTML()` | ~3935 | FII/DII 10-day flow table + net totals |
+| `renderEarningsCalendar()` | ~3960 | Earnings Calendar entry point; resets to upcoming tab |
+| `switchEarningsTab(tab, btn)` | ~3965 | Switches active earnings tab; re-renders content |
+| `renderEarningsContent()` | ~3972 | Renders earnings table filtered by upcoming/thisweek/reported/all |
 
 ---
 
@@ -222,6 +238,32 @@ Active sections (sidebar nav-items):
 .calc-inf-badge        /* "CPI" pink badge */
 ```
 
+### Tab System (shared across new features)
+```css
+.feature-tabs          /* Tab bar container (pill-shaped row) */
+.feature-tab           /* Individual tab button */
+.feature-tab.active    /* Active tab → accent-primary background */
+```
+
+### Market Pulse Classes
+```css
+.pulse-breadth-grid    /* 3-col Advancing / Unchanged / Declining cards */
+.pulse-stat-card       /* Individual breadth stat card (.pulse-adv / .pulse-dec / .pulse-unch) */
+.pulse-breadth-bar     /* Stacked A/D/U progress bar */
+.pulse-highs-grid      /* 52W High / Mid / Low 3-col grid */
+.sector-flow-row       /* Sector name + bar + % in a 3-col grid row */
+.sentiment-wrap        /* 2-col: donut gauge + indicator list */
+.fg-circle             /* CSS conic-gradient Fear & Greed donut (--fg-score var) */
+.si-badge / .si-bull / .si-bear  /* Sentiment indicator Bullish/Bearish badges */
+.fii-table             /* FII/DII 10-day flow table */
+```
+
+### Earnings Calendar Classes
+```css
+.earn-table            /* Earnings results table */
+.earn-badge            /* Status pill (.earn-reported / .earn-today / .earn-soon / .earn-upcoming) */
+```
+
 ---
 
 ## Current Features Status
@@ -253,6 +295,8 @@ Active sections (sidebar nav-items):
 | 🌍 Global Markets | ✅ Live (US, EU, Asia indices via Yahoo) |
 | 📊 Technical Screener | ✅ RSI, Buy/Sell signal, trend, S/R levels |
 | 💰 Dividend Tracker | ✅ Yield, ex-date, payout per stock |
+| 📡 Market Pulse | ✅ Breadth, Sector Flow, Sentiment, FII/DII tabs |
+| 📈 Earnings Calendar | ✅ Q4 FY26 results — upcoming/this-week/reported/all tabs |
 | **User Login / Auth System** | ❌ Not built yet |
 | **Real Demat account (broker API)** | ❌ Not built yet |
 | **Database persistence** | ❌ Not built yet (all localStorage) |
