@@ -15,9 +15,9 @@
 ```
 New project/
 ├── CLAUDE.md                ← YOU ARE HERE (AI context file)
-├── index.html               ← Entire frontend UI (1246 lines, single-page app)
-├── script.js                ← All JS logic (4085 lines)
-├── style.css                ← All CSS (2502 lines, CSS custom properties design system)
+├── index.html               ← Entire frontend UI (1257 lines, single-page app)
+├── script.js                ← All JS logic (4169 lines)
+├── style.css                ← All CSS (2586 lines, CSS custom properties design system)
 │
 ├── main.py                  ← FastAPI app entry point (serves static files + API)
 ├── config.py                ← Pydantic Settings (port, CORS, rate limits, proxy whitelist)
@@ -201,6 +201,10 @@ Active sections (sidebar nav-items):
 | `renderEarningsCalendar()` | ~3960 | Earnings Calendar entry point; resets to upcoming tab |
 | `switchEarningsTab(tab, btn)` | ~3965 | Switches active earnings tab; re-renders content |
 | `renderEarningsContent()` | ~3972 | Renders earnings table filtered by upcoming/thisweek/reported/all |
+| `startISTClock()` | 4111 | Runs the live IST clock in header |
+| `startRefreshRing(totalSeconds)` | 4131 | Animates SVG auto-refresh ring + triggers fetchRealTimeData |
+| `updateTabTitle()` | 4151 | Dynamically updates browser tab title with active view |
+| `checkBigMovers()` | 4159 | Price flash logic for large % moves on update |
 
 ---
 
