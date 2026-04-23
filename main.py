@@ -157,3 +157,13 @@ async def root_handler():
     if p.exists():
         return FileResponse(str(p), media_type="text/html")
     return HTMLResponse("<h1>Not found</h1>", status_code=404)
+
+@app.get("/{full_path:path}", include_in_schema=False)
+async def catch_all(full_path: str):
+    # If the path looks like a static asset, return 404
+    if "." in full_path:
+        return HTMLResponse("<h1>Not found</h1>", status_code=404)
+    p = BASE_DIR / "index.html"
+    if p.exists():
+        return FileResponse(str(p), media_type="text/html")
+    return HTMLResponse("<h1>Not found</h1>", status_code=404)

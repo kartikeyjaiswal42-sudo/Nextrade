@@ -1461,7 +1461,10 @@ function renderAllStocks(page, sectorFilter, sortBy) {
 // ============================================================
 // NAVIGATION
 // ============================================================
-function setView(view) {
+function setView(view, skipPush) {
+    if (!skipPush && window.history && window.history.pushState) {
+        window.history.pushState({ view: view }, '', '/' + view);
+    }
     currentView = view;
     _priceCache  = null;
     _changeCache = null;
@@ -4821,3 +4824,26 @@ function buildStrategyGreeksHTML() {
     html += '<td class="' + (nV >= 0 ? 'positive' : 'negative') + '">' + (nV >= 0 ? '+' : '') + nV.toFixed(2) + '</td></tr>';
     return html + '</tbody></table></div>';
 }
+
+// ============================================================
+// HISTORY API & ROUTING INIT
+// ============================================================
+window.addEventListener('DOMContentLoaded', function() {
+    var initialPath = window.location.pathname.substring(1);
+    if (initialPath) {
+        // Attempt to load the path, otherwise default to dashboard
+        setTimeout(function() { setView(initialPath, true); }, 50);
+    } else {
+        setTimeout(function() { setView('dashboard', true); }, 50);
+    }
+});
+
+window.addEventListener('popstate', function(e) {
+    if (e.state && e.state.view) {
+        setView(e.state.view, true);
+    } else {
+        var path = window.location.pathname.substring(1);
+        if (path) setView(path, true);
+        else setView('dashboard', true);
+    }
+});
