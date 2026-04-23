@@ -6,7 +6,7 @@
 - **Name**: NexTrade — Indian Stock Market Simulator (brokerage-grade)
 - **Purpose**: Live-data NSE/BSE dashboard with virtual trading, portfolio management, and investment calculators.
 - **Stack**: Vanilla HTML + JS + CSS frontend · FastAPI Python backend · No frameworks (no React, no Tailwind)
-- **Last updated by**: Claude Code (April 21 2026) — added Market Pulse (breadth/sectors/sentiment/FII), Earnings Calendar (tabs)
+- **Last updated by**: Claude Code (April 22 2026) — 6 new broker sections: Options Chain, F&O Dashboard, Positions, Funds & Margins, Brokerage Calc, Strategy Builder
 - **Runtime**: Python 3.11+, Node not required
 
 ---
@@ -15,13 +15,13 @@
 ```
 New project/
 ├── CLAUDE.md                ← YOU ARE HERE (AI context file)
-├── index.html               ← Entire frontend UI (1257 lines, single-page app)
-├── script.js                ← All JS logic (4169 lines)
-├── style.css                ← All CSS (2586 lines, CSS custom properties design system)
+├── index.html               ← Entire frontend UI (~1340 lines, single-page app)
+├── script.js                ← All JS logic (~5050 lines)
+├── style.css                ← All CSS (~2740 lines, CSS custom properties design system)
 │
-├── main.py                  ← FastAPI app entry point (serves static files + API)
-├── config.py                ← Pydantic Settings (port, CORS, rate limits, proxy whitelist)
-├── proxy_router.py          ← /api/proxy endpoint (Yahoo Finance + Stooq CORS proxy)
+├── main.py                  ← FastAPI app entry point (serves static files + API + SecurityHeadersMiddleware)
+├── config.py                ← Pydantic Settings (port, CORS origins incl. Render URL, rate limits, proxy whitelist)
+├── proxy_router.py          ← /api/proxy endpoint + SSRF private-IP blocklist + domain whitelist
 ├── market_data.py           ← Yahoo Finance crumb/cookie manager (async, TTL 3600s)
 ├── rate_limiter.py          ← Middleware: 120 req/min, 10 req/sec burst
 ├── proxy.py                 ← LOCAL-ONLY simple HTTP proxy on port 5005 (not used on Render)
@@ -76,7 +76,7 @@ Local edits → git add . && git commit → git push origin main → Render auto
 | GET | `/bandariya_didi.png` | Serves avatar image |
 | GET | `/api/proxy?url=<url>` | Secure CORS proxy; whitelist in `config.py` |
 | GET | `/api/health` | Health check (pinged by GitHub Actions keep-alive) |
-| GET | `/api/docs` | FastAPI Swagger UI |
+| GET | `/api/docs` | FastAPI Swagger UI — **disabled in production** (`debug=True` only) |
 
 ### Proxy Whitelist (config.py)
 ```
@@ -87,6 +87,15 @@ stooq.com / www.stooq.com
 news.google.com
 ```
 To add a new data source, add its domain to `proxy_allowed_domains` in `config.py`.
+
+### Security Layer (as of April 22 2026)
+- **SSRF protection** (`proxy_router.py`): `_is_private_host()` blocks literal private/loopback IPs (127.x, 10.x, 172.16–31.x, 192.168.x, 169.254.x, IPv6 loopback/ULA) — prevents proxy abuse to reach local services on the host machine
+- **Security headers** (`main.py` `SecurityHeadersMiddleware`): every response gets `X-Content-Type-Options`, `X-Frame-Options: DENY`, `X-XSS-Protection`, `Referrer-Policy`, `Permissions-Policy`, `Strict-Transport-Security` (HTTPS only), and a `Content-Security-Policy` locking down allowed script/style/connect origins
+- **API docs hidden in prod**: `docs_url`, `redoc_url`, `openapi_url` are all `None` unless `settings.debug=True`
+- **Root proxy shortcut removed**: `/` no longer accepts a `url` query param — only serves `index.html`
+- **CORS tightened**: `allow_methods=["GET","OPTIONS"]`, `allow_headers` restricted to safe set; Render URL added to origins
+- **Error leakage fixed**: proxy 500 errors return `"Upstream fetch failed"` not the raw exception string
+- **To enable docs locally**: set `DEBUG=true` in `.env` or export `DEBUG=true` before starting uvicorn
 
 ---
 
@@ -149,7 +158,7 @@ var isLiveData = false;       // true when live prices loaded successfully
 Single-page app. Views toggled by `setView(viewName)`.
 
 Active sections (sidebar nav-items):
-`dashboard` | `screener` | `allstocks` | `gainers` | `mutualfunds` | `ipo` | `portfolio` | `watchlist` | `orders` | `news` | `calculator` | `compare` | `heatmap` | `journal` | `calendar` | `screener-pro` | `global` | `technicals` | `dividends` | `market-pulse` | `earnings` | `settings`
+`dashboard` | `screener` | `allstocks` | `gainers` | `mutualfunds` | `ipo` | `portfolio` | `watchlist` | `orders` | `news` | `calculator` | `compare` | `heatmap` | `journal` | `calendar` | `screener-pro` | `global` | `technicals` | `dividends` | `market-pulse` | `earnings` | `options-chain` | `fno` | `positions` | `funds` | `brokerage-calc` | `strategy` | `settings`
 
 ### Key Functions Reference
 | Function | Lines | Purpose |
@@ -205,6 +214,33 @@ Active sections (sidebar nav-items):
 | `startRefreshRing(totalSeconds)` | 4131 | Animates SVG auto-refresh ring + triggers fetchRealTimeData |
 | `updateTabTitle()` | 4151 | Dynamically updates browser tab title with active view |
 | `checkBigMovers()` | 4159 | Price flash logic for large % moves on update |
+| `fmtOI(n)` | ~4180 | Format OI/volume as L/Cr for Indian-style display |
+| `renderOptionsChain()` | ~4190 | Full options chain table with CE/PE OI, IV, LTP, ATM highlight |
+| `switchOptionsTab(idx,btn)` | ~4185 | Switch between NIFTY/BANKNIFTY/FINNIFTY options chain |
+| `renderFnO()` | ~4260 | F&O Dashboard entry — tabs: Futures/Top Options/PCR/Lot Sizes |
+| `switchFnOTab(tab,btn)` | ~4255 | Switch F&O tab |
+| `buildFnOFuturesHTML()` | ~4270 | Futures OI, premium, volume table |
+| `buildFnOTopOptionsHTML()` | ~4285 | Top options by OI with type badge |
+| `buildFnOPcrHTML()` | ~4295 | PCR ratio table with sentiment label |
+| `buildFnOLotSizesHTML()` | ~4310 | Lot sizes + margin requirements |
+| `renderPositions()` | ~4330 | Positions book — Today / Holdings / P&L Summary tabs |
+| `switchPositionsTab(tab,btn)` | ~4325 | Switch positions tab |
+| `buildPositionsTodayHTML()` | ~4345 | Intraday positions with MTM P&L + Exit button |
+| `buildPositionsHoldingsHTML()` | ~4365 | Portfolio holdings from localStorage with live LTP P&L |
+| `buildPositionsPnLHTML()` | ~4385 | P&L summary grid cards |
+| `renderFunds()` | ~4400 | Funds & Margins — Overview/Equity/F&O/Ledger tabs |
+| `switchFundsTab(tab,btn)` | ~4395 | Switch funds tab |
+| `buildFundsOverviewHTML()` | ~4410 | Available cash, margin used, utilisation bar |
+| `buildFundsFnOHTML()` | ~4440 | SPAN, exposure, premium blocked |
+| `buildFundsLedgerHTML()` | ~4455 | Debit/Credit/Balance ledger table |
+| `renderBrokerageCalc()` | ~4475 | Interactive brokerage calculator with real NSE charges |
+| `switchBrokerageTab(tab,btn)` | ~4470 | Switch calc tab (Equity/F&O/Currency/Commodity) |
+| `calcBrokerage()` | ~4490 | Compute brokerage, STT, exchange charges, GST, SEBI, stamp, net P&L |
+| `renderStrategy()` | ~4540 | Options Strategy Builder — Builder/Payoff/Greeks tabs |
+| `switchStrategyTab(tab,btn)` | ~4535 | Switch strategy tab |
+| `buildStrategyBuilderHTML()` | ~4555 | Strategy leg table + net debit/credit |
+| `buildStrategyPayoffHTML()` | ~4580 | SVG payoff-at-expiry chart with breakeven line |
+| `buildStrategyGreeksHTML()` | ~4640 | Approx Delta/Gamma/Theta/Vega per leg + net position |
 
 ---
 
@@ -268,6 +304,35 @@ Active sections (sidebar nav-items):
 .earn-badge            /* Status pill (.earn-reported / .earn-today / .earn-soon / .earn-upcoming) */
 ```
 
+### Broker Features CSS Classes
+```css
+/* Options Chain */
+.oc-meta-bar / .oc-meta-item / .oc-meta-label / .oc-meta-val / .oc-expiry-sel
+.oc-table / .oc-ce-head / .oc-pe-head / .oc-strike-head
+.oc-row / .oc-atm-row / .oc-itm / .oc-ltp / .oc-strike / .oc-atm-strike
+
+/* F&O Dashboard */
+.fno-table / .fno-sym / .fno-ce-badge / .fno-pe-badge
+
+/* Positions */
+.pos-summary-bar / .pos-summary-item / .pos-buy-badge / .pos-sell-badge / .pos-product-badge
+.pos-exit-btn / .pnl-grid / .pnl-card / .pnl-card-label / .pnl-card-val
+
+/* Funds & Margins */
+.funds-overview-grid / .funds-card / .funds-avail / .funds-used
+.funds-bar-wrap / .funds-bar-track / .funds-bar-fill / .funds-breakdown
+.funds-row / .funds-row-total / .funds-section-grid / .funds-detail-card
+.fdc-label / .fdc-val / .fdc-sub
+
+/* Brokerage Calculator */
+.bc-layout / .bc-inputs / .bc-results / .bc-field / .bc-input
+.bc-charge-list / .bc-charge-row / .bc-total-row / .bc-net-row / .bc-breakeven
+
+/* Strategy Builder */
+.strat-layout / .strat-controls / .strat-legs / .strat-metrics / .strat-metric
+.nt-primary-btn
+```
+
 ---
 
 ## Current Features Status
@@ -301,6 +366,12 @@ Active sections (sidebar nav-items):
 | 💰 Dividend Tracker | ✅ Yield, ex-date, payout per stock |
 | 📡 Market Pulse | ✅ Breadth, Sector Flow, Sentiment, FII/DII tabs |
 | 📈 Earnings Calendar | ✅ Q4 FY26 results — upcoming/this-week/reported/all tabs |
+| 📊 Options Chain | ✅ NIFTY/BANKNIFTY/FINNIFTY CE+PE OI, IV, LTP, ATM highlight, PCR, Max Pain |
+| ⚙️ F&O Dashboard | ✅ Futures OI, Top Options by OI, PCR sentiment, Lot Sizes table |
+| ⚡ Positions | ✅ Intraday positions MTM P&L, Holdings (from portfolio), P&L summary cards |
+| 💰 Funds & Margins | ✅ Available cash, margin utilisation bar, SPAN/exposure, ledger |
+| 🧮 Brokerage Calc | ✅ Real NSE charges (brokerage, STT, GST, SEBI, stamp duty, net P&L) |
+| 🔧 Strategy Builder | ✅ 9 preset strategies, payoff SVG chart, Greeks (Delta/Gamma/Theta/Vega) |
 | **User Login / Auth System** | ❌ Not built yet |
 | **Real Demat account (broker API)** | ❌ Not built yet |
 | **Database persistence** | ❌ Not built yet (all localStorage) |

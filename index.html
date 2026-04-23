@@ -86,6 +86,24 @@
             <a href="#" class="nav-item" data-view="earnings">
                 <i data-lucide="trending-up"></i><span>Earnings</span>
             </a>
+            <a href="#" class="nav-item" data-view="options-chain">
+                <i data-lucide="layers"></i><span>Options Chain</span>
+            </a>
+            <a href="#" class="nav-item" data-view="fno">
+                <i data-lucide="bar-chart-2"></i><span>F&O Dashboard</span>
+            </a>
+            <a href="#" class="nav-item" data-view="positions">
+                <i data-lucide="briefcase"></i><span>Positions</span>
+            </a>
+            <a href="#" class="nav-item" data-view="funds">
+                <i data-lucide="wallet"></i><span>Funds &amp; Margins</span>
+            </a>
+            <a href="#" class="nav-item" data-view="brokerage-calc">
+                <i data-lucide="percent"></i><span>Brokerage Calc</span>
+            </a>
+            <a href="#" class="nav-item" data-view="strategy">
+                <i data-lucide="git-branch"></i><span>Strategy Builder</span>
+            </a>
         </nav>
         <div class="sidebar-bottom">
             <div class="market-status">
@@ -961,6 +979,87 @@
                 <button class="feature-tab" onclick="switchEarningsTab('all',this)">📋 All</button>
             </div>
             <div id="earnings-content"></div>
+        </div>
+
+        <!-- OPTIONS CHAIN -->
+        <div id="section-options-chain" class="glass-panel" style="margin:0 24px 24px;padding:24px;border-radius:16px;display:none;">
+            <div class="screener-header" style="margin-bottom:16px;">
+                <div><h2 class="section-title" style="margin-bottom:4px;">Options Chain</h2><p style="color:var(--text-muted);font-size:13px;">NSE F&amp;O — Open Interest, IV &amp; Premium · Expiry-wise</p></div>
+            </div>
+            <div class="feature-tabs" id="optionsTabs">
+                <button class="feature-tab active" onclick="switchOptionsTab('nifty',this)">NIFTY 50</button>
+                <button class="feature-tab" onclick="switchOptionsTab('banknifty',this)">BANK NIFTY</button>
+                <button class="feature-tab" onclick="switchOptionsTab('finnifty',this)">FIN NIFTY</button>
+            </div>
+            <div id="options-content"></div>
+        </div>
+
+        <!-- F&O DASHBOARD -->
+        <div id="section-fno" class="glass-panel" style="margin:0 24px 24px;padding:24px;border-radius:16px;display:none;">
+            <div class="screener-header" style="margin-bottom:16px;">
+                <div><h2 class="section-title" style="margin-bottom:4px;">F&amp;O Dashboard</h2><p style="color:var(--text-muted);font-size:13px;">Futures &amp; Options Overview — OI, PCR &amp; Lot Sizes</p></div>
+            </div>
+            <div class="feature-tabs" id="fnoTabs">
+                <button class="feature-tab active" onclick="switchFnOTab('futures',this)">📊 Futures</button>
+                <button class="feature-tab" onclick="switchFnOTab('topoptions',this)">🔥 Top Options</button>
+                <button class="feature-tab" onclick="switchFnOTab('pcr',this)">📈 PCR &amp; OI</button>
+                <button class="feature-tab" onclick="switchFnOTab('lotsizes',this)">📋 Lot Sizes</button>
+            </div>
+            <div id="fno-content"></div>
+        </div>
+
+        <!-- POSITIONS -->
+        <div id="section-positions" class="glass-panel" style="margin:0 24px 24px;padding:24px;border-radius:16px;display:none;">
+            <div class="screener-header" style="margin-bottom:16px;">
+                <div><h2 class="section-title" style="margin-bottom:4px;">Positions</h2><p style="color:var(--text-muted);font-size:13px;">Today's open positions, holdings &amp; P&amp;L summary</p></div>
+            </div>
+            <div class="feature-tabs" id="positionsTabs">
+                <button class="feature-tab active" onclick="switchPositionsTab('today',this)">⚡ Today</button>
+                <button class="feature-tab" onclick="switchPositionsTab('holdings',this)">💼 Holdings</button>
+                <button class="feature-tab" onclick="switchPositionsTab('pnl',this)">📊 P&amp;L Summary</button>
+            </div>
+            <div id="positions-content"></div>
+        </div>
+
+        <!-- FUNDS & MARGINS -->
+        <div id="section-funds" class="glass-panel" style="margin:0 24px 24px;padding:24px;border-radius:16px;display:none;">
+            <div class="screener-header" style="margin-bottom:16px;">
+                <div><h2 class="section-title" style="margin-bottom:4px;">Funds &amp; Margins</h2><p style="color:var(--text-muted);font-size:13px;">Available balance, margin utilisation &amp; ledger</p></div>
+            </div>
+            <div class="feature-tabs" id="fundsTabs">
+                <button class="feature-tab active" onclick="switchFundsTab('overview',this)">💰 Overview</button>
+                <button class="feature-tab" onclick="switchFundsTab('equity',this)">📈 Equity</button>
+                <button class="feature-tab" onclick="switchFundsTab('fno',this)">⚙️ F&amp;O Margins</button>
+                <button class="feature-tab" onclick="switchFundsTab('ledger',this)">📒 Ledger</button>
+            </div>
+            <div id="funds-content"></div>
+        </div>
+
+        <!-- BROKERAGE CALCULATOR -->
+        <div id="section-brokerage-calc" class="glass-panel" style="margin:0 24px 24px;padding:24px;border-radius:16px;display:none;">
+            <div class="screener-header" style="margin-bottom:16px;">
+                <div><h2 class="section-title" style="margin-bottom:4px;">Brokerage Calculator</h2><p style="color:var(--text-muted);font-size:13px;">NSE/BSE charges: brokerage, STT, GST, SEBI fees &amp; stamp duty</p></div>
+            </div>
+            <div class="feature-tabs" id="brokerageTabs">
+                <button class="feature-tab active" onclick="switchBrokerageTab('equity',this)">📈 Equity</button>
+                <button class="feature-tab" onclick="switchBrokerageTab('fno',this)">⚙️ F&amp;O</button>
+                <button class="feature-tab" onclick="switchBrokerageTab('currency',this)">💱 Currency</button>
+                <button class="feature-tab" onclick="switchBrokerageTab('commodity',this)">🪙 Commodity</button>
+            </div>
+            <div id="brokerage-content"></div>
+        </div>
+
+        <!-- STRATEGY BUILDER -->
+        <div id="section-strategy" class="glass-panel" style="margin:0 24px 24px;padding:24px;border-radius:16px;display:none;">
+            <div class="screener-header" style="margin-bottom:16px;">
+                <div><h2 class="section-title" style="margin-bottom:4px;">Options Strategy Builder</h2><p style="color:var(--text-muted);font-size:13px;">Visual payoff diagrams — Spreads, Straddles, Iron Condor &amp; more</p></div>
+            </div>
+            <div class="feature-tabs" id="strategyTabs">
+                <button class="feature-tab active" onclick="switchStrategyTab('builder',this)">🔧 Builder</button>
+                <button class="feature-tab" onclick="switchStrategyTab('payoff',this)">📊 Payoff Chart</button>
+                <button class="feature-tab" onclick="switchStrategyTab('greeks',this)">🔢 Greeks</button>
+            </div>
+            <div id="strategy-content"></div>
         </div>
 
     </main>

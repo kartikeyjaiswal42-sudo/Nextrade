@@ -2,6 +2,7 @@
 NexTrade — Secure Proxy Router (flat structure)
 """
 
+import ipaddress
 import logging
 from urllib.parse import urlparse, unquote
 
@@ -16,12 +17,37 @@ logger = logging.getLogger("nextrade.proxy")
 
 router = APIRouter(prefix="/api", tags=["proxy"])
 
+# Private/reserved IP ranges that must never be reachable via the proxy
+_PRIVATE_NETWORKS = [
+    ipaddress.ip_network("127.0.0.0/8"),
+    ipaddress.ip_network("10.0.0.0/8"),
+    ipaddress.ip_network("172.16.0.0/12"),
+    ipaddress.ip_network("192.168.0.0/16"),
+    ipaddress.ip_network("169.254.0.0/16"),   # link-local
+    ipaddress.ip_network("0.0.0.0/8"),
+    ipaddress.ip_network("100.64.0.0/10"),    # shared address space
+    ipaddress.ip_network("::1/128"),
+    ipaddress.ip_network("fc00::/7"),
+]
+
+
+def _is_private_host(hostname: str) -> bool:
+    """Return True if hostname is a literal private/loopback IP address."""
+    try:
+        addr = ipaddress.ip_address(hostname)
+        return any(addr in net for net in _PRIVATE_NETWORKS)
+    except ValueError:
+        return False  # not a literal IP — domain name, checked elsewhere
+
 
 def _is_domain_allowed(url: str) -> bool:
     try:
         parsed = urlparse(url)
         hostname = parsed.hostname
         if not hostname:
+            return False
+        # Block literal private IPs even if someone bypasses the domain list
+        if _is_private_host(hostname):
             return False
         return any(
             hostname == allowed or hostname.endswith("." + allowed)
@@ -74,4 +100,4 @@ async def proxy_request(
         raise
     except Exception as e:
         logger.error(f"Proxy error: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail="Upstream fetch failed")

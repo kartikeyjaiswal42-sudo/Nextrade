@@ -1477,7 +1477,8 @@ function setView(view) {
     // Sections outside .dashboard-content (full-page views)
     var fullPageViews = ['orders','news','calculator','compare','settings','heatmap','journal',
                          'calendar','screener-pro','global','technicals','dividends',
-                         'market-pulse','earnings'];
+                         'market-pulse','earnings',
+                         'options-chain','fno','positions','funds','brokerage-calc','strategy'];
     var isFullPage = fullPageViews.indexOf(view) !== -1;
 
     // Show/hide the main dashboard-content wrapper
@@ -1487,7 +1488,8 @@ function setView(view) {
     // Show/hide each full-page section
     ['orders','news','calculator','compare','settings','heatmap','journal',
      'calendar','screener-pro','global','technicals','dividends',
-     'market-pulse','earnings'].forEach(function(v) {
+     'market-pulse','earnings',
+     'options-chain','fno','positions','funds','brokerage-calc','strategy'].forEach(function(v) {
         var el = document.getElementById('section-' + v);
         if (el) el.style.display = (v === view) ? 'block' : 'none';
     });
@@ -1506,8 +1508,14 @@ function setView(view) {
         if (view === 'global')       { fetchGlobalMarkets(); }
         if (view === 'technicals')   { renderTechnicalScreener(); }
         if (view === 'dividends')    { renderDividendTracker(); }
-        if (view === 'market-pulse') { renderMarketPulse(); }
-        if (view === 'earnings')     { renderEarningsCalendar(); }
+        if (view === 'market-pulse')    { renderMarketPulse(); }
+        if (view === 'earnings')        { renderEarningsCalendar(); }
+        if (view === 'options-chain')   { renderOptionsChain(); }
+        if (view === 'fno')             { renderFnO(); }
+        if (view === 'positions')       { renderPositions(); }
+        if (view === 'funds')           { renderFunds(); }
+        if (view === 'brokerage-calc')  { renderBrokerageCalc(); }
+        if (view === 'strategy')        { renderStrategy(); }
         return;
     }
 
@@ -4166,4 +4174,650 @@ function checkBigMovers() {
         var sign = s.changePct > 0 ? '+' : '';
         showToast(dir + ' ' + s.name + ' ' + sign + s.changePct.toFixed(2) + '% today', s.changePct > 0 ? 'success' : 'error');
     });
+}
+
+// ============================================================
+// ──  BROKER FEATURES  ──────────────────────────────────────
+// ============================================================
+
+function fmtOI(n) {
+    if (n === undefined || n === null) return '0';
+    var abs = Math.abs(n), sign = n < 0 ? '-' : '';
+    if (abs >= 10000000) return sign + (abs / 10000000).toFixed(2) + 'Cr';
+    if (abs >= 100000)   return sign + (abs / 100000).toFixed(2) + 'L';
+    return sign + abs.toLocaleString('en-IN');
+}
+
+// ── OPTIONS CHAIN ──────────────────────────────────────────
+var _optionsActive = 'nifty';
+var _optionsData = {
+    nifty: {
+        name:'NIFTY 50', spot:24487.65, lot:75,
+        expiries:['29 May 2026','05 Jun 2026','26 Jun 2026'],
+        strikes:[
+            { k:24000, ce:{ oi:823500,  coiChg:-15000, vol:218400, iv:19.4, ltp:523.70, chg:-8.45, itm:true  }, pe:{ oi:187500,  coiChg:4500,   vol:48600,  iv:13.2, ltp:37.85,  chg:-2.10, itm:false } },
+            { k:24100, ce:{ oi:675000,  coiChg:-9000,  vol:183600, iv:18.7, ltp:427.35, chg:-7.20, itm:true  }, pe:{ oi:213750,  coiChg:6750,   vol:57150,  iv:13.6, ltp:44.10,  chg:-1.85, itm:false } },
+            { k:24200, ce:{ oi:541500,  coiChg:12750,  vol:151200, iv:17.9, ltp:335.80, chg:6.40,  itm:true  }, pe:{ oi:262500,  coiChg:8250,   vol:68250,  iv:14.1, ltp:52.95,  chg:3.20,  itm:false } },
+            { k:24300, ce:{ oi:982500,  coiChg:22500,  vol:264600, iv:17.2, ltp:249.55, chg:5.80,  itm:true  }, pe:{ oi:412500,  coiChg:15000,  vol:102600, iv:14.6, ltp:67.30,  chg:4.15,  itm:false } },
+            { k:24400, ce:{ oi:1323750, coiChg:-30000, vol:378000, iv:16.5, ltp:169.70, chg:-3.95, itm:true  }, pe:{ oi:885000,  coiChg:-22500, vol:223200, iv:15.1, ltp:88.15,  chg:-5.30, itm:false } },
+            { k:24500, ce:{ oi:2437500, coiChg:45000,  vol:654000, iv:15.8, ltp:98.30,  chg:2.15,  itm:false, atm:true }, pe:{ oi:2625000, coiChg:37500, vol:697500, iv:15.9, ltp:111.50, chg:1.80, itm:false, atm:true } },
+            { k:24600, ce:{ oi:1762500, coiChg:52500,  vol:461250, iv:16.3, ltp:46.85,  chg:3.25,  itm:false }, pe:{ oi:1387500, coiChg:30000,  vol:354750, iv:16.4, ltp:160.10, chg:-4.70, itm:true  } },
+            { k:24700, ce:{ oi:1125000, coiChg:37500,  vol:291750, iv:17.1, ltp:21.40,  chg:2.80,  itm:false }, pe:{ oi:825000,  coiChg:-18750, vol:214500, iv:17.0, ltp:235.60, chg:-6.10, itm:true  } },
+            { k:24800, ce:{ oi:825000,  coiChg:18750,  vol:210000, iv:17.8, ltp:9.75,   chg:1.30,  itm:false }, pe:{ oi:637500,  coiChg:-13500, vol:163800, iv:17.7, ltp:324.20, chg:-7.35, itm:true  } },
+            { k:24900, ce:{ oi:562500,  coiChg:11250,  vol:142500, iv:18.6, ltp:4.50,   chg:0.80,  itm:false }, pe:{ oi:412500,  coiChg:-9000,  vol:107250, iv:18.5, ltp:419.80, chg:-8.20, itm:true  } },
+            { k:25000, ce:{ oi:1987500, coiChg:67500,  vol:498750, iv:19.3, ltp:2.20,   chg:0.45,  itm:false }, pe:{ oi:262500,  coiChg:-6000,  vol:67500,  iv:19.1, ltp:518.30, chg:-9.10, itm:true  } },
+        ]
+    },
+    banknifty: {
+        name:'BANK NIFTY', spot:52340.80, lot:15,
+        expiries:['21 May 2026','28 May 2026','25 Jun 2026'],
+        strikes:[
+            { k:51400, ce:{ oi:157500, coiChg:-3000,  vol:42000,  iv:21.2, ltp:1065.50, chg:-12.40, itm:true  }, pe:{ oi:45000,  coiChg:1500,  vol:12750, iv:15.1, ltp:68.30,   chg:-3.20,  itm:false } },
+            { k:51600, ce:{ oi:127500, coiChg:-4500,  vol:34500,  iv:20.4, ltp:875.20,  chg:-10.15, itm:true  }, pe:{ oi:60000,  coiChg:2250,  vol:16500, iv:15.5, ltp:78.90,   chg:-2.80,  itm:false } },
+            { k:51800, ce:{ oi:105000, coiChg:3000,   vol:28500,  iv:19.6, ltp:692.40,  chg:7.30,   itm:true  }, pe:{ oi:82500,  coiChg:3000,  vol:22500, iv:16.0, ltp:96.70,   chg:4.50,   itm:false } },
+            { k:52000, ce:{ oi:232500, coiChg:7500,   vol:63000,  iv:18.8, ltp:516.80,  chg:5.60,   itm:true  }, pe:{ oi:172500, coiChg:-5250, vol:46500, iv:16.5, ltp:121.40,  chg:-6.80,  itm:false } },
+            { k:52200, ce:{ oi:397500, coiChg:-10500, vol:108000, iv:18.0, ltp:352.60,  chg:-4.20,  itm:true  }, pe:{ oi:300000, coiChg:-7500, vol:81000, iv:17.0, ltp:158.30,  chg:-8.10,  itm:false } },
+            { k:52400, ce:{ oi:727500, coiChg:18000,  vol:198000, iv:17.3, ltp:202.50,  chg:3.80,   itm:false, atm:true }, pe:{ oi:742500, coiChg:15000, vol:202500, iv:17.4, ltp:264.20, chg:2.90, itm:false, atm:true } },
+            { k:52600, ce:{ oi:510000, coiChg:15000,  vol:138750, iv:17.9, ltp:98.40,   chg:4.10,   itm:false }, pe:{ oi:405000, coiChg:-9750,  vol:109500, iv:17.8, ltp:362.10,  chg:-5.40,  itm:true  } },
+            { k:52800, ce:{ oi:322500, coiChg:9750,   vol:87000,  iv:18.6, ltp:43.80,   chg:2.60,   itm:false }, pe:{ oi:255000, coiChg:-7500,  vol:69000,  iv:18.5, ltp:508.30,  chg:-7.20,  itm:true  } },
+            { k:53000, ce:{ oi:217500, coiChg:6750,   vol:58500,  iv:19.4, ltp:19.50,   chg:1.35,   itm:false }, pe:{ oi:157500, coiChg:-4500,  vol:42750,  iv:19.3, ltp:684.70,  chg:-9.30,  itm:true  } },
+            { k:53200, ce:{ oi:135000, coiChg:4500,   vol:36750,  iv:20.2, ltp:8.70,    chg:0.75,   itm:false }, pe:{ oi:97500,  coiChg:-3000,  vol:26250,  iv:20.1, ltp:874.10,  chg:-11.20, itm:true  } },
+            { k:53400, ce:{ oi:472500, coiChg:15000,  vol:127500, iv:21.1, ltp:3.90,    chg:0.40,   itm:false }, pe:{ oi:67500,  coiChg:-1500,  vol:18000,  iv:20.9, ltp:1069.50, chg:-13.40, itm:true  } },
+        ]
+    },
+    finnifty: {
+        name:'FIN NIFTY', spot:23180.45, lot:40,
+        expiries:['27 May 2026','24 Jun 2026'],
+        strikes:[
+            { k:22700, ce:{ oi:64000,  coiChg:-2400, vol:17200, iv:20.8, ltp:512.30, chg:-6.80, itm:true  }, pe:{ oi:18000,  coiChg:800,   vol:5200,  iv:14.8, ltp:32.60,  chg:-1.80, itm:false } },
+            { k:22800, ce:{ oi:52000,  coiChg:-1600, vol:14400, iv:20.1, ltp:416.80, chg:-5.60, itm:true  }, pe:{ oi:24000,  coiChg:1200,  vol:6800,  iv:15.2, ltp:37.40,  chg:-1.50, itm:false } },
+            { k:22900, ce:{ oi:44000,  coiChg:2000,  vol:12000, iv:19.4, ltp:326.20, chg:4.80,  itm:true  }, pe:{ oi:32000,  coiChg:1600,  vol:8800,  iv:15.6, ltp:47.10,  chg:2.40,  itm:false } },
+            { k:23000, ce:{ oi:96000,  coiChg:4000,  vol:26800, iv:18.7, ltp:241.50, chg:3.60,  itm:true  }, pe:{ oi:72000,  coiChg:-2400, vol:19600, iv:16.0, ltp:62.80,  chg:-3.20, itm:false } },
+            { k:23100, ce:{ oi:148000, coiChg:-5200, vol:41200, iv:18.0, ltp:162.40, chg:-2.80, itm:true  }, pe:{ oi:124000, coiChg:-4000, vol:34000, iv:16.5, ltp:84.20,  chg:-4.10, itm:false } },
+            { k:23200, ce:{ oi:288000, coiChg:8800,  vol:80000, iv:17.4, ltp:91.60,  chg:1.80,  itm:false, atm:true }, pe:{ oi:304000, coiChg:7200, vol:84400, iv:17.5, ltp:113.80, chg:1.40, itm:false, atm:true } },
+            { k:23300, ce:{ oi:208000, coiChg:7200,  vol:57600, iv:17.9, ltp:42.30,  chg:2.20,  itm:false }, pe:{ oi:168000, coiChg:-5200, vol:46400, iv:17.8, ltp:164.60, chg:-3.10, itm:true  } },
+            { k:23400, ce:{ oi:132000, coiChg:5200,  vol:36400, iv:18.5, ltp:18.70,  chg:1.40,  itm:false }, pe:{ oi:104000, coiChg:-4000, vol:28800, iv:18.4, ltp:241.90, chg:-4.20, itm:true  } },
+            { k:23500, ce:{ oi:84000,  coiChg:3200,  vol:23200, iv:19.2, ltp:8.20,   chg:0.80,  itm:false }, pe:{ oi:64000,  coiChg:-2800, vol:17600, iv:19.1, ltp:331.50, chg:-5.40, itm:true  } },
+            { k:23600, ce:{ oi:52000,  coiChg:2000,  vol:14400, iv:19.9, ltp:3.60,   chg:0.40,  itm:false }, pe:{ oi:40000,  coiChg:-2000, vol:11000, iv:19.8, ltp:427.20, chg:-6.30, itm:true  } },
+            { k:23700, ce:{ oi:196000, coiChg:8800,  vol:54400, iv:20.7, ltp:1.60,   chg:0.20,  itm:false }, pe:{ oi:28000,  coiChg:-1200, vol:7600,  iv:20.5, ltp:525.10, chg:-7.20, itm:true  } },
+        ]
+    }
+};
+
+function switchOptionsTab(idx, btn) {
+    _optionsActive = idx;
+    document.querySelectorAll('#optionsTabs .feature-tab').forEach(function(b) { b.classList.remove('active'); });
+    btn.classList.add('active');
+    renderOptionsChain();
+}
+
+function renderOptionsChain() {
+    var d = _optionsData[_optionsActive];
+    var el = document.getElementById('options-content');
+    if (!el) return;
+    var totalCeOi = d.strikes.reduce(function(s, r) { return s + r.ce.oi; }, 0);
+    var totalPeOi = d.strikes.reduce(function(s, r) { return s + r.pe.oi; }, 0);
+    var pcr = (totalPeOi / totalCeOi).toFixed(2);
+    var maxPainStrike = d.strikes.reduce(function(best, row) { return row.pe.oi > best.oi ? { k: row.k, oi: row.pe.oi } : best; }, { k: 0, oi: 0 }).k;
+    var html = '<div class="oc-meta-bar">';
+    html += '<div class="oc-meta-item"><span class="oc-meta-label">Spot</span><span class="oc-meta-val positive">&#8377;' + d.spot.toLocaleString('en-IN') + '</span></div>';
+    html += '<div class="oc-meta-item"><span class="oc-meta-label">PCR (OI)</span><span class="oc-meta-val ' + (parseFloat(pcr) >= 1 ? 'positive' : 'negative') + '">' + pcr + '</span></div>';
+    html += '<div class="oc-meta-item"><span class="oc-meta-label">Max Pain</span><span class="oc-meta-val">&#8377;' + maxPainStrike.toLocaleString('en-IN') + '</span></div>';
+    html += '<div class="oc-meta-item"><span class="oc-meta-label">Lot Size</span><span class="oc-meta-val">' + d.lot + '</span></div>';
+    html += '<div class="oc-meta-item"><span class="oc-meta-label">Expiry</span><select class="oc-expiry-sel">';
+    d.expiries.forEach(function(e) { html += '<option>' + e + '</option>'; });
+    html += '</select></div></div>';
+    html += '<div class="oc-wrap"><table class="oc-table"><thead><tr>';
+    html += '<th colspan="6" class="oc-ce-head">CALLS (CE)</th><th class="oc-strike-head">STRIKE</th><th colspan="6" class="oc-pe-head">PUTS (PE)</th>';
+    html += '</tr><tr><th>OI</th><th>Chg OI</th><th>Volume</th><th>IV</th><th>LTP</th><th>Chg</th><th></th><th>Chg</th><th>LTP</th><th>IV</th><th>Volume</th><th>Chg OI</th><th>OI</th></tr></thead><tbody>';
+    d.strikes.forEach(function(row) {
+        var atmCls = row.ce.atm ? ' oc-atm-row' : '';
+        html += '<tr class="oc-row' + atmCls + '">';
+        html += '<td class="' + (row.ce.itm ? 'oc-itm' : '') + '">' + fmtOI(row.ce.oi) + '</td>';
+        html += '<td class="' + (row.ce.coiChg >= 0 ? 'positive' : 'negative') + '">' + (row.ce.coiChg >= 0 ? '+' : '') + fmtOI(row.ce.coiChg) + '</td>';
+        html += '<td class="' + (row.ce.itm ? 'oc-itm' : '') + '">' + fmtOI(row.ce.vol) + '</td>';
+        html += '<td>' + row.ce.iv + '%</td>';
+        html += '<td class="oc-ltp' + (row.ce.itm ? ' oc-itm' : '') + '">' + row.ce.ltp.toFixed(2) + '</td>';
+        html += '<td class="' + (row.ce.chg >= 0 ? 'positive' : 'negative') + '">' + (row.ce.chg >= 0 ? '+' : '') + row.ce.chg.toFixed(2) + '</td>';
+        html += '<td class="oc-strike' + (row.ce.atm ? ' oc-atm-strike' : '') + '">' + row.k.toLocaleString('en-IN') + '</td>';
+        html += '<td class="' + (row.pe.chg >= 0 ? 'positive' : 'negative') + '">' + (row.pe.chg >= 0 ? '+' : '') + row.pe.chg.toFixed(2) + '</td>';
+        html += '<td class="oc-ltp' + (row.pe.itm ? ' oc-itm' : '') + '">' + row.pe.ltp.toFixed(2) + '</td>';
+        html += '<td>' + row.pe.iv + '%</td>';
+        html += '<td class="' + (row.pe.itm ? 'oc-itm' : '') + '">' + fmtOI(row.pe.vol) + '</td>';
+        html += '<td class="' + (row.pe.coiChg >= 0 ? 'positive' : 'negative') + '">' + (row.pe.coiChg >= 0 ? '+' : '') + fmtOI(row.pe.coiChg) + '</td>';
+        html += '<td class="' + (row.pe.itm ? 'oc-itm' : '') + '">' + fmtOI(row.pe.oi) + '</td>';
+        html += '</tr>';
+    });
+    html += '</tbody></table></div>';
+    el.innerHTML = html;
+}
+
+// ── F&O DASHBOARD ─────────────────────────────────────────
+var _fnoActiveTab = 'futures';
+var _fnoFutures = [
+    { symbol:'NIFTY',     name:'NIFTY 50',           lot:75,  price:24512.50, spot:24487.65, premium:24.85,  oi:18250000, oiChg:342500,  volume:4812000 },
+    { symbol:'BANKNIFTY', name:'BANK NIFTY',          lot:15,  price:52380.25, spot:52340.80, premium:39.45,  oi:8650000,  oiChg:-127500, volume:2381250 },
+    { symbol:'FINNIFTY',  name:'FIN NIFTY',           lot:40,  price:23198.60, spot:23180.45, premium:18.15,  oi:4280000,  oiChg:88000,   volume:1124000 },
+    { symbol:'RELIANCE',  name:'Reliance Industries', lot:250, price:1426.50,  spot:1424.80,  premium:1.70,   oi:14375000, oiChg:250000,  volume:3750000 },
+    { symbol:'TCS',       name:'Tata Consultancy',    lot:150, price:3362.25,  spot:3358.90,  premium:3.35,   oi:6825000,  oiChg:-150000, volume:1837500 },
+    { symbol:'INFY',      name:'Infosys',             lot:300, price:1594.80,  spot:1592.65,  premium:2.15,   oi:8400000,  oiChg:120000,  volume:2310000 },
+    { symbol:'HDFCBANK',  name:'HDFC Bank',           lot:550, price:1842.35,  spot:1839.40,  premium:2.95,   oi:12375000, oiChg:275000,  volume:3162500 },
+    { symbol:'ICICIBANK', name:'ICICI Bank',          lot:700, price:1247.60,  spot:1245.15,  premium:2.45,   oi:9800000,  oiChg:-210000, volume:2537500 },
+];
+var _fnoTopOptions = [
+    { symbol:'NIFTY 24500 CE',     type:'CE', expiry:'29 May', ltp:98.30,   chg:2.15,  oi:2437500, oiChg:45000,  iv:15.8, lot:75  },
+    { symbol:'NIFTY 24500 PE',     type:'PE', expiry:'29 May', ltp:111.50,  chg:1.80,  oi:2625000, oiChg:37500,  iv:15.9, lot:75  },
+    { symbol:'NIFTY 25000 CE',     type:'CE', expiry:'29 May', ltp:2.20,    chg:0.45,  oi:1987500, oiChg:67500,  iv:19.3, lot:75  },
+    { symbol:'BANKNIFTY 52400 CE', type:'CE', expiry:'21 May', ltp:202.50,  chg:3.80,  oi:727500,  oiChg:18000,  iv:17.3, lot:15  },
+    { symbol:'BANKNIFTY 52400 PE', type:'PE', expiry:'21 May', ltp:264.20,  chg:2.90,  oi:742500,  oiChg:15000,  iv:17.4, lot:15  },
+    { symbol:'NIFTY 24600 CE',     type:'CE', expiry:'29 May', ltp:46.85,   chg:3.25,  oi:1762500, oiChg:52500,  iv:16.3, lot:75  },
+    { symbol:'NIFTY 24400 CE',     type:'CE', expiry:'29 May', ltp:169.70,  chg:-3.95, oi:1323750, oiChg:-30000, iv:16.5, lot:75  },
+    { symbol:'RELIANCE 1400 CE',   type:'CE', expiry:'29 May', ltp:28.50,   chg:1.20,  oi:1125000, oiChg:37500,  iv:18.4, lot:250 },
+];
+
+function switchFnOTab(tab, btn) {
+    _fnoActiveTab = tab;
+    document.querySelectorAll('#fnoTabs .feature-tab').forEach(function(b) { b.classList.remove('active'); });
+    btn.classList.add('active'); renderFnOContent();
+}
+function renderFnO() {
+    _fnoActiveTab = 'futures';
+    document.querySelectorAll('#fnoTabs .feature-tab').forEach(function(b, i) { b.classList.toggle('active', i === 0); });
+    renderFnOContent();
+}
+function renderFnOContent() {
+    var el = document.getElementById('fno-content'); if (!el) return;
+    if (_fnoActiveTab === 'futures')    el.innerHTML = buildFnOFuturesHTML();
+    if (_fnoActiveTab === 'topoptions') el.innerHTML = buildFnOTopOptionsHTML();
+    if (_fnoActiveTab === 'pcr')        el.innerHTML = buildFnOPcrHTML();
+    if (_fnoActiveTab === 'lotsizes')   el.innerHTML = buildFnOLotSizesHTML();
+}
+function buildFnOFuturesHTML() {
+    var html = '<div style="overflow-x:auto;margin-top:16px;"><table class="fno-table"><thead><tr><th>Symbol</th><th>Futures</th><th>Spot</th><th>Premium</th><th>OI</th><th>Chg OI</th><th>Volume</th><th>Lot</th></tr></thead><tbody>';
+    _fnoFutures.forEach(function(f) {
+        var pC = f.premium > 0 ? 'positive' : 'negative', oC = f.oiChg > 0 ? 'positive' : 'negative';
+        html += '<tr><td><span class="fno-sym">' + f.symbol + '</span></td>';
+        html += '<td class="oc-ltp">&#8377;' + f.price.toLocaleString('en-IN') + '</td>';
+        html += '<td>&#8377;' + f.spot.toLocaleString('en-IN') + '</td>';
+        html += '<td class="' + pC + '">' + (f.premium > 0 ? '+' : '') + f.premium.toFixed(2) + '</td>';
+        html += '<td>' + fmtOI(f.oi) + '</td><td class="' + oC + '">' + (f.oiChg > 0 ? '+' : '') + fmtOI(f.oiChg) + '</td>';
+        html += '<td>' + fmtOI(f.volume) + '</td><td>' + f.lot + '</td></tr>';
+    });
+    return html + '</tbody></table></div>';
+}
+function buildFnOTopOptionsHTML() {
+    var html = '<div style="overflow-x:auto;margin-top:16px;"><table class="fno-table"><thead><tr><th>Option</th><th>Type</th><th>Expiry</th><th>LTP</th><th>Chg</th><th>OI</th><th>Chg OI</th><th>IV</th><th>Lot</th></tr></thead><tbody>';
+    _fnoTopOptions.forEach(function(o) {
+        var cC = o.chg >= 0 ? 'positive' : 'negative', oC = o.oiChg >= 0 ? 'positive' : 'negative';
+        var tBadge = o.type === 'CE' ? 'fno-ce-badge' : 'fno-pe-badge';
+        html += '<tr><td><span class="fno-sym">' + o.symbol + '</span></td>';
+        html += '<td><span class="' + tBadge + '">' + o.type + '</span></td>';
+        html += '<td style="color:var(--text-muted)">' + o.expiry + '</td>';
+        html += '<td class="oc-ltp">&#8377;' + o.ltp.toFixed(2) + '</td>';
+        html += '<td class="' + cC + '">' + (o.chg >= 0 ? '+' : '') + o.chg.toFixed(2) + '</td>';
+        html += '<td>' + fmtOI(o.oi) + '</td><td class="' + oC + '">' + (o.oiChg >= 0 ? '+' : '') + fmtOI(o.oiChg) + '</td>';
+        html += '<td>' + o.iv + '%</td><td>' + o.lot + '</td></tr>';
+    });
+    return html + '</tbody></table></div>';
+}
+function buildFnOPcrHTML() {
+    var rows = [
+        { name:'NIFTY 50',   pcr:1.08, ceOi:'6.87L', peOi:'7.42L', status:'Bullish', chg:'+0.04' },
+        { name:'BANK NIFTY', pcr:0.92, ceOi:'2.96L', peOi:'2.73L', status:'Bearish', chg:'-0.03' },
+        { name:'FIN NIFTY',  pcr:1.03, ceOi:'1.14L', peOi:'1.17L', status:'Neutral', chg:'+0.01' },
+        { name:'RELIANCE',   pcr:0.78, ceOi:'4.82L', peOi:'3.76L', status:'Bearish', chg:'-0.06' },
+        { name:'HDFC BANK',  pcr:1.15, ceOi:'3.12L', peOi:'3.59L', status:'Bullish', chg:'+0.08' },
+    ];
+    var html = '<div style="overflow-x:auto;margin-top:16px;">';
+    html += '<p style="color:var(--text-muted);font-size:13px;margin-bottom:12px;">PCR &gt; 1 = Bullish (more puts bought) &middot; PCR &lt; 1 = Bearish</p>';
+    html += '<table class="fno-table"><thead><tr><th>Index / Stock</th><th>PCR (OI)</th><th>CE OI</th><th>PE OI</th><th>Sentiment</th><th>Day Chg</th></tr></thead><tbody>';
+    rows.forEach(function(p) {
+        var sC = p.status === 'Bullish' ? 'positive' : (p.status === 'Bearish' ? 'negative' : '');
+        html += '<tr><td><b>' + p.name + '</b></td><td class="oc-ltp">' + p.pcr + '</td>';
+        html += '<td>' + p.ceOi + '</td><td>' + p.peOi + '</td>';
+        html += '<td class="' + sC + '"><b>' + p.status + '</b></td>';
+        html += '<td class="' + (p.chg.startsWith('+') ? 'positive' : 'negative') + '">' + p.chg + '</td></tr>';
+    });
+    return html + '</tbody></table></div>';
+}
+function buildFnOLotSizesHTML() {
+    var lots = [
+        { sym:'NIFTY',     co:'NIFTY 50',          lot:75,   margin:'&#8377;1.38L', val:'&#8377;18.36L' },
+        { sym:'BANKNIFTY', co:'BANK NIFTY',         lot:15,   margin:'&#8377;52K',   val:'&#8377;7.85L'  },
+        { sym:'FINNIFTY',  co:'FIN NIFTY',          lot:40,   margin:'&#8377;30K',   val:'&#8377;9.27L'  },
+        { sym:'RELIANCE',  co:'Reliance Industries',lot:250,  margin:'&#8377;89K',   val:'&#8377;3.56L'  },
+        { sym:'TCS',       co:'Tata Consultancy',   lot:150,  margin:'&#8377;1.26L', val:'&#8377;5.04L'  },
+        { sym:'INFY',      co:'Infosys',            lot:300,  margin:'&#8377;72K',   val:'&#8377;4.78L'  },
+        { sym:'HDFCBANK',  co:'HDFC Bank',          lot:550,  margin:'&#8377;76K',   val:'&#8377;10.12L' },
+        { sym:'ICICIBANK', co:'ICICI Bank',         lot:700,  margin:'&#8377;62K',   val:'&#8377;8.72L'  },
+        { sym:'WIPRO',     co:'Wipro',              lot:3000, margin:'&#8377;38K',   val:'&#8377;1.68L'  },
+        { sym:'SBILIFE',   co:'SBI Life Insurance', lot:750,  margin:'&#8377;58K',   val:'&#8377;11.73L' },
+    ];
+    var html = '<div style="overflow-x:auto;margin-top:16px;"><table class="fno-table"><thead><tr><th>Symbol</th><th>Company</th><th>Lot Size</th><th>Margin Req.</th><th>Mkt Lot Value</th></tr></thead><tbody>';
+    lots.forEach(function(l) {
+        html += '<tr><td><span class="fno-sym">' + l.sym + '</span></td><td>' + l.co + '</td><td><b>' + l.lot + '</b></td><td>' + l.margin + '</td><td>' + l.val + '</td></tr>';
+    });
+    return html + '</tbody></table></div>';
+}
+
+// ── POSITIONS ─────────────────────────────────────────────
+var _posActiveTab = 'today';
+var _todayPositions = [
+    { symbol:'NIFTY 24500 CE',     product:'MIS', qty:1,   avgPrice:96.15,  ltp:98.30,  pnl:161.25,  pnlPct:2.24,  side:'BUY',  type:'OPT' },
+    { symbol:'RELIANCE',           product:'MIS', qty:50,  avgPrice:1422.50,ltp:1424.80,pnl:115.00,  pnlPct:0.16,  side:'BUY',  type:'EQ'  },
+    { symbol:'TCS',                product:'MIS', qty:25,  avgPrice:3371.80,ltp:3358.90,pnl:322.50,  pnlPct:0.38,  side:'SELL', type:'EQ'  },
+    { symbol:'HDFC BANK',          product:'MIS', qty:100, avgPrice:1843.20,ltp:1839.40,pnl:-380.00, pnlPct:-0.21, side:'BUY',  type:'EQ'  },
+    { symbol:'BANKNIFTY 52400 PE', product:'MIS', qty:1,   avgPrice:271.50, ltp:264.20, pnl:109.50,  pnlPct:2.69,  side:'SELL', type:'OPT' },
+];
+
+function switchPositionsTab(tab, btn) {
+    _posActiveTab = tab;
+    document.querySelectorAll('#positionsTabs .feature-tab').forEach(function(b) { b.classList.remove('active'); });
+    btn.classList.add('active'); renderPositionsContent();
+}
+function renderPositions() {
+    _posActiveTab = 'today';
+    document.querySelectorAll('#positionsTabs .feature-tab').forEach(function(b, i) { b.classList.toggle('active', i === 0); });
+    renderPositionsContent();
+}
+function renderPositionsContent() {
+    var el = document.getElementById('positions-content'); if (!el) return;
+    if (_posActiveTab === 'today')    el.innerHTML = buildPositionsTodayHTML();
+    if (_posActiveTab === 'holdings') el.innerHTML = buildPositionsHoldingsHTML();
+    if (_posActiveTab === 'pnl')      el.innerHTML = buildPositionsPnLHTML();
+}
+function buildPositionsTodayHTML() {
+    var totalPnl = _todayPositions.reduce(function(s, p) { return s + p.pnl; }, 0);
+    var pCls = totalPnl >= 0 ? 'positive' : 'negative';
+    var html = '<div class="pos-summary-bar">';
+    html += '<div class="pos-summary-item"><span>Day\'s P&L</span><b class="' + pCls + '">' + (totalPnl >= 0 ? '+' : '') + '&#8377;' + Math.abs(totalPnl).toFixed(2) + '</b></div>';
+    html += '<div class="pos-summary-item"><span>Open Positions</span><b>' + _todayPositions.length + '</b></div>';
+    html += '<div class="pos-summary-item"><span>Realised P&L</span><b class="positive">+&#8377;0.00</b></div>';
+    html += '</div><div style="overflow-x:auto;margin-top:16px;"><table class="fno-table"><thead><tr>';
+    html += '<th>Symbol</th><th>Product</th><th>Qty</th><th>Avg Price</th><th>LTP</th><th>P&L</th><th>P&L %</th><th>Action</th></tr></thead><tbody>';
+    _todayPositions.forEach(function(p) {
+        var plC = p.pnl >= 0 ? 'positive' : 'negative';
+        var sC = p.side === 'BUY' ? 'pos-buy-badge' : 'pos-sell-badge';
+        html += '<tr><td><span class="fno-sym">' + p.symbol + '</span> <span class="' + sC + '">' + p.side + '</span></td>';
+        html += '<td><span class="pos-product-badge">' + p.product + '</span></td>';
+        html += '<td>' + p.qty + '</td>';
+        html += '<td>&#8377;' + p.avgPrice.toFixed(2) + '</td>';
+        html += '<td class="oc-ltp">&#8377;' + p.ltp.toFixed(2) + '</td>';
+        html += '<td class="' + plC + '"><b>' + (p.pnl >= 0 ? '+' : '') + '&#8377;' + p.pnl.toFixed(2) + '</b></td>';
+        html += '<td class="' + plC + '">' + (p.pnlPct >= 0 ? '+' : '') + p.pnlPct.toFixed(2) + '%</td>';
+        html += '<td><button class="pos-exit-btn" onclick="showToast(\'Exit order placed\',\'success\')">Exit</button></td></tr>';
+    });
+    return html + '</tbody></table></div>';
+}
+function buildPositionsHoldingsHTML() {
+    if (!portfolioHoldings || portfolioHoldings.length === 0) {
+        return '<div style="text-align:center;padding:48px;color:var(--text-muted);">No holdings yet. Buy stocks from the Dashboard.</div>';
+    }
+    var html = '<div style="overflow-x:auto;margin-top:16px;"><table class="fno-table"><thead><tr>';
+    html += '<th>Symbol</th><th>Qty</th><th>Avg Cost</th><th>LTP</th><th>Invested</th><th>Current Value</th><th>P&L</th><th>P&L %</th></tr></thead><tbody>';
+    portfolioHoldings.forEach(function(h) {
+        var st = stocks.find(function(s) { return s.symbol === h.symbol; });
+        var ltp = st ? st.price : h.avgCost;
+        var inv = h.qty * h.avgCost, cur = h.qty * ltp, pnl = cur - inv;
+        var pct = (pnl / inv) * 100;
+        var pC = pnl >= 0 ? 'positive' : 'negative';
+        html += '<tr><td><span class="fno-sym">' + h.symbol + '</span></td><td>' + h.qty + '</td>';
+        html += '<td>&#8377;' + h.avgCost.toFixed(2) + '</td><td class="oc-ltp">&#8377;' + ltp.toFixed(2) + '</td>';
+        html += '<td>&#8377;' + inv.toLocaleString('en-IN', { maximumFractionDigits: 0 }) + '</td>';
+        html += '<td>&#8377;' + cur.toLocaleString('en-IN', { maximumFractionDigits: 0 }) + '</td>';
+        html += '<td class="' + pC + '"><b>' + (pnl >= 0 ? '+' : '') + '&#8377;' + Math.abs(pnl).toFixed(2) + '</b></td>';
+        html += '<td class="' + pC + '">' + (pct >= 0 ? '+' : '') + pct.toFixed(2) + '%</td></tr>';
+    });
+    return html + '</tbody></table></div>';
+}
+function buildPositionsPnLHTML() {
+    var dayPnl = _todayPositions.reduce(function(s, p) { return s + p.pnl; }, 0);
+    var inv = portfolioHoldings.reduce(function(s, h) { return s + h.qty * h.avgCost; }, 0);
+    var cur = portfolioHoldings.reduce(function(s, h) {
+        var st = stocks.find(function(x) { return x.symbol === h.symbol; });
+        return s + h.qty * (st ? st.price : h.avgCost);
+    }, 0);
+    var overall = cur - inv;
+    var cards = [
+        ['Day\'s P&L (F&O)',  dayPnl,   dayPnl >= 0 ? 'positive' : 'negative'],
+        ['Portfolio P&L',     overall,  overall >= 0 ? 'positive' : 'negative'],
+        ['Total Invested',    null,     ''],
+        ['Current Value',     null,     ''],
+        ['Realised P&L',      0,        'positive'],
+        ['Charges Today',     null,     'negative'],
+    ];
+    var vals = [dayPnl, overall, inv, cur, 0, -342.80];
+    var html = '<div class="pnl-grid">';
+    cards.forEach(function(c, i) {
+        var v = vals[i];
+        var display = (i === 2 || i === 3)
+            ? '&#8377;' + Math.abs(v).toLocaleString('en-IN', { maximumFractionDigits: 0 })
+            : (i === 5 ? '-&#8377;342.80' : (v >= 0 ? '+&#8377;' : '-&#8377;') + Math.abs(v).toFixed(2));
+        html += '<div class="pnl-card"><div class="pnl-card-label">' + c[0] + '</div><div class="pnl-card-val ' + c[2] + '">' + display + '</div></div>';
+    });
+    return html + '</div>';
+}
+
+// ── FUNDS & MARGINS ────────────────────────────────────────
+var _fundsActiveTab = 'overview';
+function switchFundsTab(tab, btn) {
+    _fundsActiveTab = tab;
+    document.querySelectorAll('#fundsTabs .feature-tab').forEach(function(b) { b.classList.remove('active'); });
+    btn.classList.add('active'); renderFundsContent();
+}
+function renderFunds() {
+    _fundsActiveTab = 'overview';
+    document.querySelectorAll('#fundsTabs .feature-tab').forEach(function(b, i) { b.classList.toggle('active', i === 0); });
+    renderFundsContent();
+}
+function renderFundsContent() {
+    var el = document.getElementById('funds-content'); if (!el) return;
+    if (_fundsActiveTab === 'overview') el.innerHTML = buildFundsOverviewHTML();
+    if (_fundsActiveTab === 'equity')   el.innerHTML = buildFundsEquityHTML();
+    if (_fundsActiveTab === 'fno')      el.innerHTML = buildFundsFnOHTML();
+    if (_fundsActiveTab === 'ledger')   el.innerHTML = buildFundsLedgerHTML();
+}
+function buildFundsOverviewHTML() {
+    var bal = virtualBalance;
+    var used = Math.max(0, 1000000 - bal);
+    var pct = Math.min(100, (used / 1000000) * 100).toFixed(1);
+    var html = '<div class="funds-overview-grid">';
+    html += '<div class="funds-card funds-avail"><div class="funds-card-label">Available Cash</div><div class="funds-card-val">&#8377;' + bal.toLocaleString('en-IN', { maximumFractionDigits: 2 }) + '</div><div class="funds-card-sub">Ready to invest</div></div>';
+    html += '<div class="funds-card funds-used"><div class="funds-card-label">Margin Used</div><div class="funds-card-val negative">&#8377;' + used.toLocaleString('en-IN', { maximumFractionDigits: 2 }) + '</div><div class="funds-card-sub">' + pct + '% of total</div></div>';
+    html += '<div class="funds-card"><div class="funds-card-label">Total Funds</div><div class="funds-card-val">&#8377;10,00,000</div><div class="funds-card-sub">Opening balance</div></div>';
+    html += '<div class="funds-card"><div class="funds-card-label">Collateral</div><div class="funds-card-val">&#8377;0</div><div class="funds-card-sub">Pledged securities</div></div></div>';
+    html += '<div class="funds-bar-wrap"><div class="funds-bar-label"><span>Margin Utilisation</span><span>' + pct + '%</span></div><div class="funds-bar-track"><div class="funds-bar-fill" style="width:' + pct + '%"></div></div></div>';
+    html += '<div class="funds-breakdown"><h3 style="margin-bottom:12px;font-size:14px;">Charge Breakdown</h3>';
+    var frows = [['Opening Balance','&#8377;10,00,000.00',''],['Payin (today)','+&#8377;0.00','positive'],['Stock Purchases','-&#8377;' + used.toLocaleString('en-IN', { maximumFractionDigits:2 }),'negative'],['Brokerage &amp; Charges','-&#8377;342.80','negative'],['Available Balance','&#8377;' + bal.toLocaleString('en-IN', { maximumFractionDigits:2 }),'']];
+    frows.forEach(function(r, i) {
+        html += '<div class="funds-row' + (i === 4 ? ' funds-row-total' : '') + '"><span>' + r[0] + '</span><span class="' + r[2] + '">' + r[1] + '</span></div>';
+    });
+    return html + '</div>';
+}
+function buildFundsEquityHTML() {
+    var items = [
+        ['Cash Margin','&#8377;4,85,320.50','Available for equity delivery'],
+        ['Intraday MIS Margin','&#8377;9,70,641.00','5x leverage on cash (MIS)'],
+        ['Collateral','&#8377;0.00','Pledged holdings value'],
+        ['Peak Margin Used','&#8377;2,20,000.00','Today\'s maximum margin used'],
+        ['SPAN + Exposure','&#8377;0.00','F&O margin requirement'],
+        ['Ad-hoc Margin','&#8377;0.00','Shortage penalty from exchange'],
+    ];
+    var html = '<div class="funds-section-grid">';
+    items.forEach(function(item) {
+        html += '<div class="funds-detail-card"><div class="fdc-label">' + item[0] + '</div><div class="fdc-val">' + item[1] + '</div><div class="fdc-sub">' + item[2] + '</div></div>';
+    });
+    return html + '</div>';
+}
+function buildFundsFnOHTML() {
+    var items = [
+        ['Available Margin','&#8377;3,12,480.25','Cash available for F&O'],
+        ['Blocked for F&O','&#8377;1,87,519.75','Margin blocked by open positions'],
+        ['SPAN Margin','&#8377;1,42,300.00','Exchange minimum margin (SPAN)'],
+        ['Exposure Margin','&#8377;45,219.75','Exchange additional exposure margin'],
+        ['Option Premium Blocked','&#8377;8,450.50','Premium for long option positions'],
+        ['Collateral','&#8377;0.00','Pledged F&O margin'],
+    ];
+    var html = '<div class="funds-section-grid">';
+    items.forEach(function(item) {
+        html += '<div class="funds-detail-card"><div class="fdc-label">' + item[0] + '</div><div class="fdc-val">' + item[1] + '</div><div class="fdc-sub">' + item[2] + '</div></div>';
+    });
+    return html + '</div>';
+}
+function buildFundsLedgerHTML() {
+    var ledger = [
+        { date:'21 May 2026', narr:'Opening Balance',                   dr:0,       cr:1000000, bal:1000000    },
+        { date:'21 May 2026', narr:'Buy RELIANCE MIS 50@1422.50',       dr:71125,   cr:0,       bal:928875     },
+        { date:'21 May 2026', narr:'Sell TCS MIS 25@3371.80',           dr:0,       cr:84295,   bal:1013170    },
+        { date:'21 May 2026', narr:'Buy NIFTY 24500 CE 75@96.15',       dr:7211.25, cr:0,       bal:1005958.75 },
+        { date:'21 May 2026', narr:'Sell BANKNIFTY 52400 PE 15@271.50', dr:0,       cr:4072.50, bal:1010031.25 },
+        { date:'21 May 2026', narr:'Brokerage &amp; Charges',           dr:342.80,  cr:0,       bal:1009688.45 },
+        { date:'21 May 2026', narr:'STT',                               dr:1018.75, cr:0,       bal:1008669.70 },
+        { date:'21 May 2026', narr:'Buy HDFC BANK MIS 100@1843.20',     dr:184320,  cr:0,       bal:824349.70  },
+        { date:'21 May 2026', narr:'MTM Settlement F&amp;O',            dr:5249.20, cr:0,       bal:virtualBalance },
+    ];
+    var html = '<div style="overflow-x:auto;margin-top:16px;"><table class="fno-table"><thead><tr><th>Date</th><th>Narration</th><th>Debit (&#8377;)</th><th>Credit (&#8377;)</th><th>Balance (&#8377;)</th></tr></thead><tbody>';
+    ledger.forEach(function(l) {
+        html += '<tr><td style="color:var(--text-muted);font-size:12px;">' + l.date + '</td><td>' + l.narr + '</td>';
+        html += '<td class="' + (l.dr > 0 ? 'negative' : '') + '">' + (l.dr > 0 ? '&#8377;' + l.dr.toLocaleString('en-IN', { maximumFractionDigits:2 }) : '-') + '</td>';
+        html += '<td class="' + (l.cr > 0 ? 'positive' : '') + '">' + (l.cr > 0 ? '&#8377;' + l.cr.toLocaleString('en-IN', { maximumFractionDigits:2 }) : '-') + '</td>';
+        html += '<td><b>&#8377;' + l.bal.toLocaleString('en-IN', { maximumFractionDigits:2 }) + '</b></td></tr>';
+    });
+    return html + '</tbody></table></div>';
+}
+
+// ── BROKERAGE CALCULATOR ───────────────────────────────────
+var _brokerageActiveTab = 'equity';
+function switchBrokerageTab(tab, btn) {
+    _brokerageActiveTab = tab;
+    document.querySelectorAll('#brokerageTabs .feature-tab').forEach(function(b) { b.classList.remove('active'); });
+    btn.classList.add('active'); renderBrokerageContent();
+}
+function renderBrokerageCalc() {
+    _brokerageActiveTab = 'equity';
+    document.querySelectorAll('#brokerageTabs .feature-tab').forEach(function(b, i) { b.classList.toggle('active', i === 0); });
+    renderBrokerageContent();
+}
+function renderBrokerageContent() {
+    var el = document.getElementById('brokerage-content'); if (!el) return;
+    var tab = _brokerageActiveTab;
+    var prodOpts = tab === 'equity'
+        ? '<option value="delivery">Delivery (CNC)</option><option value="intraday">Intraday (MIS)</option>'
+        : (tab === 'fno' ? '<option value="futures">Futures</option><option value="options">Options</option>' : '<option value="intraday">Intraday</option>');
+    var lotField = tab === 'fno' ? '<div class="bc-field"><label>Lot Size</label><input id="bc_lot" type="number" value="75" min="1" oninput="calcBrokerage()" class="bc-input"></div>' : '';
+    el.innerHTML = '<div class="bc-layout"><div class="bc-inputs"><h3 style="margin-bottom:16px;font-size:14px;color:var(--text-muted);">Trade Details</h3>'
+        + '<div class="bc-field"><label>Buy Price (&#8377;)</label><input id="bc_buy" type="number" value="1500" min="0.01" step="0.05" oninput="calcBrokerage()" class="bc-input"></div>'
+        + '<div class="bc-field"><label>Sell Price (&#8377;)</label><input id="bc_sell" type="number" value="1550" min="0.01" step="0.05" oninput="calcBrokerage()" class="bc-input"></div>'
+        + '<div class="bc-field"><label>Quantity</label><input id="bc_qty" type="number" value="100" min="1" oninput="calcBrokerage()" class="bc-input"></div>'
+        + '<div class="bc-field"><label>Product Type</label><select id="bc_product" class="bc-input" onchange="calcBrokerage()">' + prodOpts + '</select></div>'
+        + lotField + '</div><div class="bc-results" id="bc_results"></div></div>';
+    calcBrokerage();
+}
+function calcBrokerage() {
+    var buy = parseFloat((document.getElementById('bc_buy') || {}).value) || 0;
+    var sell = parseFloat((document.getElementById('bc_sell') || {}).value) || 0;
+    var qty = parseInt((document.getElementById('bc_qty') || {}).value) || 0;
+    var prod = (document.getElementById('bc_product') || {}).value || 'delivery';
+    var lot = parseInt(((document.getElementById('bc_lot') || {}).value)) || 1;
+    var tab = _brokerageActiveTab;
+    var aQty = tab === 'fno' ? qty * lot : qty;
+    var buyT = buy * aQty, sellT = sell * aQty, profit = (sell - buy) * aQty;
+    var brokBuy, brokSell;
+    if (tab === 'equity' && prod === 'delivery')  { brokBuy = Math.min(buyT * 0.001, 20); brokSell = Math.min(sellT * 0.001, 20); }
+    else if (tab === 'equity')                    { brokBuy = Math.min(buyT * 0.0003, 20); brokSell = Math.min(sellT * 0.0003, 20); }
+    else                                          { brokBuy = 20; brokSell = 20; }
+    var brok = brokBuy + brokSell;
+    var stt = 0;
+    if (tab === 'equity' && prod === 'delivery')  stt = (buyT + sellT) * 0.001;
+    else if (tab === 'equity')                    stt = sellT * 0.00025;
+    else if (prod === 'futures')                  stt = sellT * 0.0001;
+    else if (prod === 'options')                  stt = sellT * 0.000625;
+    else                                          stt = sellT * 0.00002;
+    var exchRate = tab === 'equity' ? 0.0000335 : (prod === 'options' ? 0.00053 : 0.00002);
+    var exch = (buyT + sellT) * exchRate;
+    var sebi = (buyT + sellT) * 0.000001;
+    var gst  = (brok + exch + sebi) * 0.18;
+    var stampRate = (tab === 'equity' && prod === 'delivery') ? 0.00015 : (tab === 'fno' ? 0.00002 : 0.000003);
+    var stamp = buyT * stampRate;
+    var total = brok + stt + exch + sebi + gst + stamp;
+    var net = profit - total;
+    var be = aQty > 0 ? buy + total / aQty : 0;
+    var f = function(n) { return '&#8377;' + Math.abs(n).toFixed(2); };
+    var res = document.getElementById('bc_results'); if (!res) return;
+    var rows = [['Gross P&L', profit, profit >= 0 ? 'positive' : 'negative'],['Brokerage', -brok, 'negative'],
+                ['STT / CTT', -stt, 'negative'],['Exchange Charges', -exch, 'negative'],
+                ['GST (18%)', -gst, 'negative'],['SEBI Fees', -sebi, 'negative'],['Stamp Duty', -stamp, 'negative']];
+    var html = '<h3 style="margin-bottom:16px;font-size:14px;color:var(--text-muted);">Charge Breakdown</h3><div class="bc-charge-list">';
+    rows.forEach(function(r) { html += '<div class="bc-charge-row"><span>' + r[0] + '</span><span class="' + r[2] + '">' + (r[1] >= 0 ? '+' : '-') + f(r[1]) + '</span></div>'; });
+    html += '<div class="bc-charge-row bc-total-row"><span>Total Charges</span><span class="negative">-' + f(total) + '</span></div>';
+    html += '<div class="bc-charge-row bc-net-row"><span>Net P&L</span><span class="' + (net >= 0 ? 'positive' : 'negative') + '"><b>' + (net >= 0 ? '+' : '-') + f(net) + '</b></span></div></div>';
+    html += '<div class="bc-breakeven">Breakeven: <b>&#8377;' + be.toFixed(2) + '</b></div>';
+    html += '<p style="font-size:11px;color:var(--text-muted);margin-top:10px;">Approximate. Based on NSE/BSE + Zerodha flat &#8377;20 brokerage model.</p>';
+    res.innerHTML = html;
+}
+
+// ── STRATEGY BUILDER ──────────────────────────────────────
+var _strategyActiveTab = 'builder';
+var _selectedStrategy  = 'Bull Call Spread';
+var _strategyPresets = {
+    'Long Call':        [{ action:'BUY',  type:'CE',    stOff:0,  label:'ATM Call',        premium:98  }],
+    'Long Put':         [{ action:'BUY',  type:'PE',    stOff:0,  label:'ATM Put',          premium:111 }],
+    'Covered Call':     [{ action:'BUY',  type:'STOCK', stOff:0,  label:'Buy 75 shares',    premium:24487 },
+                         { action:'SELL', type:'CE',    stOff:2,  label:'OTM Call (Sell)',  premium:46  }],
+    'Bull Call Spread': [{ action:'BUY',  type:'CE',    stOff:0,  label:'ATM Call (Buy)',   premium:98  },
+                         { action:'SELL', type:'CE',    stOff:2,  label:'OTM Call (Sell)',  premium:46  }],
+    'Bear Put Spread':  [{ action:'BUY',  type:'PE',    stOff:0,  label:'ATM Put (Buy)',    premium:111 },
+                         { action:'SELL', type:'PE',    stOff:-2, label:'OTM Put (Sell)',   premium:67  }],
+    'Long Straddle':    [{ action:'BUY',  type:'CE',    stOff:0,  label:'ATM Call',         premium:98  },
+                         { action:'BUY',  type:'PE',    stOff:0,  label:'ATM Put',          premium:111 }],
+    'Short Straddle':   [{ action:'SELL', type:'CE',    stOff:0,  label:'ATM Call (Sell)',  premium:98  },
+                         { action:'SELL', type:'PE',    stOff:0,  label:'ATM Put (Sell)',   premium:111 }],
+    'Long Strangle':    [{ action:'BUY',  type:'CE',    stOff:2,  label:'OTM Call',         premium:46  },
+                         { action:'BUY',  type:'PE',    stOff:-2, label:'OTM Put',          premium:67  }],
+    'Iron Condor':      [{ action:'BUY',  type:'CE',    stOff:4,  label:'Far OTM Call',     premium:9   },
+                         { action:'SELL', type:'CE',    stOff:2,  label:'OTM Call (Sell)',  premium:46  },
+                         { action:'SELL', type:'PE',    stOff:-2, label:'OTM Put (Sell)',   premium:67  },
+                         { action:'BUY',  type:'PE',    stOff:-4, label:'Far OTM Put',      premium:19  }],
+};
+
+function switchStrategyTab(tab, btn) {
+    _strategyActiveTab = tab;
+    document.querySelectorAll('#strategyTabs .feature-tab').forEach(function(b) { b.classList.remove('active'); });
+    btn.classList.add('active'); renderStrategyContent();
+}
+function switchStratTabToPayoff() {
+    var btn = document.querySelectorAll('#strategyTabs .feature-tab')[1];
+    if (btn) switchStrategyTab('payoff', btn);
+}
+function renderStrategy() {
+    _strategyActiveTab = 'builder';
+    document.querySelectorAll('#strategyTabs .feature-tab').forEach(function(b, i) { b.classList.toggle('active', i === 0); });
+    renderStrategyContent();
+}
+function renderStrategyContent() {
+    var el = document.getElementById('strategy-content'); if (!el) return;
+    if (_strategyActiveTab === 'builder') el.innerHTML = buildStrategyBuilderHTML();
+    if (_strategyActiveTab === 'payoff')  el.innerHTML = buildStrategyPayoffHTML();
+    if (_strategyActiveTab === 'greeks')  el.innerHTML = buildStrategyGreeksHTML();
+}
+function buildStrategyBuilderHTML() {
+    var spot = 24500, step = 100;
+    var legs = _strategyPresets[_selectedStrategy] || [];
+    var keys = Object.keys(_strategyPresets);
+    var sel = '<select class="bc-input" onchange="_selectedStrategy=this.value;renderStrategyContent()">';
+    keys.forEach(function(k) { sel += '<option' + (k === _selectedStrategy ? ' selected' : '') + '>' + k + '</option>'; });
+    sel += '</select>';
+    var html = '<div class="strat-layout"><div class="strat-controls">';
+    html += '<div class="bc-field"><label>Strategy</label>' + sel + '</div>';
+    html += '<div class="bc-field"><label>Underlying</label><input class="bc-input" value="NIFTY 50 — &#8377;24,487.65" readonly></div>';
+    html += '<div class="bc-field"><label>ATM Strike</label><input class="bc-input" value="24,500" readonly></div>';
+    html += '<div class="bc-field"><label>Expiry</label><input class="bc-input" value="29 May 2026" readonly></div>';
+    html += '</div><div class="strat-legs"><h3 style="margin-bottom:12px;font-size:14px;">Strategy Legs</h3>';
+    html += '<table class="fno-table"><thead><tr><th>Action</th><th>Type</th><th>Strike</th><th>Premium</th><th>Qty (lots)</th></tr></thead><tbody>';
+    legs.forEach(function(leg) {
+        var strike = leg.type === 'STOCK' ? '-' : (spot + leg.stOff * step).toLocaleString('en-IN');
+        var cls = leg.action === 'BUY' ? 'pos-buy-badge' : 'pos-sell-badge';
+        html += '<tr><td><span class="' + cls + '">' + leg.action + '</span></td><td>' + leg.type + '</td>';
+        html += '<td>' + strike + '</td><td>&#8377;' + leg.premium + '</td><td>1</td></tr>';
+    });
+    html += '</tbody></table>';
+    var netDeb = legs.reduce(function(s, l) { return l.action === 'BUY' ? s + l.premium : s - l.premium; }, 0);
+    html += '<div style="margin-top:12px;padding:12px;background:var(--bg-panel);border-radius:8px;font-size:13px;">';
+    html += 'Net <b>' + (netDeb >= 0 ? 'Debit' : 'Credit') + ':</b> &#8377;' + Math.abs(netDeb) + ' per share';
+    html += ' &nbsp;|&nbsp; <b>Max Risk per lot:</b> &#8377;' + (Math.abs(netDeb) * 75).toLocaleString('en-IN') + '</div>';
+    html += '<button class="nt-primary-btn" style="margin-top:14px" onclick="switchStratTabToPayoff()">View Payoff Chart &#8594;</button>';
+    html += '</div></div>';
+    return html;
+}
+function buildStrategyPayoffHTML() {
+    var spot = 24500, step = 100;
+    var legs = _strategyPresets[_selectedStrategy] || [];
+    var minS = spot * 0.88, maxS = spot * 1.12;
+    var W = 680, H = 270, padL = 60, padR = 20, padT = 24, padB = 40;
+    var cW = W - padL - padR, cH = H - padT - padB;
+    var payoffs = [];
+    for (var i = 0; i <= 120; i++) {
+        var s = minS + (maxS - minS) * i / 120;
+        var pnl = 0;
+        legs.forEach(function(leg) {
+            if (leg.type === 'STOCK') { pnl += (s - spot); return; }
+            var k = spot + leg.stOff * step;
+            var o = leg.type === 'CE' ? Math.max(0, s - k) - leg.premium : Math.max(0, k - s) - leg.premium;
+            pnl += leg.action === 'SELL' ? -o : o;
+        });
+        payoffs.push({ s: s, p: pnl });
+    }
+    var allP = payoffs.map(function(p) { return p.p; });
+    var minP = Math.min.apply(null, allP), maxP = Math.max.apply(null, allP);
+    var pad2 = (maxP - minP) * 0.14;
+    var lo = minP - pad2, hi = maxP + pad2;
+    if (lo > -1) lo = -Math.abs(maxP || 50) * 0.25;
+    if (hi < 1)  hi =  Math.abs(minP || 50) * 0.25;
+    function sx(sv) { return padL + (sv - minS) / (maxS - minS) * cW; }
+    function sy(pv) { return padT + (1 - (pv - lo) / (hi - lo)) * cH; }
+    var zY = sy(0);
+    var pathD = payoffs.reduce(function(acc, pt, idx) {
+        return acc + (idx === 0 ? 'M ' : ' L ') + sx(pt.s).toFixed(1) + ' ' + sy(pt.p).toFixed(1);
+    }, '');
+    var xTks = [minS, spot * 0.94, spot * 0.97, spot, spot * 1.03, spot * 1.06, maxS];
+    var html = '<div style="padding:8px 0;"><h3 style="margin-bottom:4px;">' + _selectedStrategy + ' — Payoff at Expiry</h3>';
+    html += '<p style="color:var(--text-muted);font-size:12px;margin-bottom:10px;">NIFTY Spot: &#8377;24,487.65 &middot; Expiry: 29 May 2026 &middot; Lot = 75</p>';
+    html += '<div style="overflow-x:auto;"><svg width="100%" viewBox="0 0 ' + W + ' ' + H + '" style="display:block;max-width:720px;min-width:320px;">';
+    for (var g = 0; g <= 4; g++) {
+        var gy = padT + g * cH / 4;
+        var gv = hi - g * (hi - lo) / 4;
+        html += '<line x1="' + padL + '" y1="' + gy.toFixed(1) + '" x2="' + (W - padR) + '" y2="' + gy.toFixed(1) + '" stroke="rgba(255,255,255,0.06)" stroke-width="1"/>';
+        html += '<text x="' + (padL - 5) + '" y="' + (gy + 4).toFixed(1) + '" text-anchor="end" font-size="9" fill="var(--text-muted)">' + (gv >= 0 ? '+' : '') + Math.round(gv) + '</text>';
+    }
+    html += '<line x1="' + padL + '" y1="' + zY.toFixed(1) + '" x2="' + (W - padR) + '" y2="' + zY.toFixed(1) + '" stroke="rgba(255,255,255,0.28)" stroke-width="1.5" stroke-dasharray="4,3"/>';
+    html += '<line x1="' + sx(spot).toFixed(1) + '" y1="' + padT + '" x2="' + sx(spot).toFixed(1) + '" y2="' + (H - padB) + '" stroke="var(--accent-primary)" stroke-width="1" stroke-dasharray="3,3" opacity="0.65"/>';
+    html += '<text x="' + sx(spot).toFixed(1) + '" y="' + (padT - 5) + '" text-anchor="middle" font-size="9" fill="var(--accent-primary)">Spot</text>';
+    html += '<path d="' + pathD + '" fill="none" stroke="var(--positive)" stroke-width="2.5" stroke-linejoin="round"/>';
+    xTks.forEach(function(t) { html += '<text x="' + sx(t).toFixed(1) + '" y="' + (H - padB + 14) + '" text-anchor="middle" font-size="9" fill="var(--text-muted)">' + Math.round(t / 100) * 100 + '</text>'; });
+    html += '<text x="' + (W / 2) + '" y="' + (H - 2) + '" text-anchor="middle" font-size="9" fill="var(--text-muted)">Price at Expiry (&#8377;)</text>';
+    html += '<text x="14" y="' + (H / 2) + '" text-anchor="middle" font-size="9" fill="var(--text-muted)" transform="rotate(-90 14 ' + (H / 2) + ')">P&amp;L (&#8377;/share)</text>';
+    html += '</svg></div>';
+    var netDeb2 = legs.reduce(function(s, l) { return l.action === 'BUY' ? s + l.premium : s - l.premium; }, 0);
+    html += '<div class="strat-metrics">';
+    html += '<div class="strat-metric"><span>Max Profit/lot</span><b class="positive">' + (maxP > 9000 ? 'Unlimited' : '+&#8377;' + (maxP * 75).toFixed(0)) + '</b></div>';
+    html += '<div class="strat-metric"><span>Max Loss/lot</span><b class="negative">' + (minP < -9000 ? 'Unlimited' : '-&#8377;' + Math.abs(minP * 75).toFixed(0)) + '</b></div>';
+    html += '<div class="strat-metric"><span>Net ' + (netDeb2 >= 0 ? 'Debit' : 'Credit') + '</span><b>&#8377;' + Math.abs(netDeb2) + '</b></div>';
+    html += '<div class="strat-metric"><span>Lot Size</span><b>75</b></div></div></div>';
+    return html;
+}
+function buildStrategyGreeksHTML() {
+    var spot = 24500, step = 100;
+    var legs = _strategyPresets[_selectedStrategy] || [];
+    var html = '<div style="overflow-x:auto;margin-top:16px;">';
+    html += '<p style="color:var(--text-muted);font-size:12px;margin-bottom:12px;">Approximate Greeks at current spot. Values per lot (75 shares).</p>';
+    html += '<table class="fno-table"><thead><tr><th>Leg</th><th>Action</th><th>Type</th><th>Strike</th><th>&#916; Delta</th><th>&#915; Gamma</th><th>&#920; Theta</th><th>&#957; Vega</th></tr></thead><tbody>';
+    var nD = 0, nG = 0, nT = 0, nV = 0;
+    legs.forEach(function(leg) {
+        if (leg.type === 'STOCK') {
+            html += '<tr><td>' + leg.label + '</td><td><span class="pos-buy-badge">BUY</span></td><td>STOCK</td><td>-</td><td class="positive">+1.00</td><td>0</td><td>0</td><td>0</td></tr>';
+            nD += 75; return;
+        }
+        var k = spot + leg.stOff * step;
+        var mon = (spot - k) / spot;
+        var delta = leg.type === 'CE' ? Math.max(0.05, Math.min(0.95, 0.5 + mon * 4)) : Math.max(0.05, Math.min(0.95, 0.5 - mon * 4));
+        delta = Math.round(delta * 100) / 100;
+        var gamma = Math.round(0.002 * Math.exp(-4 * Math.abs(mon)) * 10000) / 10000;
+        var theta = -Math.round(leg.premium * 0.012 * 100) / 100;
+        var vega  = Math.round(leg.premium * 0.08 * 100) / 100;
+        var m = leg.action === 'SELL' ? -1 : 1;
+        nD += m * delta * 75; nG += m * gamma * 75; nT += m * theta * 75; nV += m * vega * 75;
+        var cls = leg.action === 'BUY' ? 'pos-buy-badge' : 'pos-sell-badge';
+        html += '<tr><td>' + leg.label + '</td><td><span class="' + cls + '">' + leg.action + '</span></td><td>' + leg.type + '</td>';
+        html += '<td>' + k.toLocaleString('en-IN') + '</td>';
+        html += '<td class="' + (m > 0 ? 'positive' : 'negative') + '">' + (m > 0 ? '+' : '-') + delta + '</td>';
+        html += '<td class="' + (m > 0 ? 'positive' : 'negative') + '">' + (m > 0 ? '+' : '-') + gamma + '</td>';
+        html += '<td class="' + (m > 0 ? 'negative' : 'positive') + '">' + (m > 0 ? '' : '+') + theta + '</td>';
+        html += '<td class="positive">+' + vega + '</td></tr>';
+    });
+    html += '<tr style="border-top:2px solid var(--border-color);font-weight:700;"><td colspan="4">Net Position</td>';
+    html += '<td class="' + (nD >= 0 ? 'positive' : 'negative') + '">' + (nD >= 0 ? '+' : '') + nD.toFixed(1) + '</td>';
+    html += '<td class="' + (nG >= 0 ? 'positive' : 'negative') + '">' + (nG >= 0 ? '+' : '') + nG.toFixed(3) + '</td>';
+    html += '<td class="' + (nT >= 0 ? 'positive' : 'negative') + '">' + (nT >= 0 ? '+' : '') + nT.toFixed(2) + '</td>';
+    html += '<td class="' + (nV >= 0 ? 'positive' : 'negative') + '">' + (nV >= 0 ? '+' : '') + nV.toFixed(2) + '</td></tr>';
+    return html + '</tbody></table></div>';
 }

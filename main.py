@@ -5,13 +5,13 @@ Restructured for flat deployment (all files at repo root).
 
 import logging
 import time
-import os
 from contextlib import asynccontextmanager
 from pathlib import Path
-
-from fastapi import FastAPI, Query, Request
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, HTMLResponse
+from starlette.middleware.base import BaseHTTPMiddleware
+from starlette.responses import Response as StarletteResponse
 
 from config import settings
 from rate_limiter import RateLimitMiddleware
@@ -28,6 +28,33 @@ logger = logging.getLogger("nextrade")
 
 # Frontend files are in the same directory
 BASE_DIR = Path(__file__).resolve().parent
+
+
+class SecurityHeadersMiddleware(BaseHTTPMiddleware):
+    """Add hardening headers to every response."""
+    async def dispatch(self, request: Request, call_next) -> StarletteResponse:
+        response = await call_next(request)
+        response.headers["X-Content-Type-Options"] = "nosniff"
+        response.headers["X-Frame-Options"] = "DENY"
+        response.headers["X-XSS-Protection"] = "1; mode=block"
+        response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+        response.headers["Permissions-Policy"] = "camera=(), microphone=(), geolocation=()"
+        if request.url.scheme == "https":
+            response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains; preload"
+        response.headers["Content-Security-Policy"] = (
+            "default-src 'self'; "
+            "script-src 'self' 'unsafe-inline' https://unpkg.com; "
+            "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; "
+            "font-src 'self' https://fonts.gstatic.com; "
+            "img-src 'self' data: https:; "
+            "connect-src 'self' "
+            "https://query1.finance.yahoo.com https://query2.finance.yahoo.com "
+            "https://stooq.com https://www.stooq.com "
+            "https://news.google.com "
+            "https://corsproxy.io https://api.allorigins.win https://api.codetabs.com; "
+            "frame-ancestors 'none';"
+        )
+        return response
 
 
 @asynccontextmanager
@@ -58,17 +85,20 @@ app = FastAPI(
     description="Production-grade backend for NexTrade trading platform.",
     version="1.0.0",
     lifespan=lifespan,
-    docs_url="/api/docs",
-    redoc_url="/api/redoc",
+    # Expose interactive docs only in local debug mode — never in production
+    docs_url="/api/docs" if settings.debug else None,
+    redoc_url="/api/redoc" if settings.debug else None,
+    openapi_url="/api/openapi.json" if settings.debug else None,
 )
 
 # ── Middleware ──────────────────────────────────────────────
+app.add_middleware(SecurityHeadersMiddleware)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.cors_origins,
     allow_credentials=True,
-    allow_methods=["GET", "POST", "OPTIONS"],
-    allow_headers=["*"],
+    allow_methods=["GET", "OPTIONS"],
+    allow_headers=["Accept", "Accept-Language", "Content-Language", "Content-Type"],
 )
 app.add_middleware(RateLimitMiddleware)
 
@@ -122,15 +152,8 @@ async def serve_logo():
 
 # ── Root Handler ───────────────────────────────────────────
 @app.get("/", include_in_schema=False)
-async def root_handler(
-    request: Request,
-    url: str = Query(None),
-):
-    if url:
-        return await proxy_router.proxy_request(request=request, url=url)
-
+async def root_handler():
     p = BASE_DIR / "index.html"
     if p.exists():
         return FileResponse(str(p), media_type="text/html")
-
-    return {"service": settings.app_name, "status": "running"}
+    return HTMLResponse("<h1>Not found</h1>", status_code=404)
