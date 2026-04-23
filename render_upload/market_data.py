@@ -1,10 +1,15 @@
-"""NexTrade — Yahoo Finance Crumb Manager"""
-import time, logging
+"""
+NexTrade — Async Yahoo Finance Crumb Manager (flat structure)
+"""
+
+import time
+import logging
 from typing import Optional
 import httpx
-from app_config import settings
+from config import settings
 
 logger = logging.getLogger("nextrade.market_data")
+
 
 class YahooCrumbManager:
     def __init__(self):
@@ -19,22 +24,32 @@ class YahooCrumbManager:
             self._lock = asyncio.Lock()
 
     @property
-    def _is_expired(self):
+    def _is_expired(self) -> bool:
         return (time.time() - self._crumb_fetched_at) > settings.yahoo_crumb_ttl
 
-    async def get_crumb(self):
+    async def get_crumb(self) -> str:
         await self._ensure_lock()
-        if self._crumb and not self._is_expired: return self._crumb
+        if self._crumb and not self._is_expired:
+            return self._crumb
         async with self._lock:
-            if self._crumb and not self._is_expired: return self._crumb
+            if self._crumb and not self._is_expired:
+                return self._crumb
             return await self._fetch_crumb()
 
-    async def _fetch_crumb(self):
+    async def _fetch_crumb(self) -> str:
         try:
-            async with httpx.AsyncClient(headers={"User-Agent": settings.user_agent}, follow_redirects=True, timeout=5.0) as client:
-                try: await client.get("https://fc.yahoo.com")
-                except httpx.HTTPError: pass
-                resp = await client.get("https://query1.finance.yahoo.com/v1/test/getcrumb")
+            async with httpx.AsyncClient(
+                headers={"User-Agent": settings.user_agent},
+                follow_redirects=True,
+                timeout=5.0,
+            ) as client:
+                try:
+                    await client.get("https://fc.yahoo.com")
+                except httpx.HTTPError:
+                    pass
+                resp = await client.get(
+                    "https://query1.finance.yahoo.com/v1/test/getcrumb"
+                )
                 resp.raise_for_status()
                 crumb = resp.text.strip()
                 if crumb:
@@ -47,8 +62,10 @@ class YahooCrumbManager:
             logger.warning(f"Failed to fetch Yahoo crumb: {e}")
         return self._crumb or ""
 
-    async def get_cookies(self):
-        if self._is_expired: await self.get_crumb()
+    async def get_cookies(self) -> httpx.Cookies:
+        if self._is_expired:
+            await self.get_crumb()
         return self._cookies
+
 
 crumb_manager = YahooCrumbManager()

@@ -6,7 +6,7 @@
 - **Name**: NexTrade — Indian Stock Market Simulator (brokerage-grade)
 - **Purpose**: Live-data NSE/BSE dashboard with virtual trading, portfolio management, and investment calculators.
 - **Stack**: Vanilla HTML + JS + CSS frontend · FastAPI Python backend · No frameworks (no React, no Tailwind)
-- **Last updated by**: Claude Code (April 22 2026) — 6 new broker sections: Options Chain, F&O Dashboard, Positions, Funds & Margins, Brokerage Calc, Strategy Builder
+- **Last updated by**: Claude Code (April 23 2026) — Removed F&O Dashboard; fixed Positions/Funds/Brokerage Calc to use real data; equity+intraday only focus
 - **Runtime**: Python 3.11+, Node not required
 
 ---
@@ -15,9 +15,9 @@
 ```
 New project/
 ├── CLAUDE.md                ← YOU ARE HERE (AI context file)
-├── index.html               ← Entire frontend UI (~1340 lines, single-page app)
-├── script.js                ← All JS logic (~5050 lines)
-├── style.css                ← All CSS (~2740 lines, CSS custom properties design system)
+├── index.html               ← Entire frontend UI (~1336 lines, single-page app)
+├── script.js                ← All JS logic (~4823 lines)
+├── style.css                ← All CSS (~2710 lines, CSS custom properties design system)
 │
 ├── main.py                  ← FastAPI app entry point (serves static files + API + SecurityHeadersMiddleware)
 ├── config.py                ← Pydantic Settings (port, CORS origins incl. Render URL, rate limits, proxy whitelist)
@@ -158,7 +158,7 @@ var isLiveData = false;       // true when live prices loaded successfully
 Single-page app. Views toggled by `setView(viewName)`.
 
 Active sections (sidebar nav-items):
-`dashboard` | `screener` | `allstocks` | `gainers` | `mutualfunds` | `ipo` | `portfolio` | `watchlist` | `orders` | `news` | `calculator` | `compare` | `heatmap` | `journal` | `calendar` | `screener-pro` | `global` | `technicals` | `dividends` | `market-pulse` | `earnings` | `options-chain` | `fno` | `positions` | `funds` | `brokerage-calc` | `strategy` | `settings`
+`dashboard` | `screener` | `allstocks` | `gainers` | `mutualfunds` | `ipo` | `portfolio` | `watchlist` | `orders` | `news` | `calculator` | `compare` | `heatmap` | `journal` | `calendar` | `screener-pro` | `global` | `technicals` | `dividends` | `market-pulse` | `earnings` | `options-chain` | `positions` | `funds` | `brokerage-calc` | `strategy` | `settings`
 
 ### Key Functions Reference
 | Function | Lines | Purpose |
@@ -217,25 +217,21 @@ Active sections (sidebar nav-items):
 | `fmtOI(n)` | ~4180 | Format OI/volume as L/Cr for Indian-style display |
 | `renderOptionsChain()` | ~4190 | Full options chain table with CE/PE OI, IV, LTP, ATM highlight |
 | `switchOptionsTab(idx,btn)` | ~4185 | Switch between NIFTY/BANKNIFTY/FINNIFTY options chain |
-| `renderFnO()` | ~4260 | F&O Dashboard entry — tabs: Futures/Top Options/PCR/Lot Sizes |
-| `switchFnOTab(tab,btn)` | ~4255 | Switch F&O tab |
-| `buildFnOFuturesHTML()` | ~4270 | Futures OI, premium, volume table |
-| `buildFnOTopOptionsHTML()` | ~4285 | Top options by OI with type badge |
-| `buildFnOPcrHTML()` | ~4295 | PCR ratio table with sentiment label |
-| `buildFnOLotSizesHTML()` | ~4310 | Lot sizes + margin requirements |
-| `renderPositions()` | ~4330 | Positions book — Today / Holdings / P&L Summary tabs |
-| `switchPositionsTab(tab,btn)` | ~4325 | Switch positions tab |
-| `buildPositionsTodayHTML()` | ~4345 | Intraday positions with MTM P&L + Exit button |
-| `buildPositionsHoldingsHTML()` | ~4365 | Portfolio holdings from localStorage with live LTP P&L |
-| `buildPositionsPnLHTML()` | ~4385 | P&L summary grid cards |
-| `renderFunds()` | ~4400 | Funds & Margins — Overview/Equity/F&O/Ledger tabs |
-| `switchFundsTab(tab,btn)` | ~4395 | Switch funds tab |
-| `buildFundsOverviewHTML()` | ~4410 | Available cash, margin used, utilisation bar |
-| `buildFundsFnOHTML()` | ~4440 | SPAN, exposure, premium blocked |
-| `buildFundsLedgerHTML()` | ~4455 | Debit/Credit/Balance ledger table |
-| `renderBrokerageCalc()` | ~4475 | Interactive brokerage calculator with real NSE charges |
-| `switchBrokerageTab(tab,btn)` | ~4470 | Switch calc tab (Equity/F&O/Currency/Commodity) |
-| `calcBrokerage()` | ~4490 | Compute brokerage, STT, exchange charges, GST, SEBI, stamp, net P&L |
+| `renderPositions()` | ~4260 | Positions book — Intraday (MIS) / Holdings (CNC) / P&L Summary tabs |
+| `switchPositionsTab(tab,btn)` | ~4255 | Switch positions tab |
+| `_isToday(dateStr)` | ~4210 | Helper: checks if a date string is today |
+| `_getMISPositions()` | ~4220 | Derive net intraday positions from orderHistory MIS orders |
+| `buildPositionsTodayHTML()` | ~4270 | Real intraday positions (from orderHistory) with MTM P&L + Exit |
+| `buildPositionsHoldingsHTML()` | ~4310 | Portfolio holdings from localStorage with live LTP P&L + summary bar |
+| `buildPositionsPnLHTML()` | ~4360 | P&L summary grid — 8 real-data cards |
+| `renderFunds()` | ~4420 | Funds & Margins — Overview / Equity Margins / Ledger tabs |
+| `switchFundsTab(tab,btn)` | ~4415 | Switch funds tab |
+| `buildFundsOverviewHTML()` | ~4430 | Live virtualBalance, funds used, utilisation bar, flow breakdown |
+| `buildFundsEquityHTML()` | ~4460 | Cash margin, 5× MIS limit, holdings value, peak margin (all live) |
+| `buildFundsLedgerHTML()` | ~4480 | Ledger from real orderHistory — running balance per trade |
+| `renderBrokerageCalc()` | ~4510 | Brokerage calc — Intraday (MIS) / Delivery (CNC) tabs |
+| `switchBrokerageTab(tab,btn)` | ~4505 | Switch calc tab |
+| `calcBrokerage()` | ~4525 | Compute brokerage, STT, exchange charges, GST, SEBI, stamp; show summary bar + breakeven |
 | `renderStrategy()` | ~4540 | Options Strategy Builder — Builder/Payoff/Greeks tabs |
 | `switchStrategyTab(tab,btn)` | ~4535 | Switch strategy tab |
 | `buildStrategyBuilderHTML()` | ~4555 | Strategy leg table + net debit/credit |
@@ -367,10 +363,9 @@ Active sections (sidebar nav-items):
 | 📡 Market Pulse | ✅ Breadth, Sector Flow, Sentiment, FII/DII tabs |
 | 📈 Earnings Calendar | ✅ Q4 FY26 results — upcoming/this-week/reported/all tabs |
 | 📊 Options Chain | ✅ NIFTY/BANKNIFTY/FINNIFTY CE+PE OI, IV, LTP, ATM highlight, PCR, Max Pain |
-| ⚙️ F&O Dashboard | ✅ Futures OI, Top Options by OI, PCR sentiment, Lot Sizes table |
-| ⚡ Positions | ✅ Intraday positions MTM P&L, Holdings (from portfolio), P&L summary cards |
-| 💰 Funds & Margins | ✅ Available cash, margin utilisation bar, SPAN/exposure, ledger |
-| 🧮 Brokerage Calc | ✅ Real NSE charges (brokerage, STT, GST, SEBI, stamp duty, net P&L) |
+| ⚡ Positions | ✅ Intraday (MIS) live from orderHistory, Holdings (CNC) live LTP, P&L summary (8 cards) |
+| 💰 Funds & Margins | ✅ Live virtualBalance, 5× MIS limit, equity margins, real ledger from orderHistory |
+| 🧮 Brokerage Calc | ✅ Intraday (MIS) + Delivery (CNC); NSE/BSE charges, summary bar, breakeven price |
 | 🔧 Strategy Builder | ✅ 9 preset strategies, payoff SVG chart, Greeks (Delta/Gamma/Theta/Vega) |
 | **User Login / Auth System** | ❌ Not built yet |
 | **Real Demat account (broker API)** | ❌ Not built yet |

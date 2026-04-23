@@ -1478,7 +1478,7 @@ function setView(view) {
     var fullPageViews = ['orders','news','calculator','compare','settings','heatmap','journal',
                          'calendar','screener-pro','global','technicals','dividends',
                          'market-pulse','earnings',
-                         'options-chain','fno','positions','funds','brokerage-calc','strategy'];
+                         'options-chain','positions','funds','brokerage-calc','strategy'];
     var isFullPage = fullPageViews.indexOf(view) !== -1;
 
     // Show/hide the main dashboard-content wrapper
@@ -1489,7 +1489,7 @@ function setView(view) {
     ['orders','news','calculator','compare','settings','heatmap','journal',
      'calendar','screener-pro','global','technicals','dividends',
      'market-pulse','earnings',
-     'options-chain','fno','positions','funds','brokerage-calc','strategy'].forEach(function(v) {
+     'options-chain','positions','funds','brokerage-calc','strategy'].forEach(function(v) {
         var el = document.getElementById('section-' + v);
         if (el) el.style.display = (v === view) ? 'block' : 'none';
     });
@@ -1511,7 +1511,6 @@ function setView(view) {
         if (view === 'market-pulse')    { renderMarketPulse(); }
         if (view === 'earnings')        { renderEarningsCalendar(); }
         if (view === 'options-chain')   { renderOptionsChain(); }
-        if (view === 'fno')             { renderFnO(); }
         if (view === 'positions')       { renderPositions(); }
         if (view === 'funds')           { renderFunds(); }
         if (view === 'brokerage-calc')  { renderBrokerageCalc(); }
@@ -4292,123 +4291,46 @@ function renderOptionsChain() {
     el.innerHTML = html;
 }
 
-// ── F&O DASHBOARD ─────────────────────────────────────────
-var _fnoActiveTab = 'futures';
-var _fnoFutures = [
-    { symbol:'NIFTY',     name:'NIFTY 50',           lot:75,  price:24512.50, spot:24487.65, premium:24.85,  oi:18250000, oiChg:342500,  volume:4812000 },
-    { symbol:'BANKNIFTY', name:'BANK NIFTY',          lot:15,  price:52380.25, spot:52340.80, premium:39.45,  oi:8650000,  oiChg:-127500, volume:2381250 },
-    { symbol:'FINNIFTY',  name:'FIN NIFTY',           lot:40,  price:23198.60, spot:23180.45, premium:18.15,  oi:4280000,  oiChg:88000,   volume:1124000 },
-    { symbol:'RELIANCE',  name:'Reliance Industries', lot:250, price:1426.50,  spot:1424.80,  premium:1.70,   oi:14375000, oiChg:250000,  volume:3750000 },
-    { symbol:'TCS',       name:'Tata Consultancy',    lot:150, price:3362.25,  spot:3358.90,  premium:3.35,   oi:6825000,  oiChg:-150000, volume:1837500 },
-    { symbol:'INFY',      name:'Infosys',             lot:300, price:1594.80,  spot:1592.65,  premium:2.15,   oi:8400000,  oiChg:120000,  volume:2310000 },
-    { symbol:'HDFCBANK',  name:'HDFC Bank',           lot:550, price:1842.35,  spot:1839.40,  premium:2.95,   oi:12375000, oiChg:275000,  volume:3162500 },
-    { symbol:'ICICIBANK', name:'ICICI Bank',          lot:700, price:1247.60,  spot:1245.15,  premium:2.45,   oi:9800000,  oiChg:-210000, volume:2537500 },
-];
-var _fnoTopOptions = [
-    { symbol:'NIFTY 24500 CE',     type:'CE', expiry:'29 May', ltp:98.30,   chg:2.15,  oi:2437500, oiChg:45000,  iv:15.8, lot:75  },
-    { symbol:'NIFTY 24500 PE',     type:'PE', expiry:'29 May', ltp:111.50,  chg:1.80,  oi:2625000, oiChg:37500,  iv:15.9, lot:75  },
-    { symbol:'NIFTY 25000 CE',     type:'CE', expiry:'29 May', ltp:2.20,    chg:0.45,  oi:1987500, oiChg:67500,  iv:19.3, lot:75  },
-    { symbol:'BANKNIFTY 52400 CE', type:'CE', expiry:'21 May', ltp:202.50,  chg:3.80,  oi:727500,  oiChg:18000,  iv:17.3, lot:15  },
-    { symbol:'BANKNIFTY 52400 PE', type:'PE', expiry:'21 May', ltp:264.20,  chg:2.90,  oi:742500,  oiChg:15000,  iv:17.4, lot:15  },
-    { symbol:'NIFTY 24600 CE',     type:'CE', expiry:'29 May', ltp:46.85,   chg:3.25,  oi:1762500, oiChg:52500,  iv:16.3, lot:75  },
-    { symbol:'NIFTY 24400 CE',     type:'CE', expiry:'29 May', ltp:169.70,  chg:-3.95, oi:1323750, oiChg:-30000, iv:16.5, lot:75  },
-    { symbol:'RELIANCE 1400 CE',   type:'CE', expiry:'29 May', ltp:28.50,   chg:1.20,  oi:1125000, oiChg:37500,  iv:18.4, lot:250 },
-];
-
-function switchFnOTab(tab, btn) {
-    _fnoActiveTab = tab;
-    document.querySelectorAll('#fnoTabs .feature-tab').forEach(function(b) { b.classList.remove('active'); });
-    btn.classList.add('active'); renderFnOContent();
-}
-function renderFnO() {
-    _fnoActiveTab = 'futures';
-    document.querySelectorAll('#fnoTabs .feature-tab').forEach(function(b, i) { b.classList.toggle('active', i === 0); });
-    renderFnOContent();
-}
-function renderFnOContent() {
-    var el = document.getElementById('fno-content'); if (!el) return;
-    if (_fnoActiveTab === 'futures')    el.innerHTML = buildFnOFuturesHTML();
-    if (_fnoActiveTab === 'topoptions') el.innerHTML = buildFnOTopOptionsHTML();
-    if (_fnoActiveTab === 'pcr')        el.innerHTML = buildFnOPcrHTML();
-    if (_fnoActiveTab === 'lotsizes')   el.innerHTML = buildFnOLotSizesHTML();
-}
-function buildFnOFuturesHTML() {
-    var html = '<div style="overflow-x:auto;margin-top:16px;"><table class="fno-table"><thead><tr><th>Symbol</th><th>Futures</th><th>Spot</th><th>Premium</th><th>OI</th><th>Chg OI</th><th>Volume</th><th>Lot</th></tr></thead><tbody>';
-    _fnoFutures.forEach(function(f) {
-        var pC = f.premium > 0 ? 'positive' : 'negative', oC = f.oiChg > 0 ? 'positive' : 'negative';
-        html += '<tr><td><span class="fno-sym">' + f.symbol + '</span></td>';
-        html += '<td class="oc-ltp">&#8377;' + f.price.toLocaleString('en-IN') + '</td>';
-        html += '<td>&#8377;' + f.spot.toLocaleString('en-IN') + '</td>';
-        html += '<td class="' + pC + '">' + (f.premium > 0 ? '+' : '') + f.premium.toFixed(2) + '</td>';
-        html += '<td>' + fmtOI(f.oi) + '</td><td class="' + oC + '">' + (f.oiChg > 0 ? '+' : '') + fmtOI(f.oiChg) + '</td>';
-        html += '<td>' + fmtOI(f.volume) + '</td><td>' + f.lot + '</td></tr>';
-    });
-    return html + '</tbody></table></div>';
-}
-function buildFnOTopOptionsHTML() {
-    var html = '<div style="overflow-x:auto;margin-top:16px;"><table class="fno-table"><thead><tr><th>Option</th><th>Type</th><th>Expiry</th><th>LTP</th><th>Chg</th><th>OI</th><th>Chg OI</th><th>IV</th><th>Lot</th></tr></thead><tbody>';
-    _fnoTopOptions.forEach(function(o) {
-        var cC = o.chg >= 0 ? 'positive' : 'negative', oC = o.oiChg >= 0 ? 'positive' : 'negative';
-        var tBadge = o.type === 'CE' ? 'fno-ce-badge' : 'fno-pe-badge';
-        html += '<tr><td><span class="fno-sym">' + o.symbol + '</span></td>';
-        html += '<td><span class="' + tBadge + '">' + o.type + '</span></td>';
-        html += '<td style="color:var(--text-muted)">' + o.expiry + '</td>';
-        html += '<td class="oc-ltp">&#8377;' + o.ltp.toFixed(2) + '</td>';
-        html += '<td class="' + cC + '">' + (o.chg >= 0 ? '+' : '') + o.chg.toFixed(2) + '</td>';
-        html += '<td>' + fmtOI(o.oi) + '</td><td class="' + oC + '">' + (o.oiChg >= 0 ? '+' : '') + fmtOI(o.oiChg) + '</td>';
-        html += '<td>' + o.iv + '%</td><td>' + o.lot + '</td></tr>';
-    });
-    return html + '</tbody></table></div>';
-}
-function buildFnOPcrHTML() {
-    var rows = [
-        { name:'NIFTY 50',   pcr:1.08, ceOi:'6.87L', peOi:'7.42L', status:'Bullish', chg:'+0.04' },
-        { name:'BANK NIFTY', pcr:0.92, ceOi:'2.96L', peOi:'2.73L', status:'Bearish', chg:'-0.03' },
-        { name:'FIN NIFTY',  pcr:1.03, ceOi:'1.14L', peOi:'1.17L', status:'Neutral', chg:'+0.01' },
-        { name:'RELIANCE',   pcr:0.78, ceOi:'4.82L', peOi:'3.76L', status:'Bearish', chg:'-0.06' },
-        { name:'HDFC BANK',  pcr:1.15, ceOi:'3.12L', peOi:'3.59L', status:'Bullish', chg:'+0.08' },
-    ];
-    var html = '<div style="overflow-x:auto;margin-top:16px;">';
-    html += '<p style="color:var(--text-muted);font-size:13px;margin-bottom:12px;">PCR &gt; 1 = Bullish (more puts bought) &middot; PCR &lt; 1 = Bearish</p>';
-    html += '<table class="fno-table"><thead><tr><th>Index / Stock</th><th>PCR (OI)</th><th>CE OI</th><th>PE OI</th><th>Sentiment</th><th>Day Chg</th></tr></thead><tbody>';
-    rows.forEach(function(p) {
-        var sC = p.status === 'Bullish' ? 'positive' : (p.status === 'Bearish' ? 'negative' : '');
-        html += '<tr><td><b>' + p.name + '</b></td><td class="oc-ltp">' + p.pcr + '</td>';
-        html += '<td>' + p.ceOi + '</td><td>' + p.peOi + '</td>';
-        html += '<td class="' + sC + '"><b>' + p.status + '</b></td>';
-        html += '<td class="' + (p.chg.startsWith('+') ? 'positive' : 'negative') + '">' + p.chg + '</td></tr>';
-    });
-    return html + '</tbody></table></div>';
-}
-function buildFnOLotSizesHTML() {
-    var lots = [
-        { sym:'NIFTY',     co:'NIFTY 50',          lot:75,   margin:'&#8377;1.38L', val:'&#8377;18.36L' },
-        { sym:'BANKNIFTY', co:'BANK NIFTY',         lot:15,   margin:'&#8377;52K',   val:'&#8377;7.85L'  },
-        { sym:'FINNIFTY',  co:'FIN NIFTY',          lot:40,   margin:'&#8377;30K',   val:'&#8377;9.27L'  },
-        { sym:'RELIANCE',  co:'Reliance Industries',lot:250,  margin:'&#8377;89K',   val:'&#8377;3.56L'  },
-        { sym:'TCS',       co:'Tata Consultancy',   lot:150,  margin:'&#8377;1.26L', val:'&#8377;5.04L'  },
-        { sym:'INFY',      co:'Infosys',            lot:300,  margin:'&#8377;72K',   val:'&#8377;4.78L'  },
-        { sym:'HDFCBANK',  co:'HDFC Bank',          lot:550,  margin:'&#8377;76K',   val:'&#8377;10.12L' },
-        { sym:'ICICIBANK', co:'ICICI Bank',         lot:700,  margin:'&#8377;62K',   val:'&#8377;8.72L'  },
-        { sym:'WIPRO',     co:'Wipro',              lot:3000, margin:'&#8377;38K',   val:'&#8377;1.68L'  },
-        { sym:'SBILIFE',   co:'SBI Life Insurance', lot:750,  margin:'&#8377;58K',   val:'&#8377;11.73L' },
-    ];
-    var html = '<div style="overflow-x:auto;margin-top:16px;"><table class="fno-table"><thead><tr><th>Symbol</th><th>Company</th><th>Lot Size</th><th>Margin Req.</th><th>Mkt Lot Value</th></tr></thead><tbody>';
-    lots.forEach(function(l) {
-        html += '<tr><td><span class="fno-sym">' + l.sym + '</span></td><td>' + l.co + '</td><td><b>' + l.lot + '</b></td><td>' + l.margin + '</td><td>' + l.val + '</td></tr>';
-    });
-    return html + '</tbody></table></div>';
-}
-
 // ── POSITIONS ─────────────────────────────────────────────
 var _posActiveTab = 'today';
-var _todayPositions = [
-    { symbol:'NIFTY 24500 CE',     product:'MIS', qty:1,   avgPrice:96.15,  ltp:98.30,  pnl:161.25,  pnlPct:2.24,  side:'BUY',  type:'OPT' },
-    { symbol:'RELIANCE',           product:'MIS', qty:50,  avgPrice:1422.50,ltp:1424.80,pnl:115.00,  pnlPct:0.16,  side:'BUY',  type:'EQ'  },
-    { symbol:'TCS',                product:'MIS', qty:25,  avgPrice:3371.80,ltp:3358.90,pnl:322.50,  pnlPct:0.38,  side:'SELL', type:'EQ'  },
-    { symbol:'HDFC BANK',          product:'MIS', qty:100, avgPrice:1843.20,ltp:1839.40,pnl:-380.00, pnlPct:-0.21, side:'BUY',  type:'EQ'  },
-    { symbol:'BANKNIFTY 52400 PE', product:'MIS', qty:1,   avgPrice:271.50, ltp:264.20, pnl:109.50,  pnlPct:2.69,  side:'SELL', type:'OPT' },
-];
+
+function _isToday(dateStr) {
+    if (!dateStr) return false;
+    var now = new Date();
+    var d = now.getDate(), m = now.getMonth(), y = now.getFullYear();
+    var months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    return dateStr.indexOf(d + ' ' + months[m] + ' ' + y) !== -1 ||
+           dateStr.indexOf(y + '-' + String(m+1).padStart(2,'0') + '-' + String(d).padStart(2,'0')) !== -1 ||
+           dateStr.indexOf(String(d).padStart(2,'0') + '/' + String(m+1).padStart(2,'0') + '/' + y) !== -1;
+}
+
+function _getMISPositions() {
+    var map = {};
+    (orderHistory || []).forEach(function(o) {
+        if (!_isToday(o.date)) return;
+        var prod = (o.product || o.type || '').toUpperCase();
+        if (prod !== 'MIS' && prod !== 'INTRADAY') return;
+        var key = o.symbol;
+        if (!map[key]) map[key] = { symbol: o.symbol, buyQty: 0, sellQty: 0, buyVal: 0, sellVal: 0 };
+        if (o.side === 'BUY')  { map[key].buyQty  += o.qty; map[key].buyVal  += o.qty * o.price; }
+        if (o.side === 'SELL') { map[key].sellQty += o.qty; map[key].sellVal += o.qty * o.price; }
+    });
+    var positions = [];
+    Object.keys(map).forEach(function(sym) {
+        var p = map[sym];
+        var netQty = p.buyQty - p.sellQty;
+        if (netQty === 0) return;
+        var side = netQty > 0 ? 'BUY' : 'SELL';
+        var qty = Math.abs(netQty);
+        var avgPrice = side === 'BUY' ? (p.buyVal / p.buyQty) : (p.sellVal / p.sellQty);
+        var st = (stocks || []).find(function(s) { return s.symbol === sym; });
+        var ltp = st && st.price ? st.price : avgPrice;
+        var pnl = side === 'BUY' ? (ltp - avgPrice) * qty : (avgPrice - ltp) * qty;
+        var pnlPct = avgPrice > 0 ? (pnl / (avgPrice * qty)) * 100 : 0;
+        positions.push({ symbol: sym, side: side, qty: qty, avgPrice: avgPrice, ltp: ltp, pnl: pnl, pnlPct: pnlPct });
+    });
+    return positions;
+}
 
 function switchPositionsTab(tab, btn) {
     _posActiveTab = tab;
@@ -4427,73 +4349,107 @@ function renderPositionsContent() {
     if (_posActiveTab === 'pnl')      el.innerHTML = buildPositionsPnLHTML();
 }
 function buildPositionsTodayHTML() {
-    var totalPnl = _todayPositions.reduce(function(s, p) { return s + p.pnl; }, 0);
+    var positions = _getMISPositions();
+    var totalPnl = positions.reduce(function(s, p) { return s + p.pnl; }, 0);
     var pCls = totalPnl >= 0 ? 'positive' : 'negative';
     var html = '<div class="pos-summary-bar">';
-    html += '<div class="pos-summary-item"><span>Day\'s P&L</span><b class="' + pCls + '">' + (totalPnl >= 0 ? '+' : '') + '&#8377;' + Math.abs(totalPnl).toFixed(2) + '</b></div>';
-    html += '<div class="pos-summary-item"><span>Open Positions</span><b>' + _todayPositions.length + '</b></div>';
-    html += '<div class="pos-summary-item"><span>Realised P&L</span><b class="positive">+&#8377;0.00</b></div>';
-    html += '</div><div style="overflow-x:auto;margin-top:16px;"><table class="fno-table"><thead><tr>';
-    html += '<th>Symbol</th><th>Product</th><th>Qty</th><th>Avg Price</th><th>LTP</th><th>P&L</th><th>P&L %</th><th>Action</th></tr></thead><tbody>';
-    _todayPositions.forEach(function(p) {
+    html += '<div class="pos-summary-item"><span>MTM P&L</span><b class="' + pCls + '">' + (totalPnl >= 0 ? '+' : '') + '&#8377;' + Math.abs(totalPnl).toFixed(2) + '</b></div>';
+    html += '<div class="pos-summary-item"><span>Open Positions</span><b>' + positions.length + '</b></div>';
+    html += '<div class="pos-summary-item"><span>MIS Trades Today</span><b>' + (orderHistory || []).filter(function(o){ return _isToday(o.date); }).length + '</b></div>';
+    html += '</div>';
+    if (positions.length === 0) {
+        return html + '<div class="pos-empty"><div class="pos-empty-icon">&#9783;</div><p>No open intraday positions today.</p><p style="font-size:12px;color:var(--text-muted);margin-top:8px;">Place MIS orders from the Dashboard to see them here.</p></div>';
+    }
+    html += '<div style="overflow-x:auto;margin-top:16px;"><table class="trade-table"><thead><tr>';
+    html += '<th>Symbol</th><th>Side</th><th>Qty</th><th>Avg Price</th><th>LTP</th><th>MTM P&L</th><th>P&L %</th><th>Action</th></tr></thead><tbody>';
+    positions.forEach(function(p) {
         var plC = p.pnl >= 0 ? 'positive' : 'negative';
         var sC = p.side === 'BUY' ? 'pos-buy-badge' : 'pos-sell-badge';
-        html += '<tr><td><span class="fno-sym">' + p.symbol + '</span> <span class="' + sC + '">' + p.side + '</span></td>';
-        html += '<td><span class="pos-product-badge">' + p.product + '</span></td>';
+        html += '<tr>';
+        html += '<td><span class="trade-sym">' + p.symbol + '</span></td>';
+        html += '<td><span class="' + sC + '">' + p.side + '</span></td>';
         html += '<td>' + p.qty + '</td>';
         html += '<td>&#8377;' + p.avgPrice.toFixed(2) + '</td>';
-        html += '<td class="oc-ltp">&#8377;' + p.ltp.toFixed(2) + '</td>';
+        html += '<td class="trade-ltp">&#8377;' + p.ltp.toFixed(2) + '</td>';
         html += '<td class="' + plC + '"><b>' + (p.pnl >= 0 ? '+' : '') + '&#8377;' + p.pnl.toFixed(2) + '</b></td>';
         html += '<td class="' + plC + '">' + (p.pnlPct >= 0 ? '+' : '') + p.pnlPct.toFixed(2) + '%</td>';
-        html += '<td><button class="pos-exit-btn" onclick="showToast(\'Exit order placed\',\'success\')">Exit</button></td></tr>';
+        html += '<td><button class="pos-exit-btn" onclick="showToast(\'Exit order placed for ' + p.symbol + '\',\'success\')">Exit</button></td>';
+        html += '</tr>';
     });
     return html + '</tbody></table></div>';
 }
 function buildPositionsHoldingsHTML() {
     if (!portfolioHoldings || portfolioHoldings.length === 0) {
-        return '<div style="text-align:center;padding:48px;color:var(--text-muted);">No holdings yet. Buy stocks from the Dashboard.</div>';
+        return '<div class="pos-empty"><div class="pos-empty-icon">&#9783;</div><p>No holdings yet.</p><p style="font-size:12px;color:var(--text-muted);margin-top:8px;">Buy stocks with CNC/Delivery from the Dashboard.</p></div>';
     }
-    var html = '<div style="overflow-x:auto;margin-top:16px;"><table class="fno-table"><thead><tr>';
-    html += '<th>Symbol</th><th>Qty</th><th>Avg Cost</th><th>LTP</th><th>Invested</th><th>Current Value</th><th>P&L</th><th>P&L %</th></tr></thead><tbody>';
+    var totalInv = 0, totalCur = 0;
     portfolioHoldings.forEach(function(h) {
         var st = stocks.find(function(s) { return s.symbol === h.symbol; });
-        var ltp = st ? st.price : h.avgCost;
+        var ltp = st && st.price ? st.price : h.avgCost;
+        totalInv += h.qty * h.avgCost;
+        totalCur += h.qty * ltp;
+    });
+    var totalPnl = totalCur - totalInv;
+    var pCls = totalPnl >= 0 ? 'positive' : 'negative';
+    var html = '<div class="pos-summary-bar">';
+    html += '<div class="pos-summary-item"><span>Invested</span><b>&#8377;' + totalInv.toLocaleString('en-IN', { maximumFractionDigits: 0 }) + '</b></div>';
+    html += '<div class="pos-summary-item"><span>Current Value</span><b>&#8377;' + totalCur.toLocaleString('en-IN', { maximumFractionDigits: 0 }) + '</b></div>';
+    html += '<div class="pos-summary-item"><span>Total P&L</span><b class="' + pCls + '">' + (totalPnl >= 0 ? '+' : '') + '&#8377;' + Math.abs(totalPnl).toFixed(2) + '</b></div>';
+    html += '<div class="pos-summary-item"><span>Holdings</span><b>' + portfolioHoldings.length + '</b></div>';
+    html += '</div>';
+    html += '<div style="overflow-x:auto;margin-top:16px;"><table class="trade-table"><thead><tr>';
+    html += '<th>Symbol</th><th>Name</th><th>Qty</th><th>Avg Cost</th><th>LTP</th><th>Invested</th><th>Current Value</th><th>P&L</th><th>P&L %</th></tr></thead><tbody>';
+    portfolioHoldings.forEach(function(h) {
+        var st = stocks.find(function(s) { return s.symbol === h.symbol; });
+        var ltp = st && st.price ? st.price : h.avgCost;
         var inv = h.qty * h.avgCost, cur = h.qty * ltp, pnl = cur - inv;
-        var pct = (pnl / inv) * 100;
+        var pct = inv > 0 ? (pnl / inv) * 100 : 0;
         var pC = pnl >= 0 ? 'positive' : 'negative';
-        html += '<tr><td><span class="fno-sym">' + h.symbol + '</span></td><td>' + h.qty + '</td>';
-        html += '<td>&#8377;' + h.avgCost.toFixed(2) + '</td><td class="oc-ltp">&#8377;' + ltp.toFixed(2) + '</td>';
+        html += '<tr>';
+        html += '<td><span class="trade-sym">' + h.symbol + '</span></td>';
+        html += '<td style="font-size:12px;color:var(--text-muted);">' + (h.name || '') + '</td>';
+        html += '<td>' + h.qty + '</td>';
+        html += '<td>&#8377;' + h.avgCost.toFixed(2) + '</td>';
+        html += '<td class="trade-ltp">&#8377;' + ltp.toFixed(2) + '</td>';
         html += '<td>&#8377;' + inv.toLocaleString('en-IN', { maximumFractionDigits: 0 }) + '</td>';
         html += '<td>&#8377;' + cur.toLocaleString('en-IN', { maximumFractionDigits: 0 }) + '</td>';
         html += '<td class="' + pC + '"><b>' + (pnl >= 0 ? '+' : '') + '&#8377;' + Math.abs(pnl).toFixed(2) + '</b></td>';
-        html += '<td class="' + pC + '">' + (pct >= 0 ? '+' : '') + pct.toFixed(2) + '%</td></tr>';
+        html += '<td class="' + pC + '">' + (pct >= 0 ? '+' : '') + pct.toFixed(2) + '%</td>';
+        html += '</tr>';
     });
     return html + '</tbody></table></div>';
 }
 function buildPositionsPnLHTML() {
-    var dayPnl = _todayPositions.reduce(function(s, p) { return s + p.pnl; }, 0);
+    var misPosns = _getMISPositions();
+    var dayMTM = misPosns.reduce(function(s, p) { return s + p.pnl; }, 0);
     var inv = portfolioHoldings.reduce(function(s, h) { return s + h.qty * h.avgCost; }, 0);
     var cur = portfolioHoldings.reduce(function(s, h) {
         var st = stocks.find(function(x) { return x.symbol === h.symbol; });
-        return s + h.qty * (st ? st.price : h.avgCost);
+        return s + h.qty * (st && st.price ? st.price : h.avgCost);
     }, 0);
-    var overall = cur - inv;
+    var holdingsPnl = cur - inv;
+    var totalOrders = (orderHistory || []).filter(function(o) { return _isToday(o.date); }).length;
+    var todayBuy = (orderHistory || []).filter(function(o) { return _isToday(o.date) && o.side === 'BUY'; })
+                    .reduce(function(s, o) { return s + (o.total || o.qty * o.price); }, 0);
+    var todaySell = (orderHistory || []).filter(function(o) { return _isToday(o.date) && o.side === 'SELL'; })
+                     .reduce(function(s, o) { return s + (o.total || o.qty * o.price); }, 0);
     var cards = [
-        ['Day\'s P&L (F&O)',  dayPnl,   dayPnl >= 0 ? 'positive' : 'negative'],
-        ['Portfolio P&L',     overall,  overall >= 0 ? 'positive' : 'negative'],
-        ['Total Invested',    null,     ''],
-        ['Current Value',     null,     ''],
-        ['Realised P&L',      0,        'positive'],
-        ['Charges Today',     null,     'negative'],
+        { label: 'Intraday MTM P&L',  val: dayMTM,      cls: dayMTM >= 0 ? 'positive' : 'negative',      fmt: 'pnl' },
+        { label: 'Portfolio P&L',     val: holdingsPnl,  cls: holdingsPnl >= 0 ? 'positive' : 'negative', fmt: 'pnl' },
+        { label: 'Total Invested',    val: inv,           cls: '',                                          fmt: 'abs' },
+        { label: 'Current Value',     val: cur,           cls: '',                                          fmt: 'abs' },
+        { label: 'Today Buy Value',   val: todayBuy,      cls: 'negative',                                  fmt: 'abs' },
+        { label: 'Today Sell Value',  val: todaySell,     cls: 'positive',                                  fmt: 'abs' },
+        { label: 'Orders Today',      val: totalOrders,   cls: '',                                          fmt: 'count' },
+        { label: 'Open MIS Positions',val: misPosns.length, cls: '', fmt: 'count' },
     ];
-    var vals = [dayPnl, overall, inv, cur, 0, -342.80];
     var html = '<div class="pnl-grid">';
-    cards.forEach(function(c, i) {
-        var v = vals[i];
-        var display = (i === 2 || i === 3)
-            ? '&#8377;' + Math.abs(v).toLocaleString('en-IN', { maximumFractionDigits: 0 })
-            : (i === 5 ? '-&#8377;342.80' : (v >= 0 ? '+&#8377;' : '-&#8377;') + Math.abs(v).toFixed(2));
-        html += '<div class="pnl-card"><div class="pnl-card-label">' + c[0] + '</div><div class="pnl-card-val ' + c[2] + '">' + display + '</div></div>';
+    cards.forEach(function(c) {
+        var display;
+        if (c.fmt === 'pnl')   display = (c.val >= 0 ? '+&#8377;' : '-&#8377;') + Math.abs(c.val).toFixed(2);
+        else if (c.fmt === 'abs') display = '&#8377;' + Math.abs(c.val).toLocaleString('en-IN', { maximumFractionDigits: 0 });
+        else display = c.val;
+        html += '<div class="pnl-card"><div class="pnl-card-label">' + c.label + '</div><div class="pnl-card-val ' + c.cls + '">' + display + '</div></div>';
     });
     return html + '</div>';
 }
@@ -4514,49 +4470,52 @@ function renderFundsContent() {
     var el = document.getElementById('funds-content'); if (!el) return;
     if (_fundsActiveTab === 'overview') el.innerHTML = buildFundsOverviewHTML();
     if (_fundsActiveTab === 'equity')   el.innerHTML = buildFundsEquityHTML();
-    if (_fundsActiveTab === 'fno')      el.innerHTML = buildFundsFnOHTML();
     if (_fundsActiveTab === 'ledger')   el.innerHTML = buildFundsLedgerHTML();
 }
 function buildFundsOverviewHTML() {
     var bal = virtualBalance;
-    var used = Math.max(0, 1000000 - bal);
-    var pct = Math.min(100, (used / 1000000) * 100).toFixed(1);
+    var opening = 1000000;
+    var invested = portfolioHoldings.reduce(function(s, h) { return s + h.qty * h.avgCost; }, 0);
+    var used = Math.max(0, opening - bal);
+    var pct = Math.min(100, (used / opening) * 100).toFixed(1);
+    var todayBuy = (orderHistory || []).filter(function(o) { return _isToday(o.date) && o.side === 'BUY'; })
+                    .reduce(function(s, o) { return s + (o.total || o.qty * o.price); }, 0);
     var html = '<div class="funds-overview-grid">';
-    html += '<div class="funds-card funds-avail"><div class="funds-card-label">Available Cash</div><div class="funds-card-val">&#8377;' + bal.toLocaleString('en-IN', { maximumFractionDigits: 2 }) + '</div><div class="funds-card-sub">Ready to invest</div></div>';
-    html += '<div class="funds-card funds-used"><div class="funds-card-label">Margin Used</div><div class="funds-card-val negative">&#8377;' + used.toLocaleString('en-IN', { maximumFractionDigits: 2 }) + '</div><div class="funds-card-sub">' + pct + '% of total</div></div>';
-    html += '<div class="funds-card"><div class="funds-card-label">Total Funds</div><div class="funds-card-val">&#8377;10,00,000</div><div class="funds-card-sub">Opening balance</div></div>';
-    html += '<div class="funds-card"><div class="funds-card-label">Collateral</div><div class="funds-card-val">&#8377;0</div><div class="funds-card-sub">Pledged securities</div></div></div>';
-    html += '<div class="funds-bar-wrap"><div class="funds-bar-label"><span>Margin Utilisation</span><span>' + pct + '%</span></div><div class="funds-bar-track"><div class="funds-bar-fill" style="width:' + pct + '%"></div></div></div>';
-    html += '<div class="funds-breakdown"><h3 style="margin-bottom:12px;font-size:14px;">Charge Breakdown</h3>';
-    var frows = [['Opening Balance','&#8377;10,00,000.00',''],['Payin (today)','+&#8377;0.00','positive'],['Stock Purchases','-&#8377;' + used.toLocaleString('en-IN', { maximumFractionDigits:2 }),'negative'],['Brokerage &amp; Charges','-&#8377;342.80','negative'],['Available Balance','&#8377;' + bal.toLocaleString('en-IN', { maximumFractionDigits:2 }),'']];
+    html += '<div class="funds-card funds-avail"><div class="funds-card-label">Available Cash</div><div class="funds-card-val">&#8377;' + bal.toLocaleString('en-IN', { maximumFractionDigits: 2 }) + '</div><div class="funds-card-sub">Ready to trade</div></div>';
+    html += '<div class="funds-card funds-used"><div class="funds-card-label">Funds Used</div><div class="funds-card-val negative">&#8377;' + used.toLocaleString('en-IN', { maximumFractionDigits: 2 }) + '</div><div class="funds-card-sub">' + pct + '% of opening balance</div></div>';
+    html += '<div class="funds-card"><div class="funds-card-label">Opening Balance</div><div class="funds-card-val">&#8377;' + opening.toLocaleString('en-IN') + '</div><div class="funds-card-sub">Virtual account balance</div></div>';
+    html += '<div class="funds-card"><div class="funds-card-label">Holdings Value</div><div class="funds-card-val">&#8377;' + invested.toLocaleString('en-IN', { maximumFractionDigits: 0 }) + '</div><div class="funds-card-sub">CNC stock investments</div></div>';
+    html += '</div>';
+    html += '<div class="funds-bar-wrap"><div class="funds-bar-label"><span>Fund Utilisation</span><span>' + pct + '%</span></div><div class="funds-bar-track"><div class="funds-bar-fill" style="width:' + pct + '%"></div></div></div>';
+    html += '<div class="funds-breakdown"><div style="font-weight:600;font-size:14px;margin-bottom:14px;color:var(--text-main);">Fund Flow</div>';
+    var totalOrders = (orderHistory || []).length;
+    var frows = [
+        ['Opening Balance', '&#8377;' + opening.toLocaleString('en-IN'), ''],
+        ['Today\'s Buy Orders', '-&#8377;' + todayBuy.toLocaleString('en-IN', { maximumFractionDigits: 2 }), todayBuy > 0 ? 'negative' : ''],
+        ['Total Orders Placed', totalOrders + ' orders', ''],
+        ['Available Balance', '&#8377;' + bal.toLocaleString('en-IN', { maximumFractionDigits: 2 }), bal >= opening ? 'positive' : 'negative'],
+    ];
     frows.forEach(function(r, i) {
-        html += '<div class="funds-row' + (i === 4 ? ' funds-row-total' : '') + '"><span>' + r[0] + '</span><span class="' + r[2] + '">' + r[1] + '</span></div>';
+        html += '<div class="funds-row' + (i === 3 ? ' funds-row-total' : '') + '"><span>' + r[0] + '</span><span class="' + r[2] + '">' + r[1] + '</span></div>';
     });
     return html + '</div>';
 }
 function buildFundsEquityHTML() {
+    var bal = virtualBalance;
+    var mis5x = bal * 5;
+    var holdingsVal = portfolioHoldings.reduce(function(s, h) {
+        var st = stocks.find(function(x) { return x.symbol === h.symbol; });
+        return s + h.qty * (st && st.price ? st.price : h.avgCost);
+    }, 0);
+    var todayBuyVal = (orderHistory || []).filter(function(o) { return _isToday(o.date) && o.side === 'BUY'; })
+                       .reduce(function(s, o) { return s + (o.total || o.qty * o.price); }, 0);
     var items = [
-        ['Cash Margin','&#8377;4,85,320.50','Available for equity delivery'],
-        ['Intraday MIS Margin','&#8377;9,70,641.00','5x leverage on cash (MIS)'],
-        ['Collateral','&#8377;0.00','Pledged holdings value'],
-        ['Peak Margin Used','&#8377;2,20,000.00','Today\'s maximum margin used'],
-        ['SPAN + Exposure','&#8377;0.00','F&O margin requirement'],
-        ['Ad-hoc Margin','&#8377;0.00','Shortage penalty from exchange'],
-    ];
-    var html = '<div class="funds-section-grid">';
-    items.forEach(function(item) {
-        html += '<div class="funds-detail-card"><div class="fdc-label">' + item[0] + '</div><div class="fdc-val">' + item[1] + '</div><div class="fdc-sub">' + item[2] + '</div></div>';
-    });
-    return html + '</div>';
-}
-function buildFundsFnOHTML() {
-    var items = [
-        ['Available Margin','&#8377;3,12,480.25','Cash available for F&O'],
-        ['Blocked for F&O','&#8377;1,87,519.75','Margin blocked by open positions'],
-        ['SPAN Margin','&#8377;1,42,300.00','Exchange minimum margin (SPAN)'],
-        ['Exposure Margin','&#8377;45,219.75','Exchange additional exposure margin'],
-        ['Option Premium Blocked','&#8377;8,450.50','Premium for long option positions'],
-        ['Collateral','&#8377;0.00','Pledged F&O margin'],
+        ['Cash Available (Delivery)', '&#8377;' + bal.toLocaleString('en-IN', { maximumFractionDigits: 2 }), 'Available for CNC (equity delivery) orders'],
+        ['Intraday Limit (MIS)', '&#8377;' + mis5x.toLocaleString('en-IN', { maximumFractionDigits: 0 }), '5× cash leverage for intraday (MIS) orders'],
+        ['Holdings Market Value', '&#8377;' + holdingsVal.toLocaleString('en-IN', { maximumFractionDigits: 0 }), 'Current value of CNC holdings at LTP'],
+        ['Today\'s Buy Value', '&#8377;' + todayBuyVal.toLocaleString('en-IN', { maximumFractionDigits: 2 }), 'Capital deployed today across all orders'],
+        ['Collateral Value', '&#8377;0.00', 'Pledged securities (not available in simulator)'],
+        ['Peak Margin Used', '&#8377;' + Math.max(todayBuyVal, holdingsVal).toLocaleString('en-IN', { maximumFractionDigits: 0 }), 'Highest margin utilised today'],
     ];
     var html = '<div class="funds-section-grid">';
     items.forEach(function(item) {
@@ -4565,94 +4524,135 @@ function buildFundsFnOHTML() {
     return html + '</div>';
 }
 function buildFundsLedgerHTML() {
-    var ledger = [
-        { date:'21 May 2026', narr:'Opening Balance',                   dr:0,       cr:1000000, bal:1000000    },
-        { date:'21 May 2026', narr:'Buy RELIANCE MIS 50@1422.50',       dr:71125,   cr:0,       bal:928875     },
-        { date:'21 May 2026', narr:'Sell TCS MIS 25@3371.80',           dr:0,       cr:84295,   bal:1013170    },
-        { date:'21 May 2026', narr:'Buy NIFTY 24500 CE 75@96.15',       dr:7211.25, cr:0,       bal:1005958.75 },
-        { date:'21 May 2026', narr:'Sell BANKNIFTY 52400 PE 15@271.50', dr:0,       cr:4072.50, bal:1010031.25 },
-        { date:'21 May 2026', narr:'Brokerage &amp; Charges',           dr:342.80,  cr:0,       bal:1009688.45 },
-        { date:'21 May 2026', narr:'STT',                               dr:1018.75, cr:0,       bal:1008669.70 },
-        { date:'21 May 2026', narr:'Buy HDFC BANK MIS 100@1843.20',     dr:184320,  cr:0,       bal:824349.70  },
-        { date:'21 May 2026', narr:'MTM Settlement F&amp;O',            dr:5249.20, cr:0,       bal:virtualBalance },
-    ];
-    var html = '<div style="overflow-x:auto;margin-top:16px;"><table class="fno-table"><thead><tr><th>Date</th><th>Narration</th><th>Debit (&#8377;)</th><th>Credit (&#8377;)</th><th>Balance (&#8377;)</th></tr></thead><tbody>';
-    ledger.forEach(function(l) {
-        html += '<tr><td style="color:var(--text-muted);font-size:12px;">' + l.date + '</td><td>' + l.narr + '</td>';
-        html += '<td class="' + (l.dr > 0 ? 'negative' : '') + '">' + (l.dr > 0 ? '&#8377;' + l.dr.toLocaleString('en-IN', { maximumFractionDigits:2 }) : '-') + '</td>';
-        html += '<td class="' + (l.cr > 0 ? 'positive' : '') + '">' + (l.cr > 0 ? '&#8377;' + l.cr.toLocaleString('en-IN', { maximumFractionDigits:2 }) : '-') + '</td>';
-        html += '<td><b>&#8377;' + l.bal.toLocaleString('en-IN', { maximumFractionDigits:2 }) + '</b></td></tr>';
+    var entries = [];
+    entries.push({ date: 'Opening', narr: 'Opening Balance — Virtual Account', dr: 0, cr: 1000000 });
+    var sorted = (orderHistory || []).slice().sort(function(a, b) {
+        return (a.date || '').localeCompare(b.date || '');
     });
+    sorted.forEach(function(o) {
+        var val = o.total || (o.qty * o.price);
+        var narr = (o.side === 'BUY' ? 'Buy' : 'Sell') + ' ' + o.symbol + ' ' + o.qty + ' @ &#8377;' + (o.price || 0).toFixed(2);
+        if (o.product) narr += ' (' + o.product + ')';
+        if (o.side === 'BUY') entries.push({ date: o.date || '', narr: narr, dr: val, cr: 0 });
+        else                  entries.push({ date: o.date || '', narr: narr, dr: 0, cr: val });
+    });
+    var runBal = 1000000;
+    var html = '<div style="overflow-x:auto;margin-top:16px;"><table class="trade-table"><thead><tr><th>Date</th><th>Narration</th><th>Debit (&#8377;)</th><th>Credit (&#8377;)</th><th>Balance (&#8377;)</th></tr></thead><tbody>';
+    entries.forEach(function(l) {
+        runBal = runBal - l.dr + l.cr;
+        html += '<tr>';
+        html += '<td style="color:var(--text-muted);font-size:12px;white-space:nowrap;">' + l.date + '</td>';
+        html += '<td>' + l.narr + '</td>';
+        html += '<td class="' + (l.dr > 0 ? 'negative' : '') + '">' + (l.dr > 0 ? l.dr.toLocaleString('en-IN', { maximumFractionDigits: 2 }) : '—') + '</td>';
+        html += '<td class="' + (l.cr > 0 ? 'positive' : '') + '">' + (l.cr > 0 ? l.cr.toLocaleString('en-IN', { maximumFractionDigits: 2 }) : '—') + '</td>';
+        html += '<td><b>&#8377;' + runBal.toLocaleString('en-IN', { maximumFractionDigits: 2 }) + '</b></td>';
+        html += '</tr>';
+    });
+    if (entries.length <= 1) {
+        html += '<tr><td colspan="5" style="text-align:center;color:var(--text-muted);padding:32px;">No transactions yet. Place orders from the Dashboard.</td></tr>';
+    }
     return html + '</tbody></table></div>';
 }
 
 // ── BROKERAGE CALCULATOR ───────────────────────────────────
-var _brokerageActiveTab = 'equity';
+var _brokerageActiveTab = 'intraday';
 function switchBrokerageTab(tab, btn) {
     _brokerageActiveTab = tab;
     document.querySelectorAll('#brokerageTabs .feature-tab').forEach(function(b) { b.classList.remove('active'); });
     btn.classList.add('active'); renderBrokerageContent();
 }
 function renderBrokerageCalc() {
-    _brokerageActiveTab = 'equity';
+    _brokerageActiveTab = 'intraday';
     document.querySelectorAll('#brokerageTabs .feature-tab').forEach(function(b, i) { b.classList.toggle('active', i === 0); });
     renderBrokerageContent();
 }
 function renderBrokerageContent() {
     var el = document.getElementById('brokerage-content'); if (!el) return;
     var tab = _brokerageActiveTab;
-    var prodOpts = tab === 'equity'
-        ? '<option value="delivery">Delivery (CNC)</option><option value="intraday">Intraday (MIS)</option>'
-        : (tab === 'fno' ? '<option value="futures">Futures</option><option value="options">Options</option>' : '<option value="intraday">Intraday</option>');
-    var lotField = tab === 'fno' ? '<div class="bc-field"><label>Lot Size</label><input id="bc_lot" type="number" value="75" min="1" oninput="calcBrokerage()" class="bc-input"></div>' : '';
-    el.innerHTML = '<div class="bc-layout"><div class="bc-inputs"><h3 style="margin-bottom:16px;font-size:14px;color:var(--text-muted);">Trade Details</h3>'
+    var isIntra = tab === 'intraday';
+    var subLabel = isIntra
+        ? '<p class="bc-tab-note">Intraday (MIS) — Flat &#8377;20 or 0.03% brokerage per order. STT only on sell side. Position auto-squares at 3:20 PM.</p>'
+        : '<p class="bc-tab-note">Delivery (CNC) — 0.1% or &#8377;20 brokerage per order. STT on both buy &amp; sell. No auto-square off.</p>';
+    el.innerHTML = '<div class="bc-layout">'
+        + '<div class="bc-inputs">'
+        + subLabel
         + '<div class="bc-field"><label>Buy Price (&#8377;)</label><input id="bc_buy" type="number" value="1500" min="0.01" step="0.05" oninput="calcBrokerage()" class="bc-input"></div>'
         + '<div class="bc-field"><label>Sell Price (&#8377;)</label><input id="bc_sell" type="number" value="1550" min="0.01" step="0.05" oninput="calcBrokerage()" class="bc-input"></div>'
-        + '<div class="bc-field"><label>Quantity</label><input id="bc_qty" type="number" value="100" min="1" oninput="calcBrokerage()" class="bc-input"></div>'
-        + '<div class="bc-field"><label>Product Type</label><select id="bc_product" class="bc-input" onchange="calcBrokerage()">' + prodOpts + '</select></div>'
-        + lotField + '</div><div class="bc-results" id="bc_results"></div></div>';
+        + '<div class="bc-field"><label>Quantity (shares)</label><input id="bc_qty" type="number" value="100" min="1" oninput="calcBrokerage()" class="bc-input"></div>'
+        + '<div class="bc-field"><label>Exchange</label><select id="bc_exch" class="bc-input" onchange="calcBrokerage()"><option value="nse">NSE</option><option value="bse">BSE</option></select></div>'
+        + '</div>'
+        + '<div class="bc-results" id="bc_results"></div>'
+        + '</div>';
     calcBrokerage();
 }
 function calcBrokerage() {
-    var buy = parseFloat((document.getElementById('bc_buy') || {}).value) || 0;
+    var buy  = parseFloat((document.getElementById('bc_buy')  || {}).value) || 0;
     var sell = parseFloat((document.getElementById('bc_sell') || {}).value) || 0;
-    var qty = parseInt((document.getElementById('bc_qty') || {}).value) || 0;
-    var prod = (document.getElementById('bc_product') || {}).value || 'delivery';
-    var lot = parseInt(((document.getElementById('bc_lot') || {}).value)) || 1;
-    var tab = _brokerageActiveTab;
-    var aQty = tab === 'fno' ? qty * lot : qty;
-    var buyT = buy * aQty, sellT = sell * aQty, profit = (sell - buy) * aQty;
-    var brokBuy, brokSell;
-    if (tab === 'equity' && prod === 'delivery')  { brokBuy = Math.min(buyT * 0.001, 20); brokSell = Math.min(sellT * 0.001, 20); }
-    else if (tab === 'equity')                    { brokBuy = Math.min(buyT * 0.0003, 20); brokSell = Math.min(sellT * 0.0003, 20); }
-    else                                          { brokBuy = 20; brokSell = 20; }
+    var qty  = parseInt((document.getElementById('bc_qty')    || {}).value) || 0;
+    var exch = ((document.getElementById('bc_exch') || {}).value) || 'nse';
+    var tab  = _brokerageActiveTab;
+    var isIntra = tab === 'intraday';
+
+    var buyT = buy * qty, sellT = sell * qty, profit = (sell - buy) * qty;
+
+    // Brokerage: ₹20 flat per order or 0.03% (intraday) / 0.1% (delivery)
+    var brokRate = isIntra ? 0.0003 : 0.001;
+    var brokBuy  = Math.min(buyT  * brokRate, 20);
+    var brokSell = Math.min(sellT * brokRate, 20);
     var brok = brokBuy + brokSell;
-    var stt = 0;
-    if (tab === 'equity' && prod === 'delivery')  stt = (buyT + sellT) * 0.001;
-    else if (tab === 'equity')                    stt = sellT * 0.00025;
-    else if (prod === 'futures')                  stt = sellT * 0.0001;
-    else if (prod === 'options')                  stt = sellT * 0.000625;
-    else                                          stt = sellT * 0.00002;
-    var exchRate = tab === 'equity' ? 0.0000335 : (prod === 'options' ? 0.00053 : 0.00002);
-    var exch = (buyT + sellT) * exchRate;
+
+    // STT: intraday = 0.025% on sell only; delivery = 0.1% on both
+    var stt = isIntra ? sellT * 0.00025 : (buyT + sellT) * 0.001;
+
+    // Exchange transaction charges: NSE 0.00335% | BSE 0.003%
+    var exchRate = exch === 'nse' ? 0.0000335 : 0.00003;
+    var exchChg = (buyT + sellT) * exchRate;
+
+    // SEBI: ₹10 per crore (0.000001)
     var sebi = (buyT + sellT) * 0.000001;
-    var gst  = (brok + exch + sebi) * 0.18;
-    var stampRate = (tab === 'equity' && prod === 'delivery') ? 0.00015 : (tab === 'fno' ? 0.00002 : 0.000003);
+
+    // GST 18% on (brokerage + exchange charges + SEBI)
+    var gst = (brok + exchChg + sebi) * 0.18;
+
+    // Stamp duty: intraday 0.003% on buy; delivery 0.015% on buy
+    var stampRate = isIntra ? 0.00003 : 0.00015;
     var stamp = buyT * stampRate;
-    var total = brok + stt + exch + sebi + gst + stamp;
+
+    var total = brok + stt + exchChg + sebi + gst + stamp;
     var net = profit - total;
-    var be = aQty > 0 ? buy + total / aQty : 0;
+    var be = qty > 0 ? (buyT + total) / qty : 0;
+
     var f = function(n) { return '&#8377;' + Math.abs(n).toFixed(2); };
     var res = document.getElementById('bc_results'); if (!res) return;
-    var rows = [['Gross P&L', profit, profit >= 0 ? 'positive' : 'negative'],['Brokerage', -brok, 'negative'],
-                ['STT / CTT', -stt, 'negative'],['Exchange Charges', -exch, 'negative'],
-                ['GST (18%)', -gst, 'negative'],['SEBI Fees', -sebi, 'negative'],['Stamp Duty', -stamp, 'negative']];
-    var html = '<h3 style="margin-bottom:16px;font-size:14px;color:var(--text-muted);">Charge Breakdown</h3><div class="bc-charge-list">';
-    rows.forEach(function(r) { html += '<div class="bc-charge-row"><span>' + r[0] + '</span><span class="' + r[2] + '">' + (r[1] >= 0 ? '+' : '-') + f(r[1]) + '</span></div>'; });
+
+    var grossCls = profit >= 0 ? 'positive' : 'negative';
+    var netCls   = net   >= 0 ? 'positive' : 'negative';
+
+    var html = '<div class="bc-summary-bar">';
+    html += '<div class="bc-summary-item"><span>Turnover</span><b>&#8377;' + (buyT + sellT).toLocaleString('en-IN', { maximumFractionDigits: 2 }) + '</b></div>';
+    html += '<div class="bc-summary-item"><span>Gross P&L</span><b class="' + grossCls + '">' + (profit >= 0 ? '+' : '-') + f(profit) + '</b></div>';
+    html += '<div class="bc-summary-item"><span>Total Charges</span><b class="negative">-' + f(total) + '</b></div>';
+    html += '<div class="bc-summary-item"><span>Net P&L</span><b class="' + netCls + '"><b>' + (net >= 0 ? '+' : '-') + f(net) + '</b></b></div>';
+    html += '</div>';
+
+    html += '<div style="font-size:13px;font-weight:600;color:var(--text-muted);margin:18px 0 10px;">Charge Breakdown</div>';
+    html += '<div class="bc-charge-list">';
+    var rows = [
+        ['Brokerage (buy + sell)', brok,    'negative'],
+        ['STT / Securities Transaction Tax', stt, 'negative'],
+        [exch.toUpperCase() + ' Exchange Charges', exchChg, 'negative'],
+        ['SEBI Regulatory Fee', sebi, 'negative'],
+        ['GST @ 18%', gst, 'negative'],
+        ['Stamp Duty', stamp, 'negative'],
+    ];
+    rows.forEach(function(r) {
+        html += '<div class="bc-charge-row"><span>' + r[0] + '</span><span class="' + r[2] + '">-' + f(r[1]) + '</span></div>';
+    });
     html += '<div class="bc-charge-row bc-total-row"><span>Total Charges</span><span class="negative">-' + f(total) + '</span></div>';
-    html += '<div class="bc-charge-row bc-net-row"><span>Net P&L</span><span class="' + (net >= 0 ? 'positive' : 'negative') + '"><b>' + (net >= 0 ? '+' : '-') + f(net) + '</b></span></div></div>';
-    html += '<div class="bc-breakeven">Breakeven: <b>&#8377;' + be.toFixed(2) + '</b></div>';
-    html += '<p style="font-size:11px;color:var(--text-muted);margin-top:10px;">Approximate. Based on NSE/BSE + Zerodha flat &#8377;20 brokerage model.</p>';
+    html += '<div class="bc-charge-row bc-net-row"><span>Net P&L</span><span class="' + netCls + '"><b>' + (net >= 0 ? '+' : '-') + f(net) + '</b></span></div>';
+    html += '</div>';
+    html += '<div class="bc-breakeven">Breakeven sell price: <b>&#8377;' + be.toFixed(2) + '</b> &nbsp;|&nbsp; Cost/share: <b>&#8377;' + (qty > 0 ? (total / qty).toFixed(4) : '0') + '</b></div>';
+    html += '<p style="font-size:11px;color:var(--text-muted);margin-top:12px;">Based on NSE rates + Zerodha flat &#8377;20 model. Actual charges may vary slightly.</p>';
     res.innerHTML = html;
 }
 
